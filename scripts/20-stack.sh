@@ -107,6 +107,28 @@ else
   ok "ONLYOFFICE já instalado"
 fi
 
+# SSH_Orchestrator — cliente SSH/SFTP (Tauri), RPM da release oficial no GitHub
+if rpm -qa | grep -qi '^ssh-orchestrator'; then
+  ok "SSH_Orchestrator já instalado"
+else
+  log "stack: SSH_Orchestrator (RPM da release mais recente no GitHub)"
+  SSH_ORCH_API="https://api.github.com/repos/marcos2872/SSH_Orchestrator/releases/latest"
+  SSH_ORCH_URL=""
+  if [[ ${DRY_RUN} == 0 ]]; then
+    SSH_ORCH_URL="$(curl -fsSL "${SSH_ORCH_API}" 2>/dev/null \
+      | grep -oE '"browser_download_url":[[:space:]]*"[^"]*x86_64\.rpm"' \
+      | head -n1 | sed -E 's/.*"([^"]+)"$/\1/' || true)"
+  fi
+  if [[ ${DRY_RUN} == 1 ]]; then
+    log "dry-run: baixaria o RPM x86_64 da última release (${SSH_ORCH_API}) e instalaria com dnf"
+  elif [[ -n ${SSH_ORCH_URL} ]]; then
+    run_sh "dnf -y ${DNFOPT} install '${SSH_ORCH_URL}'" \
+      || warn "SSH_Orchestrator: falha ao instalar o RPM da release"
+  else
+    warn "SSH_Orchestrator: não encontrei asset .x86_64.rpm na última release"
+  fi
+fi
+
 # ─── 6. Peso morto (destrutivo → exige --yes) ───────────────────────────────
 if [[ ${SKIP_REMOVE:-0} == 1 ]]; then
   log "stack: remoções desativadas (--skip-remove)"

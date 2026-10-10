@@ -15,13 +15,16 @@
 #
 # Imagem base:
 #   Funciona em qualquer Fedora 44/45 já instalado — Workstation (remove o GNOME/GDM)
-#   ou instalação mínima (adiciona o stack). Para testar numa VM:
+#   ou instalação mínima (adiciona o stack).
+#   Download: Workstation → https://fedoraproject.org/workstation/download
+#             mínima (Everything, "Minimal Install") → https://fedoraproject.org/misc
 #
+#   Para testar numa VM:
 #     virt-install --name myos --memory 4096 --vcpus 3 --disk size=25 \
 #       --cdrom /caminho/Fedora-Workstation-Live-x86_64-44.iso \
 #       --os-variant fedora-unknown --graphics spice
 #
-#   Depois, dentro da VM: git clone <este repo> && ./install.sh
+#   Depois, dentro da VM: git clone https://github.com/marcos2872/my-os && ./install.sh
 
 set -euo pipefail
 
@@ -35,7 +38,7 @@ MYOS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 : "${GPU_PROFILE:=auto}"
 : "${SKIP_REMOVE:=0}"
 
-usage() { sed -n '2,24p' "${MYOS_ROOT}/install.sh" | sed 's/^# \{0,1\}//'; }
+usage() { awk 'NR==1{next} !/^#/{exit} {sub(/^# ?/,""); print}' "${MYOS_ROOT}/install.sh"; }
 
 while (($#)); do
   case "$1" in

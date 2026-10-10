@@ -1,0 +1,26 @@
+// MyOS — configuração padrão do niri
+// Referência: https://github.com/YaLTeR/niri/wiki/Configuration:-Introduction
+
+config {
+    gap-inset 4
+    focus-closest true
+}
+
+input {
+    repeat-delay-msec 300
+    repeat-rate-msec 33
+}
+
+// Papel de parede via swaybg: usa a 1ª imagem de ~/.config/myos-walls/
+// ou /usr/share/myos-walls/; sem imagens → cor sólida lavanda.
+// Comente a linha abaixo se preferir o wallpaper nativo do Noctalia.
+spawn-at-startup "myos-wallpaper"
+
+// Shell Noctalia v5: barra, launcher, notificações, OSD, lock screen, etc.
+spawn-at-startup "noctalia"
+
+// Atalhos do MyOS (sobrescrevem os padrões do niri)
+bind "super T" spawn "foot"
+bind "super B" spawn "brave-browser"
+bind "super E" spawn "zed"
+bind "super Print" action "screenshot"

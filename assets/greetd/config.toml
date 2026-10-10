@@ -1,0 +1,11 @@
+# MyOS — greetd (display manager)
+# __GREETER_CMD__ é substituído na instalação:
+#   - com noctalia-greeter: "/usr/bin/noctalia-greeter-session -- --session niri"
+#   - sem:                  "greetd" (greeter padrão em texto)
+
+[terminal]
+vt = 1
+
+[default_session]
+command = "__GREETER_CMD__"
+user = "greeter"

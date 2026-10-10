@@ -1,0 +1,8 @@
+# MyOS — repo comunitário Terra (fyralabs)
+# Usado para o pacote noctalia-greeter (o Fedora oficial ainda não o empacota).
+# Procedência: https://repos.fyralabs.com — desative com --no-greeter.
+[myos-terra]
+name=Terra (MyOS — noctalia-greeter)
+baseurl=https://repos.fyralabs.com/terra$releasever
+enabled=1
+gpgcheck=0

@@ -1,0 +1,8 @@
+# MyOS — PAM do greetd (autenticação do display manager)
+auth       required     pam_env.so
+auth       include      system-auth
+account    include      system-auth
+password   include      system-auth
+session    required     pam_loginuid.so
+session    required     pam_env.so
+session    include      system-auth

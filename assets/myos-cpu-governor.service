@@ -1,0 +1,13 @@
+[Unit]
+Description=MyOS — governor de CPU em performance (desktop sem bateria)
+After=multi-user.target
+Wants=multi-user.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/myos-cpu-governor
+StandardOutput=journal
+
+[Install]
+WantedBy=multi-user.target

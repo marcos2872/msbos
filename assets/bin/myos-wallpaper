@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# MyOS — define o papel de parede com swaybg.
+#
+# Ordem de busca (1ª imagem encontrada):
+#   1) ~/.config/myos-walls/
+#   2) /usr/share/myos-walls/
+# Sem imagens → cor sólida lavanda.
+
+set -u
+
+DIRS=("${HOME}/.config/myos-walls" "/usr/share/myos-walls")
+
+for d in "${DIRS[@]}"; do
+  [[ -d ${d} ]] || continue
+  img="$(find "${d}" -maxdepth 1 -type f \
+    \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' \) \
+    2>/dev/null | sort | head -n1)"
+  if [[ -n ${img} ]]; then
+    exec swaybg -i "${img}"
+  fi
+done
+
+exec swaybg --color "#221c3a"

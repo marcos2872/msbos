@@ -18,7 +18,7 @@ todas as otimizações de memória.
 | Shell | **Noctalia v5** — barra, launcher, notificações, OSD e lock screen |
 | Login | **greetd** + Noctalia Greeter (substitui o GDM) |
 | Terminal | alacritty (`Super+T`) |
-| Apps | Zed (editor), OpenCode v2 (IA no terminal), Brave (navegador padrão), ONLYOFFICE |
+| Apps | Zed (editor), OpenCode v2 (IA no terminal, configurado com o [agents-config](https://github.com/marcos2872/agents-config)), Brave (navegador padrão), ONLYOFFICE |
 
 Nada do GNOME/GDM permanece: o objetivo é um desktop enxuto que fica **abaixo de ~600 MB
 de RAM em idle** (contra ~1,5 GB de um GNOME típico).
@@ -82,7 +82,7 @@ cd my-os
 | `20-stack.sh` | Instala o núcleo (niri, Noctalia, greetd, PipeWire, portais, fontes) e os apps: **Zed** e **OpenCode v2** pelos scripts oficiais (`curl`), **Brave** e **ONLYOFFICE** pelos repos oficiais; remove GDM/GNOME |
 | `30-services.sh` | greetd assume o boot (GDM mascarado); desativa avahi/cups/sssd/fprintd/etc.; habilita zram, oomd, tuned e power-profiles-daemon |
 | `40-tuning.sh` | **zram** (swap comprimido zstd), sysctl de memória, **btrfs `compress=zstd`**, governor `performance` (só em desktop sem bateria), oomd conservador |
-| `50-configs.sh` | Escreve as configs do niri/Noctalia/greetd, instala os wallpapers e define o **Brave como navegador padrão** |
+| `50-configs.sh` | Escreve as configs do niri/Noctalia/greetd, instala os wallpapers, aplica o **agents-config** no OpenCode (agentes/skills/commands) e define o **Brave como navegador padrão** |
 
 ## Depois de instalar
 

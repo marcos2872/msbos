@@ -29,7 +29,7 @@ CORE=(
   xdg-desktop-portal xdg-desktop-portal-gtk
   polkit NetworkManager
   power-profiles-daemon tuned
-  curl xdg-utils
+  curl git xdg-utils
   google-noto-sans-fonts google-noto-sans-mono-fonts
 )
 log "stack: instalando núcleo: ${CORE[*]}"

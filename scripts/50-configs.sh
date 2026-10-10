@@ -45,14 +45,34 @@ fi
 render_file "greetd/config.toml" "/etc/greetd/config.toml" "__GREETER_CMD__" "${GREETER_CMD}"
 install_file "pam.d/greetd" "/etc/pam.d/greetd"
 
-# ─── 5. Brave como navegador padrão (do usuário) ────────────────────────────
+# ─── 5. OpenCode — configuração pessoal (agents-config) ─────────────────────
+# Repo público https://github.com/marcos2872/agents-config: agentes, skills,
+# commands e plugins. O sync.sh do repo copia tudo para ~/.config/opencode/
+# (com backup automático do que já existir).
+AGENTS_REPO="https://github.com/marcos2872/agents-config.git"
+AGENTS_DIR="${TU_HOME}/.local/share/agents-config"
+log "config: OpenCode (agents-config: agentes, skills, commands, plugins)"
+if [[ ${DRY_RUN} == 1 ]]; then
+  log "dry-run: clonaria ${AGENTS_REPO} → ${AGENTS_DIR} e rodaria ./sync.sh"
+elif [[ -d ${AGENTS_DIR}/.git ]]; then
+  run_sh "runuser -u ${TU} -- env HOME='${TU_HOME}' git -C '${AGENTS_DIR}' pull --ff-only" \
+    || warn "agents-config: falha no git pull (seguindo com a cópia local)"
+  run_sh "runuser -u ${TU} -- env HOME='${TU_HOME}' bash '${AGENTS_DIR}/sync.sh'" \
+    || warn "agents-config: falha ao aplicar o sync.sh"
+else
+  run_sh "runuser -u ${TU} -- env HOME='${TU_HOME}' git clone '${AGENTS_REPO}' '${AGENTS_DIR}'" \
+    && run_sh "runuser -u ${TU} -- env HOME='${TU_HOME}' bash '${AGENTS_DIR}/sync.sh'" \
+    || warn "agents-config: falha na configuração do OpenCode (clone/sync)"
+fi
+
+# ─── 6. Brave como navegador padrão (do usuário) ────────────────────────────
 if command -v brave-browser >/dev/null 2>&1 || [[ ${DRY_RUN} == 1 ]]; then
   run_sh "runuser -u ${TU} -- env HOME='${TU_HOME}' xdg-settings set default-web-browser brave-browser.desktop >/dev/null 2>&1 || true"
   run_sh "runuser -u ${TU} -- env HOME='${TU_HOME}' xdg-mime default brave-browser.desktop x-scheme-handler/https x-scheme-handler/http >/dev/null 2>&1 || true"
   ok "Brave definido como navegador padrão (https/http)"
 fi
 
-# ─── 6. Permissões dos arquivos do usuário ──────────────────────────────────
+# ─── 7. Permissões dos arquivos do usuário ──────────────────────────────────
 run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.config/niri" "${TU_HOME}/.config/noctalia"
 
 cat <<EOF

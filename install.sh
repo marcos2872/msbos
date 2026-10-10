@@ -18,7 +18,7 @@
 #   ou instalação mínima (adiciona o stack). Para testar numa VM:
 #
 #     virt-install --name myos --memory 4096 --vcpus 3 --disk size=25 \
-#       --cdrom /caminho/Fedora-Workstation-Live-x86_64-45.iso \
+#       --cdrom /caminho/Fedora-Workstation-Live-x86_64-44.iso \
 #       --os-variant fedora-unknown --graphics spice
 #
 #   Depois, dentro da VM: git clone <este repo> && ./install.sh

@@ -25,16 +25,32 @@ de RAM em idle** (contra ~1,5 GB de um GNOME típico).
 
 ## De onde rodar (base)
 
-O script precisa de um **Fedora 44 ou 45 já instalado** (físico ou VM), x86_64, com internet:
+O script precisa de um **Fedora já instalado** (físico ou VM), x86_64, com internet.
+O estável atual é o **Fedora 44** (o 45 entra em breve; os mesmos links servem trocando a versão):
 
 - **Fedora Workstation** → o script remove GDM/GNOME e adiciona o stack (mais fácil para testar);
 - **Instalação mínima** → o script apenas adiciona o que falta (mais enxuto, ideal para a versão final).
 
-Para testar numa VM, use a ISO do Fedora Workstation:
+### Onde baixar as imagens
+
+| Imagem | Para quê | Onde |
+|---|---|---|
+| **Fedora Workstation** (Live ISO) | base recomendada para testar (já vem com GNOME, que o script remove) | <https://fedoraproject.org/workstation/download> |
+| **Fedora Everything** (netinstall ISO) | instalação **mínima** — no instalador (Anaconda) escolha **"Minimal Install"** | <https://fedoraproject.org/misc> |
+
+Espelhos diretos (troque `44` pela versão desejada; lista completa em <https://mirrors.fedoraproject.org>):
+
+- Workstation: <https://download.fedoraproject.org/pub/fedora/linux/releases/44/Workstation/x86_64/iso/>
+- Everything (mínimo): <https://download.fedoraproject.org/pub/fedora/linux/releases/44/Everything/x86_64/iso/>
+
+> Dica: verifique o checksum das ISOs com os arquivos `-CHECKSUM` (e a assinatura OpenPGP do Fedora)
+> antes de instalar.
+
+Para testar numa VM, use a ISO escolhida:
 
 ```bash
 virt-install --name myos --memory 4096 --vcpus 3 --disk size=25 \
-  --cdrom /caminho/Fedora-Workstation-Live-x86_64-45.iso \
+  --cdrom /caminho/Fedora-Workstation-Live-x86_64-44.iso \
   --os-variant fedora-unknown --graphics spice
 ```
 

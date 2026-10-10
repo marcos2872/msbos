@@ -20,7 +20,7 @@ spawn-at-startup "myos-wallpaper"
 spawn-at-startup "noctalia"
 
 // Atalhos do MyOS (sobrescrevem os padrões do niri)
-bind "super T" spawn "foot"
+bind "super T" spawn "alacritty"
 bind "super B" spawn "brave-browser"
 bind "super E" spawn "zed"
 bind "super Print" action "screenshot"

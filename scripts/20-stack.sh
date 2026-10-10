@@ -40,7 +40,7 @@ fi
 ok "núcleo instalado"
 
 # ─── 2. Utilitários leves ───────────────────────────────────────────────────
-UTILS=(foot grim slurp brightnessctl wl-cliphist playerctl)
+UTILS=(alacritty grim slurp brightnessctl wl-cliphist playerctl)
 for p in "${UTILS[@]}"; do
   run_sh "dnf -y ${DNFOPT} install ${p}" || warn "utilitário '${p}' indisponível — ignorado"
 done

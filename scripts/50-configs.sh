@@ -25,8 +25,10 @@ install_file "noctalia/config.toml" "${TU_HOME}/.config/noctalia/config.toml"
 # ─── 3. Papel de parede + helper ────────────────────────────────────────────
 install_file "bin/myos-wallpaper" "/usr/local/bin/myos-wallpaper"
 run_cmd chmod 755 /usr/local/bin/myos-wallpaper
-install_file "wallpapers/myos-lavender-1920x1080.png" \
-  "/usr/share/myos-walls/myos-lavender-1920x1080.png"
+for w in "${MYOS_ROOT}"/assets/wallpapers/*; do
+  [[ -f ${w} ]] || continue
+  install_file "wallpapers/$(basename "${w}")" "/usr/share/myos-walls/$(basename "${w}")"
+done
 
 # ─── 4. greetd — escolhe o greeter disponível ───────────────────────────────
 GREETER_BIN="$(command -v noctalia-greeter-session 2>/dev/null || true)"

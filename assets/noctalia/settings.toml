@@ -32,7 +32,7 @@ end = [
 start = [ "cpu", "ram", "workspaces", "taskbar" ]
 
 [plugins]
-enabled = [ "tmelik/system-monitor" ]
+enabled = [ "tmelik/system-monitor", "raycursive/niri-displays" ]
 
 # Mesmo wallpaper usado como padrão do MyOS (instalado pelo 50-configs.sh
 # em /usr/share/myos-walls/). As entradas por monitor são criadas em runtime.

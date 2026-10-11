@@ -34,6 +34,7 @@ else
 fi
 if [[ ${DRY_RUN} == 1 ]]; then
   log "dry-run: copiaria assets/noctalia/plugins/* → ${NOCT_STATE}/plugins/ (somente os ausentes)"
+  log "dry-run: copiaria assets/noctalia/plugins-local/* → ${TU_HOME}/.local/share/noctalia/plugins/ (somente os ausentes)"
 else
   for plug in "${MYOS_ROOT}"/assets/noctalia/plugins/*/*/*; do
     [[ -d ${plug} ]] || continue
@@ -44,6 +45,19 @@ else
       mkdir -p "${NOCT_STATE}/plugins/$(dirname "${rel}")"
       cp -a "${plug}" "${NOCT_STATE}/plugins/${rel}"
       log "noctalia: plugin '${rel}' instalado"
+    fi
+  done
+  # plugins locais (documentado: ~/.local/share/noctalia/plugins/<plugin>/ é
+  # descoberto como "local source" — funciona sem rede e sem registro)
+  for plug in "${MYOS_ROOT}"/assets/noctalia/plugins-local/*; do
+    [[ -d ${plug} ]] || continue
+    name="$(basename "${plug}")"
+    if [[ -d ${TU_HOME}/.local/share/noctalia/plugins/${name} ]]; then
+      log "noctalia: plugin local '${name}' já instalado — mantido"
+    else
+      mkdir -p "${TU_HOME}/.local/share/noctalia/plugins"
+      cp -a "${plug}" "${TU_HOME}/.local/share/noctalia/plugins/${name}"
+      log "noctalia: plugin local '${name}' instalado"
     fi
   done
 fi
@@ -124,7 +138,7 @@ if command -v zsh >/dev/null 2>&1 || [[ ${DRY_RUN} == 1 ]]; then
 fi
 
 # ─── 8. Permissões dos arquivos do usuário ──────────────────────────────────
-run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.config/niri" "${TU_HOME}/.config/noctalia" "${TU_HOME}/.config/alacritty" "${TU_HOME}/.local/state/noctalia"
+run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.config/niri" "${TU_HOME}/.config/noctalia" "${TU_HOME}/.config/alacritty" "${TU_HOME}/.local/state/noctalia" "${TU_HOME}/.local/share/noctalia"
 run_cmd chown "${TU}:${TU}" "${TU_HOME}/.zshrc"
 
 cat <<EOF
@@ -136,8 +150,8 @@ cat <<EOF
      com a sessão "niri" já disponível
    • Shell: Noctalia v5 (barra, launcher, notificações, lock, OSD)
    • Atalhos: Super+T terminal · Super+Space launcher · Super+S control center
-              Super+B Brave · Super+E Zed · Alt+Tab switcher · Print screenshot
-              (o restante são os defaults oficiais do niri)
+              Super+B Brave · Super+E Zed · Super+P monitores · Alt+Tab switcher
+              Print screenshot (o restante são os defaults oficiais do niri)
    • Editor: Zed · IA no terminal: opencode · Office: ONLYOFFICE
 
  Verificações pós-reboot:

@@ -55,6 +55,7 @@ binds {
     Mod+S           { spawn-sh "noctalia msg panel-toggle control-center"; }
     Mod+Shift+Comma { spawn-sh "noctalia msg settings-toggle"; }
     Alt+Tab         { spawn-sh "noctalia msg window-switcher hold"; }
+    Mod+P hotkey-overlay-title="Displays (Noctalia)" { spawn-sh "noctalia msg panel-toggle raycursive/niri-displays:panel"; }
 
     // ── MyOS: apps ──────────────────────────────────────────────────────────
     Mod+B { spawn "brave-browser"; }

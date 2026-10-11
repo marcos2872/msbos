@@ -17,7 +17,7 @@ todas as otimizações de memória.
 | Sessão gráfica | **niri** (compositor Wayland com tiling rolável) |
 | Shell | **Noctalia v5** — barra, launcher, notificações, OSD e lock screen |
 | Login | **greetd** + Noctalia Greeter (substitui o GDM) |
-| Noctalia (defaults) | Barra: `cpu ram workspaces taskbar` · `media clock` · `tray … session`; plugin **tmelik/system-monitor**; wallpaper padrão do MyOS |
+| Noctalia (defaults) | Barra: `cpu ram workspaces taskbar` · `media clock` · `tray … session`; plugins **tmelik/system-monitor** e **raycursive/niri-displays** (gerenciador de monitores); wallpaper padrão do MyOS |
 | Terminal | alacritty + **zsh com autocomplete** (sugestões inline do histórico, syntax highlight, fzf no Ctrl+R) — `Super+T` |
 | Dev | Rust (rustup), Node.js LTS via nvm (npm/pnpm/yarn), gcc/make |
 | Apps | Zed (editor), OpenCode v2 (IA no terminal, configurado com o [agents-config](https://github.com/marcos2872/agents-config)), Brave (navegador padrão), ONLYOFFICE, SSH_Orchestrator (RPM da release oficial), lazydocker (TUI para containers) |
@@ -98,6 +98,7 @@ Reinicie: a tela do greetd aparece com a sessão **niri** já disponível.
 | `Super+S` | Control center (Noctalia) |
 | `Super+B` | Brave |
 | `Super+E` | Zed |
+| `Super+P` | Gerenciador de monitores (plugin Niri Displays: liga/desliga saídas, resolução, escala, rotação, posição) |
 | `Alt+Tab` | Window switcher (Noctalia) |
 | `Print` | Screenshot |
 | `Super+Shift+E` | Sair do niri |

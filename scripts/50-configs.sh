@@ -16,11 +16,16 @@ TU_HOME="$(user_home "${TU}")"
 log "config: configurando para o usuário: ${TU} (${TU_HOME})"
 
 # ─── 1. niri ────────────────────────────────────────────────────────────────
-install_file "niri/config.kdl" "${TU_HOME}/.config/niri/config.kdl"
+# Config do USUÁRIO: só instala se não existir (install_file_once) — o niri
+# substitui TODOS os binds default quando o config define qualquer bind, então
+# esse arquivo é o "default set" completo do MyOS; sobrescrevê-lo depois comeria
+# a personalização de quem mexeu nos atalhos.
+install_file_once "niri/config.kdl" "${TU_HOME}/.config/niri/config.kdl"
+# Fallback de sistema: o MyOS é dono dele, pode ser sempre atualizado.
 install_file "niri/config.kdl" "/etc/xdg/niri/config.kdl"
 
 # ─── 2. Noctalia (esqueleto; padrões da instalação já funcionam) ────────────
-install_file "noctalia/config.toml" "${TU_HOME}/.config/noctalia/config.toml"
+install_file_once "noctalia/config.toml" "${TU_HOME}/.config/noctalia/config.toml"
 
 # ─── 2b. Noctalia: defaults do MyOS (settings + plugins) ────────────────────
 # A config real do Noctalia v5 vive em ~/.local/state/noctalia/ (settings.toml
@@ -36,29 +41,36 @@ if [[ ${DRY_RUN} == 1 ]]; then
   log "dry-run: copiaria assets/noctalia/plugins/* → ${NOCT_STATE}/plugins/ (somente os ausentes)"
   log "dry-run: copiaria assets/noctalia/plugins-local/* → ${TU_HOME}/.local/share/noctalia/plugins/ (somente os ausentes)"
 else
+  # copia_plugin <dir_do_plugin_no_repo> <dir_de_destino> — copia arquivo por
+  # arquivo via install_file (nunca cp direto): garante modo, dono e contexto
+  # SELinux corretos no destino, além do backup .myos-bak. Se o destino já
+  # existe, o plugin é mantido como está.
+  copia_plugin() {
+    local src_dir="$1" dst_dir="$2" rel f sub
+    rel="${src_dir#"${MYOS_ROOT}"/assets/}"
+    if [[ -d ${dst_dir} ]]; then
+      log "noctalia: plugin '${rel}' já instalado — mantido"
+      return 0
+    fi
+    while IFS= read -r -d '' f; do
+      sub="${f#"${src_dir}"/}"
+      install_file "${rel}/${sub}" "${dst_dir}/${sub}" \
+        || warn "noctalia: falha ao copiar ${rel}/${sub}"
+    done < <(find "${src_dir}" -type f -print0 | sort -z)
+    log "noctalia: plugin '${rel}' instalado"
+  }
+
   for plug in "${MYOS_ROOT}"/assets/noctalia/plugins/*/*/*; do
     [[ -d ${plug} ]] || continue
     rel="${plug#"${MYOS_ROOT}"/assets/noctalia/plugins/}"
-    if [[ -d ${NOCT_STATE}/plugins/${rel} ]]; then
-      log "noctalia: plugin '${rel}' já instalado — mantido"
-    else
-      mkdir -p "${NOCT_STATE}/plugins/$(dirname "${rel}")"
-      cp -a "${plug}" "${NOCT_STATE}/plugins/${rel}"
-      log "noctalia: plugin '${rel}' instalado"
-    fi
+    copia_plugin "${plug}" "${NOCT_STATE}/plugins/${rel}"
   done
   # plugins locais (documentado: ~/.local/share/noctalia/plugins/<plugin>/ é
   # descoberto como "local source" — funciona sem rede e sem registro)
   for plug in "${MYOS_ROOT}"/assets/noctalia/plugins-local/*; do
     [[ -d ${plug} ]] || continue
     name="$(basename "${plug}")"
-    if [[ -d ${TU_HOME}/.local/share/noctalia/plugins/${name} ]]; then
-      log "noctalia: plugin local '${name}' já instalado — mantido"
-    else
-      mkdir -p "${TU_HOME}/.local/share/noctalia/plugins"
-      cp -a "${plug}" "${TU_HOME}/.local/share/noctalia/plugins/${name}"
-      log "noctalia: plugin local '${name}' instalado"
-    fi
+    copia_plugin "${plug}" "${TU_HOME}/.local/share/noctalia/plugins/${name}"
   done
 fi
 
@@ -112,28 +124,35 @@ log "config: OpenCode (agents-config: agentes, skills, commands, plugins)"
 if [[ ${DRY_RUN} == 1 ]]; then
   log "dry-run: clonaria ${AGENTS_REPO} → ${AGENTS_DIR} e rodaria ./sync.sh"
 elif [[ -d ${AGENTS_DIR}/.git ]]; then
-  run_sh "runuser -u ${TU} -- env HOME='${TU_HOME}' git -C '${AGENTS_DIR}' pull --ff-only" \
+  run_cmd runuser -u "${TU}" -- env "HOME=${TU_HOME}" git -C "${AGENTS_DIR}" pull --ff-only \
     || warn "agents-config: falha no git pull (seguindo com a cópia local)"
-  run_sh "runuser -u ${TU} -- env HOME='${TU_HOME}' bash '${AGENTS_DIR}/sync.sh'" \
+  run_cmd runuser -u "${TU}" -- env "HOME=${TU_HOME}" bash "${AGENTS_DIR}/sync.sh" \
     || warn "agents-config: falha ao aplicar o sync.sh"
 else
-  run_sh "runuser -u ${TU} -- env HOME='${TU_HOME}' git clone '${AGENTS_REPO}' '${AGENTS_DIR}'" \
-    && run_sh "runuser -u ${TU} -- env HOME='${TU_HOME}' bash '${AGENTS_DIR}/sync.sh'" \
+  run_cmd runuser -u "${TU}" -- env "HOME=${TU_HOME}" git clone "${AGENTS_REPO}" "${AGENTS_DIR}" \
+    && run_cmd runuser -u "${TU}" -- env "HOME=${TU_HOME}" bash "${AGENTS_DIR}/sync.sh" \
     || warn "agents-config: falha na configuração do OpenCode (clone/sync)"
 fi
 
 # ─── 6. Brave como navegador padrão (do usuário) ────────────────────────────
 if command -v brave-browser >/dev/null 2>&1 || [[ ${DRY_RUN} == 1 ]]; then
-  run_sh "runuser -u ${TU} -- env HOME='${TU_HOME}' xdg-settings set default-web-browser brave-browser.desktop >/dev/null 2>&1 || true"
-  run_sh "runuser -u ${TU} -- env HOME='${TU_HOME}' xdg-mime default brave-browser.desktop x-scheme-handler/https x-scheme-handler/http >/dev/null 2>&1 || true"
+  run_cmd runuser -u "${TU}" -- env "HOME=${TU_HOME}" \
+    xdg-settings set default-web-browser brave-browser.desktop >/dev/null 2>&1 || true
+  run_cmd runuser -u "${TU}" -- env "HOME=${TU_HOME}" \
+    xdg-mime default brave-browser.desktop x-scheme-handler/https x-scheme-handler/http >/dev/null 2>&1 || true
   ok "Brave definido como navegador padrão (https/http)"
 fi
 
 # ─── 7. Terminal: tema do alacritty + zsh com autocomplete ──────────────────
-install_file "alacritty/alacritty.toml" "${TU_HOME}/.config/alacritty/alacritty.toml"
-install_file "zsh/zshrc" "${TU_HOME}/.zshrc"
+# Também install_file_once: .zshrc e alacritty.toml são configs pessoais.
+install_file_once "alacritty/alacritty.toml" "${TU_HOME}/.config/alacritty/alacritty.toml"
+install_file_once "zsh/zshrc" "${TU_HOME}/.zshrc"
+
+# shell do usuário → zsh (path resolvido, nunca fixo em /usr/bin/zsh)
 if command -v zsh >/dev/null 2>&1 || [[ ${DRY_RUN} == 1 ]]; then
-  run_sh "chsh -s /usr/bin/zsh '${TU}'" || warn "chsh: falha ao definir o zsh como shell padrão"
+  ZSH_BIN="$(command -v zsh 2>/dev/null || true)"
+  [[ -n ${ZSH_BIN} ]] || ZSH_BIN='/usr/bin/zsh'   # valor esperado pós-instalação
+  run_cmd chsh -s "${ZSH_BIN}" "${TU}" || warn "chsh: falha ao definir o zsh como shell padrão"
   ok "shell padrão: zsh (sugestões inline + syntax highlight + fzf no Ctrl+R)"
 fi
 

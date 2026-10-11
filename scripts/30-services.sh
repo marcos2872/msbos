@@ -60,7 +60,11 @@ if [[ -z "$(ls /sys/class/bluetooth 2>/dev/null)" ]]; then
 fi
 
 # ─── 4. Serviços que queremos no boot ───────────────────────────────────────
-on power-profiles-daemon
+if rpm -q tuned-ppd >/dev/null 2>&1; then
+  on tuned-ppd        # perfis de energia (API PPD do tuned, padrão no F44+)
+else
+  on power-profiles-daemon
+fi
 on tuned
 on systemd-zram-setup@root.service
 on podman.socket   # API do Podman (usada pelo lazydocker)

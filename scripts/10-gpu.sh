@@ -76,8 +76,8 @@ install_nvidia_driver() {
 ensure_igpu() {
   local vendor=$1 pkg=''
   case "${vendor}" in
-    intel) pkg="intel-ucode" ;;
-    amd)   pkg="amd-ucode" ;;
+    intel) pkg="microcode_ctl" ;;        # microcódigo Intel (Fedora)
+    amd)   pkg="amd-ucode-firmware" ;;   # microcódigo AMD (split do linux-firmware)
   esac
   run_sh "dnf -y --setopt=install_weak_deps=0 install mesa-dri-drivers" \
     || warn "mesa-dri-drivers: falha na instalação"

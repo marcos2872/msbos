@@ -28,7 +28,7 @@ CORE=(
   pipewire pipewire-pulse wireplumber
   xdg-desktop-portal xdg-desktop-portal-gtk
   polkit NetworkManager
-  power-profiles-daemon tuned
+  tuned
   curl git xdg-utils
   google-noto-sans-fonts google-noto-sans-mono-fonts
 )
@@ -39,8 +39,19 @@ if ! run_sh "dnf -y ${DNFOPT} install ${CORE[*]}"; then
 fi
 ok "núcleo instalado"
 
+# perfis de energia: Fedora 44+ traz tuned-ppd (mesma API do power-profiles-daemon);
+# instalar os dois causa conflito de provides (ppd-service)
+if rpm -q tuned-ppd >/dev/null 2>&1; then
+  log "stack: perfis de energia: tuned-ppd (API PPD do tuned)"
+elif rpm -q power-profiles-daemon >/dev/null 2>&1; then
+  log "stack: perfis de energia: power-profiles-daemon"
+else
+  run_sh "dnf -y ${DNFOPT} install power-profiles-daemon" \
+    || warn "sem gerenciador de perfis de energia (tuned-ppd/PPD indisponíveis)"
+fi
+
 # ─── 2. Utilitários leves ───────────────────────────────────────────────────
-UTILS=(alacritty grim slurp brightnessctl wl-cliphist playerctl)
+UTILS=(alacritty grim slurp brightnessctl playerctl)
 for p in "${UTILS[@]}"; do
   run_sh "dnf -y ${DNFOPT} install ${p}" || warn "utilitário '${p}' indisponível — ignorado"
 done
@@ -55,9 +66,14 @@ for p in "${TERM_PKGS[@]}"; do
 done
 
 # ─── 4. Contêineres: lazydocker (TUI) + compat docker/podman ────────────────
-for p in lazydocker podman-docker; do
-  run_sh "dnf -y ${DNFOPT} install ${p}" || warn "contêineres: '${p}' indisponível — ignorado"
-done
+# lazydocker não está nos repos oficiais do Fedora → fallback: script oficial
+if ! run_sh "dnf -y ${DNFOPT} install lazydocker"; then
+  warn "lazydocker fora dos repos — usando o script oficial (→ /usr/local/bin)"
+  run_sh "cd /tmp && curl -fsSL https://raw.githubusercontent.com/jesseduffield/lazydocker/master/scripts/install_update_linux.sh | DIR=/usr/local/bin bash" \
+    || warn "lazydocker: falha na instalação (dnf e script oficial)"
+fi
+run_sh "dnf -y ${DNFOPT} install podman-docker" \
+  || warn "contêineres: 'podman-docker' indisponível — ignorado"
 
 # ─── 5. Bluetooth (só se houver adaptador) ──────────────────────────────────
 if [[ -n "$(ls /sys/class/bluetooth 2>/dev/null)" ]]; then

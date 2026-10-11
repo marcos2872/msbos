@@ -1,0 +1,53 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Nada de cache: o trabalho aqui é só verificação, e Rodar tudo em paralelo
+# mantém o pipeline em ~1 minuto.
+jobs:
+  sintaxe:
+    name: sintaxe (bash -n)
+    runs-on: ubuntu-latest
+    container: fedora:44
+    steps:
+      - uses: actions/checkout@v4
+      # ATENÇÃO: "bash -n f1 f2 f3" só valida o PRIMEIRO arquivo (os demais
+      # virariam $1, $2...). Por isso o loop.
+      - name: bash -n em todos os scripts
+        run: |
+          for f in install.sh lib/common.sh scripts/*.sh assets/bin/* assets/libexec/*; do
+            bash -n "$f" || exit 1
+          done
+          echo "sintaxe OK em todos os arquivos"
+
+  lint:
+    name: shellcheck
+    runs-on: ubuntu-latest
+    container: fedora:44
+    steps:
+      - uses: actions/checkout@v4
+      - name: instala o shellcheck
+        run: dnf -q -y install ShellCheck
+      - name: shellcheck (severidade warning ou maior)
+        run: shellcheck -S warning install.sh lib/common.sh scripts/*.sh assets/bin/* assets/libexec/*
+
+  dry-run:
+    name: dry-run (instalação simulada)
+    runs-on: ubuntu-latest
+    container: fedora:44
+    steps:
+      - uses: actions/checkout@v4
+      # As etapas precisam de um usuário-alvo (UID >= 1000) para configurar;
+      # num container como root, resolve_target_user não acharia nenhum.
+      # shadow-utils (useradd) já desapareceu da imagem base em algumas
+      # versões do Fedora; instala se faltar.
+      - name: cria usuário de teste
+        run: |
+          command -v useradd >/dev/null || dnf -y -q install shadow-utils
+          useradd -m -u 1000 ci
+      - name: ./install.sh --dry-run --user ci
+        run: ./install.sh --dry-run --user ci

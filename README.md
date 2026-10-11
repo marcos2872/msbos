@@ -136,8 +136,39 @@ assets/                 # arquivos instalados (configs, wallpapers, helpers)
   (`myos-remove-gnome.service`, roda antes do login): remover o desktop em uso derruba a
   sessão (o scriptlet do gdm executa `systemctl disable --now gdm.service`), então a
   remoção nunca acontece dentro da sessão. É só reiniciar após a instalação.
+- **Configs pessoais são instaladas só uma vez**: `~/.config/niri/config.kdl`,
+  `~/.config/noctalia/config.toml`, `~/.config/alacritty/alacritty.toml` e `~/.zshrc` **não
+  são sobrescritos** em uma reexecução — sua personalização de atalhos/temas sobrevive.
+  Para voltar ao padrão do MyOS, apague o arquivo e rode `sudo bash scripts/50-configs.sh`.
+  (Arquivos que o MyOS é dono — wallpapers, fallback `/etc/xdg/niri/config.kdl`,
+  `settings.toml`/plugins do Noctalia — seguem a mesma regra: só instalam se ausentes.)
+- **Registro de etapas**: cada etapa concluída é marcada em `/var/lib/myos/steps/`. Se uma
+  etapa falhar, o instalador mostra o código de erro, até onde chegou e como retomar
+  (`sudo ./install.sh` ou só a etapa que falhou) — as etapas são idempotentes.
 - `noctalia-greeter` vem do repositório **comunitário Terra** (o Fedora oficial ainda não
   o empacota); use `--no-greeter` para evitá-lo.
 - Zed e OpenCode são instalados pelos **scripts oficiais** (`zed.dev/install.sh` e
   `opencode.ai/v2/install`) e se auto-atualizam depois.
+- **lazydocker**: instalado do repo do Fedora quando disponível; se não estiver, o binário
+  vem da release oficial do GitHub **com verificação de sha256** (nunca `curl | bash`).
 - Arquivos sobrescritos no sistema ganham backup com sufixo `.myos-bak`.
+
+## Verificação
+
+```bash
+# bash -n com vários arquivos só valida o PRIMEIRO (os demais virariam $1, $2...),
+# por isso o loop:
+for f in install.sh lib/common.sh scripts/*.sh assets/bin/* assets/libexec/*; do
+  bash -n "$f" || exit 1
+done
+shellcheck -S warning install.sh lib/common.sh scripts/*.sh assets/bin/* assets/libexec/*
+./install.sh --dry-run           # simula as 6 etapas sem alterar nada
+```
+
+O CI (`.github/workflows/ci.yml`) roda essas três verificações em `fedora:44` a cada
+push/PR — inclusive o `--dry-run` completo com um usuário de teste.
+
+## Licença
+
+[MIT](LICENSE) — use, modifique e redistribua como quiser.
+

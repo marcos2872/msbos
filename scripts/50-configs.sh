@@ -22,6 +22,32 @@ install_file "niri/config.kdl" "/etc/xdg/niri/config.kdl"
 # ─── 2. Noctalia (esqueleto; padrões da instalação já funcionam) ────────────
 install_file "noctalia/config.toml" "${TU_HOME}/.config/noctalia/config.toml"
 
+# ─── 2b. Noctalia: defaults do MyOS (settings + plugins) ────────────────────
+# A config real do Noctalia v5 vive em ~/.local/state/noctalia/ (settings.toml
+# + plugins/). Instalamos os defaults do repo SOMENTE se ainda não existirem —
+# uma personalização existente nunca é sobrescrita.
+NOCT_STATE="${TU_HOME}/.local/state/noctalia"
+if [[ -f ${NOCT_STATE}/settings.toml ]]; then
+  log "noctalia: settings.toml já existe — mantendo a personalização atual"
+else
+  install_file "noctalia/settings.toml" "${NOCT_STATE}/settings.toml"
+fi
+if [[ ${DRY_RUN} == 1 ]]; then
+  log "dry-run: copiaria assets/noctalia/plugins/* → ${NOCT_STATE}/plugins/ (somente os ausentes)"
+else
+  for plug in "${MYOS_ROOT}"/assets/noctalia/plugins/*/*/*; do
+    [[ -d ${plug} ]] || continue
+    rel="${plug#"${MYOS_ROOT}"/assets/noctalia/plugins/}"
+    if [[ -d ${NOCT_STATE}/plugins/${rel} ]]; then
+      log "noctalia: plugin '${rel}' já instalado — mantido"
+    else
+      mkdir -p "${NOCT_STATE}/plugins/$(dirname "${rel}")"
+      cp -a "${plug}" "${NOCT_STATE}/plugins/${rel}"
+      log "noctalia: plugin '${rel}' instalado"
+    fi
+  done
+fi
+
 # ─── 3. Papel de parede + helper ────────────────────────────────────────────
 install_file "bin/myos-wallpaper" "/usr/local/bin/myos-wallpaper"
 run_cmd chmod 755 /usr/local/bin/myos-wallpaper
@@ -98,7 +124,7 @@ if command -v zsh >/dev/null 2>&1 || [[ ${DRY_RUN} == 1 ]]; then
 fi
 
 # ─── 8. Permissões dos arquivos do usuário ──────────────────────────────────
-run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.config/niri" "${TU_HOME}/.config/noctalia" "${TU_HOME}/.config/alacritty"
+run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.config/niri" "${TU_HOME}/.config/noctalia" "${TU_HOME}/.config/alacritty" "${TU_HOME}/.local/state/noctalia"
 run_cmd chown "${TU}:${TU}" "${TU_HOME}/.zshrc"
 
 cat <<EOF

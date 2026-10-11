@@ -1,11 +1,12 @@
-# MyOS — configuração do Noctalia v5
+# MyOS — nota sobre a configuração do Noctalia v5
 #
-# Os padrões da instalação já são funcionais (barra, launcher, notificações,
-# lock screen, OSD). Use a interface gráfica de configuração do próprio shell
-# ou edite este arquivo.
+# O Noctalia v5 NÃO lê este arquivo: a configuração real fica em
+#   ~/.local/state/noctalia/settings.toml
+# (gerenciada pela interface gráfica do próprio shell).
+#
+# Os defaults do MyOS (layout da barra, plugin system-monitor, wallpaper)
+# estão em assets/noctalia/settings.toml + assets/noctalia/plugins/ do
+# repositório e são instalados pelo 50-configs.sh somente quando ainda
+# não existem — sua personalização nunca é sobrescrita.
 #
 # Referência completa: https://docs.noctalia.dev
-# Dica MyOS: para trocar o papel de parede, coloque imagens em
-#   ~/.config/myos-walls/   (usuário)
-#   /usr/share/myos-walls/  (sistema)
-# e o helper myos-wallpaper (swaybg) usa a primeira delas no próximo login.

@@ -1,0 +1,48 @@
+# MyOS — defaults do Noctalia v5 (instalados em ~/.local/state/noctalia/)
+#
+# O que vai aqui:
+#   - layout da barra ([bar.default])
+#   - plugins habilitados ([plugins] — o código fica em plugins/)
+#   - ajustes de widgets ([widget.*]) e wallpaper padrão
+#
+# O que NÃO vai (criado em runtime, específico da máquina):
+#   - [lockscreen_widgets] (geometria por monitor — o Noctalia cria sozinho)
+#   - [wallpaper.monitors.*] (idem)
+#   - state.toml, usage_counts.json, clipboard, plugin-cache, sources/
+#     (estado/estatísticas/cache — o Noctalia gera e baixa sozinho)
+#
+# Instalação: 50-configs.sh copia este arquivo e plugins/ somente se ainda
+# não existirem no destino — uma config já personalizada nunca é sobrescrita.
+config_version = 14
+
+[bar.default]
+center = [ "media", "clock" ]
+end = [
+    "tray",
+    "notifications",
+    "clipboard",
+    "network",
+    "bluetooth",
+    "volume",
+    "brightness",
+    "battery",
+    "control-center",
+    "session"
+]
+start = [ "cpu", "ram", "workspaces", "taskbar" ]
+
+[plugins]
+enabled = [ "tmelik/system-monitor" ]
+
+# Mesmo wallpaper usado como padrão do MyOS (instalado pelo 50-configs.sh
+# em /usr/share/myos-walls/). As entradas por monitor são criadas em runtime.
+[wallpaper.default]
+path = "/usr/share/myos-walls/pexels-wearelivingart-7862142.jpg"
+
+[wallpaper.last]
+path = "/usr/share/myos-walls/pexels-wearelivingart-7862142.jpg"
+
+[widget.media]
+hide_when_no_media = true
+max_length = 108
+rotate_album_art = true

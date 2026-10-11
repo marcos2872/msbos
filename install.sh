@@ -76,9 +76,41 @@ fi
 STEPS=()
 while IFS= read -r s; do STEPS+=("${s}"); done < <(cd "${MYOS_ROOT}/scripts" && ls -1 [0-9][0-9]-*.sh | sort)
 
+if ((${#STEPS[@]} == 0)); then
+  echo "nenhuma etapa encontrada em ${MYOS_ROOT}/scripts" >&2
+  exit 1
+fi
+
+# Estado das etapas concluídas (só grava em modo real; nenhum arquivo em dry-run).
+# Serve de registro/auditoria: se uma etapa falhar, o histórico em
+# /var/lib/myos/steps mostra exatamente até onde a instalação chegou.
+STATE_DIR="/var/lib/myos/steps"
+
 for step in "${STEPS[@]}"; do
   printf '\n──── %s ────\n' "${step}"
-  bash "${MYOS_ROOT}/scripts/${step}"
+  # Nota: "if ! cmd; then rc=$?" NÃO funciona — $? traria o status invertido
+  # do pipeline negado. Por isso capturamos com "|| rc=$?".
+  rc=0
+  bash "${MYOS_ROOT}/scripts/${step}" || rc=$?
+  if ((rc != 0)); then
+    printf '\n%s\n' "══════════════════════════════════════════════════════════"
+    printf '[ER ] a etapa %s falhou (código %s).\n' "${step}" "${rc}"
+    cat <<MSG
+
+  O que fazer:
+    • veja a mensagem de erro acima e corrija a causa
+    • as etapas são idempotentes — rodar de novo é seguro:
+        sudo ./install.sh              # tudo, desde o início
+        sudo bash scripts/${step}      # só esta etapa
+    • histórico do que já foi aplicado: ls ${STATE_DIR}/
+MSG
+    printf '%s\n\n' "══════════════════════════════════════════════════════════"
+    exit "${rc}"
+  fi
+  if [[ ${DRY_RUN} == 0 ]]; then
+    mkdir -p "${STATE_DIR}"
+    date '+%Y-%m-%d %H:%M:%S' > "${STATE_DIR}/${step}"
+  fi
 done
 
 printf '\n%s\n' "══════════════════════════════════════════════════════════"

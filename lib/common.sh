@@ -50,7 +50,7 @@ run_sh() {
 
 # exige_ok — bloqueia operações destrutivas sem --yes (ou aprovação interativa)
 exige_ok() {
-  local msg=$1
+  local msg="$1"
   if [[ ${YES} == 1 ]]; then
     return 0
   fi
@@ -75,7 +75,7 @@ require_fedora() {
   fi
   FEDORA_VERSION="${VERSION_ID:-?}"
   command -v dnf >/dev/null 2>&1 || { err "dnf não encontrado no PATH"; exit 1; }
-  log "base" "Sistema: ${PRETTY_NAME:-Fedora} (versão ${FEDORA_VERSION}) — OK"
+  log "base: ${PRETTY_NAME:-Fedora} (versão ${FEDORA_VERSION}) — OK"
   export FEDORA_VERSION
 }
 
@@ -110,8 +110,30 @@ user_home() {
   getent passwd "$1" | cut -d: -f6
 }
 
+# _backup_dst <dst> — guarda a 1ª versão de um arquivo que vamos sobrescrever
+# (sufixo .myos-bak; nunca sobrescreve um backup já existente).
+# Respeita DRY_RUN: em simulação não tocamos no disco.
+_backup_dst() {
+  local dst="$1"
+  [[ -f ${dst} && ! -f ${dst}.myos-bak ]] || return 0
+  [[ ${DRY_RUN} == 1 ]] && return 0
+  # cp -a aqui é correto: o backup deve ser uma cópia fiel do original
+  # (dono, modo, timestamps). Quoteado para não quebrar com path com espaços.
+  run_cmd cp -a "${dst}" "${dst}.myos-bak" 2>/dev/null || true
+}
+
 # install_file <asset_rel> <dst> — copia asset do repositório para o sistema
-# (faz backup .myos-bak da primeira vez que sobrescrever um arquivo existente)
+# (faz backup .myos-bak da primeira vez que sobrescrever um arquivo existente).
+# Sempre sobrescreve: use para arquivos que o MyOS é dono (wallpapers, helpers,
+# fallback de sistema). Para configs que o USUÁRIO pode personalizar, prefira
+# install_file_once.
+#
+# Usa `install -D -m` (não `cp`): além de criar os diretórios-pai, define o
+# DONO e o contexto SELinux do destino conforme o sistema (root:root / padrão
+# do destino). Um `cp -a` preservaria o dono de quem clonou o repo e o contexto
+# user_home_t — o que deixaria, por exemplo, uma unit systemd em
+# /etc/systemd/system editável por usuário comum (e legível só no contexto do
+# home). O modo vem do asset (644 configs, 755 scripts).
 install_file() {
   local src="${MYOS_ROOT}/assets/$1" dst="$2"
   if [[ ! -r ${src} ]]; then
@@ -122,14 +144,31 @@ install_file() {
     log "dry-run: copiaria ${src} → ${dst}"
     return 0
   fi
-  if [[ -f ${dst} && ! -f ${dst}.myos-bak ]]; then
-    cp -a "${dst}" "${dst}.myos-bak" 2>/dev/null || true
+  _backup_dst "${dst}"
+  run_cmd install -D -m "$(stat -c %a "${src}")" "${src}" "${dst}"
+}
+
+# install_file_once <asset_rel> <dst> — instala o asset SOMENTE se o destino
+# ainda não existir (idempotência para configurações pessoais: uma
+# personalização do usuário nunca é sobrescrita por uma reexecução do install).
+install_file_once() {
+  local src="${MYOS_ROOT}/assets/$1" dst="$2"
+  if [[ ! -r ${src} ]]; then
+    err "asset ausente no repositório: ${src}"
+    return 1
   fi
-  run_cmd mkdir -p "$(dirname "${dst}")"
-  run_cmd cp -f "${src}" "${dst}"
+  if [[ -f ${dst} ]]; then
+    log "config: ${dst} já existe — mantido (para restaurar o padrão MyOS, apague o arquivo e rode a etapa de novo)"
+    return 0
+  fi
+  install_file "$1" "$2"
 }
 
 # render_file <asset_rel> <dst> <VAR> <valor> — copia asset substituindo __VAR__
+# Usa install -m 0644 (modo explícito): o destino é sempre um arquivo de
+# configuração e precisa ser legível por outros usuários — ex.: o /etc/greetd/
+# config.toml é lido pelo usuário 'greeter'. Um cp simples herdaria o modo 600
+# do mktemp e o greeter falharia.
 render_file() {
   local src="${MYOS_ROOT}/assets/$1" dst="$2" var="$3" val="$4"
   if [[ ! -r ${src} ]]; then
@@ -144,10 +183,11 @@ render_file() {
     rm -f "${tmp}"
     return 0
   fi
-  if [[ -f ${dst} && ! -f ${dst}.myos-bak ]]; then
-    cp -a "${dst}" "${dst}.myos-bak" 2>/dev/null || true
-  fi
-  mkdir -p "$(dirname "${dst}")"
-  cp -f "${tmp}" "${dst}"
+  _backup_dst "${dst}"
+  # install -D -m 0644: dono root, contexto do destino e 0644 explícito. O
+  # alvo é sempre um arquivo de configuração lido por outros usuários — ex.: o
+  # /etc/greetd/config.toml é lido pelo usuário 'greeter'. (Um cp a partir de
+  # um mktemp herdaria modo 600 e o greeter falharia.)
+  run_cmd install -D -m 0644 "${tmp}" "${dst}"
   rm -f "${tmp}"
 }

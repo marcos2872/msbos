@@ -11,19 +11,19 @@ require_fedora
 
 off() {  # desativa no boot, se a unit existir
   local s=$1
-  run_sh "systemctl disable '${s}' >/dev/null 2>&1 || true"
+  run_cmd systemctl disable "${s}" >/dev/null 2>&1 || true
   log "serviço: '${s}' desativado no boot"
 }
 
 mask() {  # impede totalmente a inicialização
   local s=$1
-  run_sh "systemctl mask '${s}' >/dev/null 2>&1 || true"
+  run_cmd systemctl mask "${s}" >/dev/null 2>&1 || true
   log "serviço: '${s}' mascarado"
 }
 
 on() {  # habilita no boot
   local s=$1
-  run_sh "systemctl enable '${s}' >/dev/null 2>&1 || true"
+  run_cmd systemctl enable "${s}" >/dev/null 2>&1 || true
   log "serviço: '${s}' habilitado no boot"
 }
 
@@ -70,7 +70,7 @@ on podman.socket   # API do Podman (usada pelo lazydocker)
 
 # compat: ferramentas que esperam /var/run/docker.sock (lazydocker/docker CLI)
 if [[ ! -e /var/run/docker.sock ]] && { rpm -q podman >/dev/null 2>&1 || [[ ${DRY_RUN} == 1 ]]; }; then
-  run_sh "ln -sf /run/podman/podman.sock /var/run/docker.sock"
+  run_cmd ln -sf /run/podman/podman.sock /var/run/docker.sock
   log "serviço: /var/run/docker.sock → socket do Podman (compatibilidade)"
 fi
 

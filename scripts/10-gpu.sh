@@ -9,6 +9,10 @@
 
 set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/lib/common.sh"
+require_fedora
+
+# dnf enxuto: sem weak deps (mesma opção usada nas outras etapas)
+DNFOPT='--setopt=install_weak_deps=0'
 
 declare -A FOUND=() DEVS=()
 
@@ -56,16 +60,16 @@ profile_from_detection() {
 install_nvidia_driver() {
   log "gpu: NVIDIA detectada — instalando driver proprietário (Wayland exige KMS)"
   # 1) driver binário pronto (mais leve; não exige toolchain); fallback: akmod
-  if ! run_sh "dnf -y --setopt=install_weak_deps=0 install nvidia"; then
+  if ! run_cmd dnf -y "${DNFOPT}" install nvidia; then
     warn "pacote binário 'nvidia' indisponível; tentando 'akmod-nvidia' (compila localmente)"
-    if ! run_sh "dnf -y install akmod-nvidia"; then
+    if ! run_cmd dnf -y install akmod-nvidia; then
       err "falha ao instalar o driver NVIDIA"
       return 1
     fi
   fi
   # 2) nvidia-drm.modeset=1 é obrigatório para Wayland
   if command -v grubby >/dev/null 2>&1; then
-    run_sh "grubby --update-kernel=ALL --args='nvidia-drm.modeset=1'"
+    run_cmd grubby --update-kernel=ALL --args=nvidia-drm.modeset=1
   else
     warn "grubby ausente: adicione 'nvidia-drm.modeset=1' manualmente à cmdline do kernel"
   fi
@@ -79,10 +83,10 @@ ensure_igpu() {
     intel) pkg="microcode_ctl" ;;        # microcódigo Intel (Fedora)
     amd)   pkg="amd-ucode-firmware" ;;   # microcódigo AMD (split do linux-firmware)
   esac
-  run_sh "dnf -y --setopt=install_weak_deps=0 install mesa-dri-drivers" \
+  run_cmd dnf -y "${DNFOPT}" install mesa-dri-drivers \
     || warn "mesa-dri-drivers: falha na instalação"
   if [[ -n ${pkg} ]]; then
-    run_sh "dnf -y --setopt=install_weak_deps=0 install ${pkg}" \
+    run_cmd dnf -y "${DNFOPT}" install "${pkg}" \
       || warn "${pkg}: falha na instalação"
   fi
 }
@@ -119,6 +123,12 @@ main() {
       ;;
     hybrid)
       log "gpu: setup híbrido — iGPU + dGPU NVIDIA (offload configurado)"
+      # Atenção (limitação conhecida): em híbrido o driver proprietário + o
+      # profile.d que força __GLX_VENDOR_LIBRARY_NAME=nvidia fazem apps GLX
+      # renderizarem na dGPU, o que pode mantê-la acordada (mais ruado/energia).
+      # Para forçar a iGPU num app específico:
+      #   __GLX_VENDOR_LIBRARY_NAME=mesa <app>
+      # Confira o consumo/estado com: nvidia-smi --query-gpu=name,power.draw
       install_nvidia_driver || warn "driver NVIDIA com problema"
       if [[ -n ${FOUND[intel]:-} ]]; then ensure_igpu intel; fi
       if [[ -n ${FOUND[amd]:-} ]]; then ensure_igpu amd; fi

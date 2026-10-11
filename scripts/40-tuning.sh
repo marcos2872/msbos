@@ -29,7 +29,7 @@ mfk=$(( mem_kb / 64 ))
 if (( mfk < 8192 )); then mfk=8192; fi
 if (( mfk > 8388608 )); then mfk=8388608; fi
 render_file "sysctl.d/99-myos.conf" "/etc/sysctl.d/99-myos.conf" "__MINFREE__" "${mfk}"
-run_sh "sysctl --system >/dev/null 2>&1 || true"
+run_cmd sysctl --system >/dev/null 2>&1 || true
 ok "sysctl aplicado (min_free_kbytes=${mfk}K)"
 
 # ─── 3. btrfs: compressão zstd no root ──────────────────────────────────────
@@ -65,7 +65,7 @@ if (( has_battery == 0 )); then
   install_file "myos-cpu-governor.service" "/etc/systemd/system/myos-cpu-governor.service"
   install_file "bin/myos-cpu-governor" "/usr/local/bin/myos-cpu-governor"
   run_cmd chmod 755 /usr/local/bin/myos-cpu-governor
-  run_sh "systemctl enable myos-cpu-governor.service >/dev/null 2>&1 || true"
+  run_cmd systemctl enable myos-cpu-governor.service >/dev/null 2>&1 || true
   ok "governor: performance fixado no boot (desktop sem bateria)"
 else
   log "tuning: bateria detectada — power-profiles-daemon cuida da energia"
@@ -79,10 +79,10 @@ fi
 
 # ─── 6. tuned ───────────────────────────────────────────────────────────────
 if command -v tuned-adm >/dev/null 2>&1; then
-  run_sh "tuned-adm profile latency-performance >/dev/null 2>&1 || true"
+  run_cmd tuned-adm profile latency-performance >/dev/null 2>&1 || true
   ok "tuned: perfil latency-performance"
 fi
 
 run_cmd systemctl daemon-reload
-run_sh "dnf clean all >/dev/null 2>&1 || true"
+run_cmd dnf clean all >/dev/null 2>&1 || true
 ok "tuning concluído"

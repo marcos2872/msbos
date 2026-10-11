@@ -93,9 +93,12 @@ Reinicie: a tela do greetd aparece com a sessão **niri** já disponível.
 | Atalho | Ação |
 |---|---|
 | `Super+T` | Terminal (alacritty) |
+| `Super+Space` / `Super+D` | Launcher (Noctalia) |
+| `Super+S` | Control center (Noctalia) |
 | `Super+B` | Brave |
 | `Super+E` | Zed |
-| `Super+Print` | Screenshot |
+| `Alt+Tab` | Window switcher (Noctalia) |
+| `Print` | Screenshot |
 | `Super+Shift+E` | Sair do niri |
 
 Verificações úteis:

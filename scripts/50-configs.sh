@@ -109,8 +109,9 @@ cat <<EOF
    • Tela de login do greetd (Noctalia Greeter, se instalado)
      com a sessão "niri" já disponível
    • Shell: Noctalia v5 (barra, launcher, notificações, lock, OSD)
-   • Atalhos: Super+T terminal · Super+B Brave · Super+E Zed
-              Super+Print screenshot · Super+Shift+E sair
+   • Atalhos: Super+T terminal · Super+Space launcher · Super+S control center
+              Super+B Brave · Super+E Zed · Alt+Tab switcher · Print screenshot
+              (o restante são os defaults oficiais do niri)
    • Editor: Zed · IA no terminal: opencode · Office: ONLYOFFICE
 
  Verificações pós-reboot:

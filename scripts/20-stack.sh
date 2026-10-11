@@ -158,24 +158,11 @@ fi
 
 # ─── 8. Peso morto (destrutivo → exige --yes) ───────────────────────────────
 # gdm/gnome-shell/gnome-session/etc. são interdependentes: precisam sair na
-# MESMA transação. O gnome-shell também é pacote protegido pelo
-# fedora-release-workstation (/etc/dnf/protected.d) — removemos apenas essa
-# proteção, mantendo as demais (dnf5, systemd, sudo, grub, selinux…).
-protected_sem_gnome_shell() {
-  local f line out='dnf5'
-  for f in /etc/dnf/protected.d/*.conf; do
-    [[ -r ${f} ]] || continue
-    while IFS= read -r line; do
-      line="${line%%#*}"
-      line="${line//[[:space:]]/}"
-      if [[ -n ${line} && ${line} != gnome-shell ]]; then
-        out+=",${line}"
-      fi
-    done < "${f}"
-  done
-  echo "${out}"
-}
-
+# MESMA transação. O gnome-shell é pacote protegido pelo
+# fedora-release-identity-workstation (/etc/dnf/protected.d/fedora-workstation.conf);
+# o dnf5 trata protected_packages como lista APPEND (setopt soma, não substitui),
+# então desativamos só esse arquivo durante a transação e o restauramos em
+# seguida — as demais proteções (dnf5, systemd, sudo, grub, selinux…) seguem valendo.
 if [[ ${SKIP_REMOVE:-0} == 1 ]]; then
   log "stack: remoções desativadas (--skip-remove)"
 else
@@ -187,8 +174,22 @@ else
   done
   if ((${#REMOVE_PKGS[@]} > 0)); then
     if exige_ok "remover GDM/GNOME (${REMOVE_PKGS[*]})? O login passará a ser pelo greetd"; then
-      run_sh "dnf -y ${DNFOPT} remove --setopt=protected_packages='$(protected_sem_gnome_shell)' ${REMOVE_PKGS[*]}" \
-        || warn "falha ao remover GDM/GNOME — rode manualmente: dnf remove --setopt=protected_packages= ${REMOVE_PKGS[*]}"
+      PROT_FILE=/etc/dnf/protected.d/fedora-workstation.conf
+      PROT_OFF="${PROT_FILE}.myos-off"
+      restore_prot() { { [[ -e ${PROT_OFF} ]] && mv -f "${PROT_OFF}" "${PROT_FILE}"; } || true; }
+      if [[ ${DRY_RUN} == 1 ]]; then
+        log "dry-run: desativaria '${PROT_FILE}' (temporário) e rodaria: dnf -y remove ${REMOVE_PKGS[*]}"
+      else
+        trap restore_prot EXIT   # restaura a proteção mesmo se interromper/falhar
+        mv -f "${PROT_FILE}" "${PROT_OFF}" 2>/dev/null || true
+        if dnf -y ${DNFOPT} remove "${REMOVE_PKGS[@]}"; then
+          ok "GDM/GNOME removidos"
+        else
+          warn "falha ao remover GDM/GNOME — manualmente: mv ${PROT_FILE} ${PROT_OFF} && dnf remove ${REMOVE_PKGS[*]} && mv ${PROT_OFF} ${PROT_FILE}"
+        fi
+        restore_prot
+        trap - EXIT
+      fi
     else
       warn "GDM/GNOME mantidos — serão apenas mascarados em 30-services.sh"
     fi

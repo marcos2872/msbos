@@ -22,6 +22,66 @@ log "stack: usuário-alvo: ${TU} (${TU_HOME})"
 
 DNFOPT='--setopt=install_weak_deps=0'
 
+# install_lazydocker_verified — baixa o binário do lazydocker da última release
+# oficial e só instala se o sha256 do tarball bater com o checksums.txt da MESMA
+# release. Substitui o antigo "curl | bash" (que executa código remoto sem
+# verificação nenhuma). Falha = não instala (nunca instala algo não verificado).
+install_lazydocker_verified() {
+  local dest='/usr/local/bin/lazydocker'
+  local base='https://github.com/jesseduffield/lazydocker/releases/latest/download'
+  if [[ ${DRY_RUN} == 1 ]]; then
+    log "dry-run: baixaria ${base}/checksums.txt + tarball Linux_x86_64, verificaria o sha256 e instalaria em ${dest}"
+    return 0
+  fi
+  if ! command -v sha256sum >/dev/null 2>&1; then
+    warn "lazydocker: sha256sum indisponível — não é possível verificar o binário"
+    return 1
+  fi
+  local tmp asset esperado
+  tmp="$(mktemp -d)" || return 1
+  # 1) checksums oficiais da release
+  if ! curl -fsSL --retry 2 --max-time 60 "${base}/checksums.txt" -o "${tmp}/checksums.txt"; then
+    warn "lazydocker: falha ao baixar checksums.txt"
+    rm -rf "${tmp}"; return 1
+  fi
+  # 2) nome do tarball linux/x86_64 dentro do checksums.txt
+  asset="$(awk '$2 ~ /_Linux_x86_64\.tar\.gz$/ {print $2; exit}' "${tmp}/checksums.txt")"
+  if [[ -z ${asset} ]]; then
+    warn "lazydocker: tarball Linux_x86_64 não encontrado no checksums.txt"
+    rm -rf "${tmp}"; return 1
+  fi
+  esperado="$(awk -v f="${asset}" '$2 == f {print $1}' "${tmp}/checksums.txt")"
+  # sanidade: hash tem de ser sha256 em hex (evita instalar algo valendo-se de
+  # uma linha malformada do checksums.txt)
+  if [[ ! ${esperado} =~ ^[0-9a-fA-F]{64}$ ]]; then
+    warn "lazydocker: hash inválido no checksums.txt para ${asset}"
+    rm -rf "${tmp}"; return 1
+  fi
+  # 3) baixa o tarball
+  if ! curl -fsSL --retry 2 --max-time 180 "${base}/${asset}" -o "${tmp}/${asset}"; then
+    warn "lazydocker: falha ao baixar ${asset}"
+    rm -rf "${tmp}"; return 1
+  fi
+  # 4) VERIFICA — hash divergente aborta a instalação
+  printf '%s  %s\n' "${esperado}" "${tmp}/${asset}" > "${tmp}/sha256sum"
+  if ! run_cmd sha256sum -c "${tmp}/sha256sum" >/dev/null; then
+    warn "lazydocker: checksum de ${asset} NÃO confere — instalação abortada"
+    rm -rf "${tmp}"; return 1
+  fi
+  # 5) extrai e instala (busca o binário em qualquer nível do archive — o
+  # layout da release já mudou de formato no passado)
+  run_cmd tar -xzf "${tmp}/${asset}" -C "${tmp}" || { rm -rf "${tmp}"; return 1; }
+  local bin
+  bin="$(find "${tmp}" -type f -name lazydocker -print -quit 2>/dev/null || true)"
+  if [[ -z ${bin} ]]; then
+    warn "lazydocker: binário não encontrado dentro de ${asset}"
+    rm -rf "${tmp}"; return 1
+  fi
+  run_cmd install -m 0755 "${bin}" "${dest}" || { rm -rf "${tmp}"; return 1; }
+  rm -rf "${tmp}"
+  ok "lazydocker ${asset} instalado e verificado (sha256 OK) em ${dest}"
+}
+
 # ─── 1. Núcleo (obrigatório) ────────────────────────────────────────────────
 CORE=(
   greetd niri noctalia jemalloc
@@ -33,7 +93,7 @@ CORE=(
   google-noto-sans-fonts google-noto-sans-mono-fonts
 )
 log "stack: instalando núcleo: ${CORE[*]}"
-if ! run_sh "dnf -y ${DNFOPT} install ${CORE[*]}"; then
+if ! run_cmd dnf -y "${DNFOPT}" install "${CORE[@]}"; then
   err "falha ao instalar o núcleo do stack — abortando"
   exit 1
 fi
@@ -46,38 +106,45 @@ if rpm -q tuned-ppd >/dev/null 2>&1; then
 elif rpm -q power-profiles-daemon >/dev/null 2>&1; then
   log "stack: perfis de energia: power-profiles-daemon"
 else
-  run_sh "dnf -y ${DNFOPT} install power-profiles-daemon" \
+  run_cmd dnf -y "${DNFOPT}" install power-profiles-daemon \
     || warn "sem gerenciador de perfis de energia (tuned-ppd/PPD indisponíveis)"
 fi
 
 # ─── 2. Utilitários leves ───────────────────────────────────────────────────
 UTILS=(alacritty grim slurp brightnessctl playerctl)
 for p in "${UTILS[@]}"; do
-  run_sh "dnf -y ${DNFOPT} install ${p}" || warn "utilitário '${p}' indisponível — ignorado"
+  run_cmd dnf -y "${DNFOPT}" install "${p}" || warn "utilitário '${p}' indisponível — ignorado"
 done
 for p in swaybg wlsunset ddcutil pipewire-alsa; do
-  run_sh "dnf -y ${DNFOPT} install ${p}" || warn "opcional '${p}' indisponível — ignorado"
+  run_cmd dnf -y "${DNFOPT}" install "${p}" || warn "opcional '${p}' indisponível — ignorado"
 done
 
 # ─── 3. Terminal: zsh com autocomplete + fonte ──────────────────────────────
 TERM_PKGS=(zsh zsh-autosuggestions zsh-syntax-highlighting fzf bash-completion jetbrains-mono-fonts)
 for p in "${TERM_PKGS[@]}"; do
-  run_sh "dnf -y ${DNFOPT} install ${p}" || warn "terminal: '${p}' indisponível — ignorado"
+  run_cmd dnf -y "${DNFOPT}" install "${p}" || warn "terminal: '${p}' indisponível — ignorado"
 done
 
 # ─── 4. Contêineres: lazydocker (TUI) + compat docker/podman ────────────────
-# lazydocker não está nos repos oficiais do Fedora → fallback: script oficial
-if ! run_sh "dnf -y ${DNFOPT} install lazydocker"; then
-  warn "lazydocker fora dos repos — usando o script oficial (→ /usr/local/bin)"
-  run_sh "cd /tmp && curl -fsSL https://raw.githubusercontent.com/jesseduffield/lazydocker/master/scripts/install_update_linux.sh | DIR=/usr/local/bin bash" \
-    || warn "lazydocker: falha na instalação (dnf e script oficial)"
+# Idempotente: se o binário já existe, não faz nada.
+if command -v lazydocker >/dev/null 2>&1; then
+  ok "lazydocker já instalado"
+else
+  # 1ª tentativa: repo do Fedora
+  if ! run_cmd dnf -y "${DNFOPT}" install lazydocker; then
+    # 2ª tentativa: binário da release oficial COM verificação de sha256.
+    # Não usamos o instalador oficial (curl | bash): baixamos o tarball e o
+    # checksums.txt da mesma release e só instalamos se o hash bater.
+    warn "lazydocker fora dos repos — instalando binário verificado (sha256) da release oficial"
+    install_lazydocker_verified || warn "lazydocker: falha na instalação verificada"
+  fi
 fi
-run_sh "dnf -y ${DNFOPT} install podman-docker" \
+run_cmd dnf -y "${DNFOPT}" install podman-docker \
   || warn "contêineres: 'podman-docker' indisponível — ignorado"
 
 # ─── 5. Bluetooth (só se houver adaptador) ──────────────────────────────────
 if [[ -n "$(ls /sys/class/bluetooth 2>/dev/null)" ]]; then
-  run_sh "dnf -y ${DNFOPT} install bluez" || warn "bluez: falha na instalação"
+  run_cmd dnf -y "${DNFOPT}" install bluez || warn "bluez: falha na instalação"
 else
   log "stack: sem adaptador Bluetooth — bluez não será instalado"
 fi
@@ -88,15 +155,18 @@ if [[ ${NO_GREETER} == 1 ]]; then
 else
   install_file "yum.repos.d/terra.repo" "/etc/yum.repos.d/myos-terra.repo"
   warn "repo comunitário Terra (fyralabs) habilitado para o pacote noctalia-greeter"
-  run_sh "dnf -y ${DNFOPT} install noctalia-greeter" \
+  run_cmd dnf -y "${DNFOPT}" install noctalia-greeter \
     || warn "noctalia-greeter indisponível — o greetd usará o greeter padrão"
 fi
 
 # ─── 7. Aplicativos do usuário ──────────────────────────────────────────────
 
-# Zed — script oficial (instala em ~/.local/bin, com auto-update)
+# Zed — script oficial (instala em ~/.local/bin, com auto-update).
+# run_cmd com o script interno entre aspas simples: nada é interpolado pelo
+# shell de fora (só as variáveis que passamos via env).
 log "stack: Zed (script oficial: curl -fsSL https://zed.dev/install.sh | sh)"
-run_sh "runuser -u ${TU} -- env HOME='${TU_HOME}' SHELL='${TU_SHELL}' bash -c 'curl -fsSL https://zed.dev/install.sh | sh'" \
+run_cmd runuser -u "${TU}" -- env "HOME=${TU_HOME}" "SHELL=${TU_SHELL}" \
+  bash -c 'curl -fsSL https://zed.dev/install.sh | sh' \
   || warn "Zed: falha na instalação pelo script oficial"
 
 # OpenCode v2 CLI — script oficial (instala em ~/.opencode/bin).
@@ -107,32 +177,38 @@ OC_LOCAL=''; OC_LATEST=''
 if [[ -n ${OC_BIN} ]]; then
   OC_LOCAL="$("${OC_BIN}" --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+[^ ]*' | head -n1 || true)"
 fi
-OC_LATEST="$(curl -fsSL --retry 2 --max-time 15 https://opencode.ai/update/api/latest/cli/npm 2>/dev/null \
-  | sed -n 's/.*"version":"\([^"]*\)".*/\1/p' | head -n1 || true)"
+# consulta a versão remota só em modo real — dry-run não acessa a rede
+if [[ ${DRY_RUN} == 0 ]]; then
+  OC_LATEST="$(curl -fsSL --retry 2 --max-time 15 https://opencode.ai/update/api/latest/cli/npm 2>/dev/null \
+    | sed -n 's/.*"version":"\([^"]*\)".*/\1/p' | head -n1 || true)"
+else
+  OC_LATEST="${OC_LOCAL}"   # em dry-run: assume atualizado e não baixa nada
+fi
 if [[ -n ${OC_LOCAL} && -n ${OC_LATEST} ]] \
    && [[ "$(printf '%s\n%s\n' "${OC_LOCAL}" "${OC_LATEST}" | sort -V | tail -n1)" == "${OC_LOCAL}" ]]; then
   ok "OpenCode já está atualizado (${OC_LOCAL}) — pulando instalação; indo para a configuração"
 else
   log "stack: OpenCode v2 CLI (script oficial: curl -fsSL https://opencode.ai/v2/install | bash)"
-  run_sh "runuser -u ${TU} -- env HOME='${TU_HOME}' SHELL='${TU_SHELL}' bash -c 'curl -fsSL https://opencode.ai/v2/install | bash'" \
+  run_cmd runuser -u "${TU}" -- env "HOME=${TU_HOME}" "SHELL=${TU_SHELL}" \
+    bash -c 'curl -fsSL https://opencode.ai/v2/install | bash' \
     || warn "OpenCode: falha na instalação pelo script oficial"
 fi
 # o instalador v2 instala em ~/.opencode/bin e mexe no PATH dos shells;
 # o symlink abaixo garante o comando em qualquer sessão (gráfica inclusive)
-run_sh "ln -sf '${TU_HOME}/.opencode/bin/opencode' /usr/local/bin/opencode" \
+run_cmd ln -sf "${TU_HOME}/.opencode/bin/opencode" /usr/local/bin/opencode \
   || warn "OpenCode: falha ao criar symlink em /usr/local/bin"
 
 # Brave — repo oficial da Brave Software (dnf5 em F41+; fallback dnf4)
 if ! rpm -q brave-browser >/dev/null 2>&1; then
   log "stack: Brave (repo oficial RPM)"
   if command -v dnf5 >/dev/null 2>&1; then
-    run_sh "dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo" \
+    run_cmd dnf config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo \
       || warn "Brave: falha ao adicionar o repo (dnf5)"
   else
-    run_sh "dnf config-manager --add-repo=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo" \
+    run_cmd dnf config-manager --add-repo=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo \
       || warn "Brave: falha ao adicionar o repo (dnf4)"
   fi
-  run_sh "dnf -y ${DNFOPT} install brave-browser" || warn "Brave: falha na instalação"
+  run_cmd dnf -y "${DNFOPT}" install brave-browser || warn "Brave: falha na instalação"
 else
   ok "Brave já instalado"
 fi
@@ -140,9 +216,9 @@ fi
 # ONLYOFFICE — repo oficial
 if ! rpm -q onlyoffice-desktopeditors >/dev/null 2>&1; then
   log "stack: ONLYOFFICE Desktop Editors (repo oficial RPM)"
-  run_sh "dnf -y install https://download.onlyoffice.com/repo/centos/main/noarch/onlyoffice-repo.noarch.rpm" \
+  run_cmd dnf -y install https://download.onlyoffice.com/repo/centos/main/noarch/onlyoffice-repo.noarch.rpm \
     || warn "ONLYOFFICE: falha ao adicionar o repo"
-  run_sh "dnf -y ${DNFOPT} install onlyoffice-desktopeditors" \
+  run_cmd dnf -y "${DNFOPT}" install onlyoffice-desktopeditors \
     || warn "ONLYOFFICE indisponível — instale manualmente o RPM oficial"
 else
   ok "ONLYOFFICE já instalado"
@@ -163,7 +239,7 @@ else
   if [[ ${DRY_RUN} == 1 ]]; then
     log "dry-run: baixaria o RPM x86_64 da última release (${SSH_ORCH_API}) e instalaria com dnf"
   elif [[ -n ${SSH_ORCH_URL} ]]; then
-    run_sh "dnf -y ${DNFOPT} install '${SSH_ORCH_URL}'" \
+    run_cmd dnf -y "${DNFOPT}" install "${SSH_ORCH_URL}" \
       || warn "SSH_Orchestrator: falha ao instalar o RPM da release"
   else
     warn "SSH_Orchestrator: não encontrei asset .x86_64.rpm na última release"
@@ -190,7 +266,7 @@ else
       install_file "libexec/myos-remove-gnome" "/usr/local/libexec/myos-remove-gnome"
       run_cmd chmod 755 /usr/local/libexec/myos-remove-gnome
       install_file "myos-remove-gnome.service" "/etc/systemd/system/myos-remove-gnome.service"
-      run_sh "systemctl enable myos-remove-gnome.service >/dev/null 2>&1 || true"
+      run_cmd systemctl enable myos-remove-gnome.service >/dev/null 2>&1 || true
       ok "GDM/GNOME serão removidos no PRÓXIMO BOOT (antes do login, sem sessão em uso)"
     else
       warn "GDM/GNOME mantidos — serão apenas mascarados em 30-services.sh"
@@ -198,5 +274,5 @@ else
   fi
 fi
 
-run_sh "dnf clean all" || true
+run_cmd dnf clean all || true
 ok "stack instalado"

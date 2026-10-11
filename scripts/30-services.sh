@@ -63,6 +63,13 @@ fi
 on power-profiles-daemon
 on tuned
 on systemd-zram-setup@root.service
+on podman.socket   # API do Podman (usada pelo lazydocker)
+
+# compat: ferramentas que esperam /var/run/docker.sock (lazydocker/docker CLI)
+if [[ ! -e /var/run/docker.sock ]] && { rpm -q podman >/dev/null 2>&1 || [[ ${DRY_RUN} == 1 ]]; }; then
+  run_sh "ln -sf /run/podman/podman.sock /var/run/docker.sock"
+  log "serviço: /var/run/docker.sock → socket do Podman (compatibilidade)"
+fi
 
 if [[ -f /usr/lib/systemd/system/systemd-oomd.service ]]; then
   on systemd-oomd

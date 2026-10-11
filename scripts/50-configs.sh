@@ -72,8 +72,17 @@ if command -v brave-browser >/dev/null 2>&1 || [[ ${DRY_RUN} == 1 ]]; then
   ok "Brave definido como navegador padrão (https/http)"
 fi
 
-# ─── 7. Permissões dos arquivos do usuário ──────────────────────────────────
-run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.config/niri" "${TU_HOME}/.config/noctalia"
+# ─── 7. Terminal: tema do alacritty + zsh com autocomplete ──────────────────
+install_file "alacritty/alacritty.toml" "${TU_HOME}/.config/alacritty/alacritty.toml"
+install_file "zsh/zshrc" "${TU_HOME}/.zshrc"
+if command -v zsh >/dev/null 2>&1 || [[ ${DRY_RUN} == 1 ]]; then
+  run_sh "chsh -s /usr/bin/zsh '${TU}'" || warn "chsh: falha ao definir o zsh como shell padrão"
+  ok "shell padrão: zsh (sugestões inline + syntax highlight + fzf no Ctrl+R)"
+fi
+
+# ─── 8. Permissões dos arquivos do usuário ──────────────────────────────────
+run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.config/niri" "${TU_HOME}/.config/noctalia" "${TU_HOME}/.config/alacritty"
+run_cmd chown "${TU}:${TU}" "${TU_HOME}/.zshrc"
 
 cat <<EOF
 

@@ -48,14 +48,25 @@ for p in swaybg wlsunset ddcutil pipewire-alsa; do
   run_sh "dnf -y ${DNFOPT} install ${p}" || warn "opcional '${p}' indisponível — ignorado"
 done
 
-# ─── 3. Bluetooth (só se houver adaptador) ──────────────────────────────────
+# ─── 3. Terminal: zsh com autocomplete + fonte ──────────────────────────────
+TERM_PKGS=(zsh zsh-autosuggestions zsh-syntax-highlighting fzf bash-completion jetbrains-mono-fonts)
+for p in "${TERM_PKGS[@]}"; do
+  run_sh "dnf -y ${DNFOPT} install ${p}" || warn "terminal: '${p}' indisponível — ignorado"
+done
+
+# ─── 4. Contêineres: lazydocker (TUI) + compat docker/podman ────────────────
+for p in lazydocker podman-docker; do
+  run_sh "dnf -y ${DNFOPT} install ${p}" || warn "contêineres: '${p}' indisponível — ignorado"
+done
+
+# ─── 5. Bluetooth (só se houver adaptador) ──────────────────────────────────
 if [[ -n "$(ls /sys/class/bluetooth 2>/dev/null)" ]]; then
   run_sh "dnf -y ${DNFOPT} install bluez" || warn "bluez: falha na instalação"
 else
   log "stack: sem adaptador Bluetooth — bluez não será instalado"
 fi
 
-# ─── 4. Greeter do Noctalia (repo comunitário Terra) ────────────────────────
+# ─── 6. Greeter do Noctalia (repo comunitário Terra) ────────────────────────
 if [[ ${NO_GREETER} == 1 ]]; then
   log "stack: greeter Noctalia desativado (--no-greeter)"
 else
@@ -65,7 +76,7 @@ else
     || warn "noctalia-greeter indisponível — o greetd usará o greeter padrão"
 fi
 
-# ─── 5. Aplicativos do usuário ──────────────────────────────────────────────
+# ─── 7. Aplicativos do usuário ──────────────────────────────────────────────
 
 # Zed — script oficial (instala em ~/.local/bin, com auto-update)
 log "stack: Zed (script oficial: curl -fsSL https://zed.dev/install.sh | sh)"
@@ -129,7 +140,7 @@ else
   fi
 fi
 
-# ─── 6. Peso morto (destrutivo → exige --yes) ───────────────────────────────
+# ─── 8. Peso morto (destrutivo → exige --yes) ───────────────────────────────
 if [[ ${SKIP_REMOVE:-0} == 1 ]]; then
   log "stack: remoções desativadas (--skip-remove)"
 else

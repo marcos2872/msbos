@@ -1,0 +1,41 @@
+# MyOS — ~/.zshrc minimalista
+# Autocomplete: sugestões inline do histórico (aceite com → ou End),
+# syntax highlighting e fzf (Ctrl+R para histórico fuzzy, Ctrl+T arquivos).
+
+# ─── Histórico ──────────────────────────────────────────────────────────────
+HISTFILE=~/.zsh_history
+HISTSIZE=10000
+SAVEHIST=10000
+setopt SHARE_HISTORY HIST_IGNORE_ALL_DUPS HIST_VERIFY
+
+# ─── Completions (Tab com menu navegável e case-insensitive) ────────────────
+autoload -Uz compinit && compinit
+zstyle ':completion:*' menu select
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+
+# ─── Navegação ──────────────────────────────────────────────────────────────
+setopt AUTO_CD AUTO_PUSHD PUSHD_IGNORE_DUPS
+
+# ─── Sugestões inline do histórico ──────────────────────────────────────────
+if [[ -f /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh ]]; then
+  ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#6b6382'
+  source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+fi
+
+# ─── Destaque de sintaxe (válido/inválido) — carregar por último ────────────
+if [[ -f /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]]; then
+  source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+fi
+
+# ─── fzf: Ctrl+R (histórico), Ctrl+T (arquivos) ─────────────────────────────
+if [[ -f /usr/share/fzf/shell/key-bindings.zsh ]]; then
+  source /usr/share/fzf/shell/key-bindings.zsh
+fi
+
+# ─── Prompt minimalista (caminho + branch git + ❯) ──────────────────────────
+autoload -Uz vcs_info
+precmd() { vcs_info }
+zstyle ':vcs_info:git:*' formats '%F{#9ece9a}(%b)%f '
+setopt PROMPT_SUBST
+PROMPT='%F{#b9a7f0}%~%f ${vcs_info_msg_0_}%F{#6b6382}❯%f '

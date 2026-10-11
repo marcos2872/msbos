@@ -17,8 +17,8 @@ todas as otimizações de memória.
 | Sessão gráfica | **niri** (compositor Wayland com tiling rolável) |
 | Shell | **Noctalia v5** — barra, launcher, notificações, OSD e lock screen |
 | Login | **greetd** + Noctalia Greeter (substitui o GDM) |
-| Terminal | alacritty (`Super+T`) |
-| Apps | Zed (editor), OpenCode v2 (IA no terminal, configurado com o [agents-config](https://github.com/marcos2872/agents-config)), Brave (navegador padrão), ONLYOFFICE, SSH_Orchestrator (RPM da release oficial) |
+| Terminal | alacritty + **zsh com autocomplete** (sugestões inline do histórico, syntax highlight, fzf no Ctrl+R) — `Super+T` |
+| Apps | Zed (editor), OpenCode v2 (IA no terminal, configurado com o [agents-config](https://github.com/marcos2872/agents-config)), Brave (navegador padrão), ONLYOFFICE, SSH_Orchestrator (RPM da release oficial), lazydocker (TUI para containers) |
 
 Nada do GNOME/GDM permanece: o objetivo é um desktop enxuto que fica **abaixo de ~600 MB
 de RAM em idle** (contra ~1,5 GB de um GNOME típico).
@@ -79,10 +79,10 @@ cd my-os
 | Etapa | O que faz |
 |---|---|
 | `10-gpu.sh` | Detecta GPUs (Intel/AMD/NVIDIA, **híbridos** também) e instala o driver certo: NVIDIA (binário/akmod + `nvidia-drm.modeset=1` + offload GL), AMD/Intel (Mesa + microcódigo) |
-| `20-stack.sh` | Instala o núcleo (niri, Noctalia, greetd, PipeWire, portais, fontes) e os apps: **Zed** e **OpenCode v2** pelos scripts oficiais (`curl`), **Brave** e **ONLYOFFICE** pelos repos oficiais e **SSH_Orchestrator** pelo RPM da release no GitHub; remove GDM/GNOME |
+| `20-stack.sh` | Instala o núcleo (niri, Noctalia, greetd, PipeWire, portais, fontes) e os apps: **Zed** e **OpenCode v2** pelos scripts oficiais (`curl`), **Brave** e **ONLYOFFICE** pelos repos oficiais e **SSH_Orchestrator** pelo RPM da release no GitHub; instala o terminal (**zsh + plugins + fonte JetBrains Mono**) e o **lazydocker**; remove GDM/GNOME |
 | `30-services.sh` | greetd assume o boot (GDM mascarado); desativa avahi/cups/sssd/fprintd/etc.; habilita zram, oomd, tuned e power-profiles-daemon |
 | `40-tuning.sh` | **zram** (swap comprimido zstd), sysctl de memória, **btrfs `compress=zstd`**, governor `performance` (só em desktop sem bateria), oomd conservador |
-| `50-configs.sh` | Escreve as configs do niri/Noctalia/greetd, instala os wallpapers, aplica o **agents-config** no OpenCode (agentes/skills/commands) e define o **Brave como navegador padrão** |
+| `50-configs.sh` | Escreve as configs do niri/Noctalia/greetd, instala os wallpapers, aplica o **agents-config** no OpenCode (agentes/skills/commands), define o **Brave como navegador padrão** e instala o tema do **alacritty** + `.zshrc` com autocomplete (zsh vira o shell padrão) |
 
 ## Depois de instalar
 

@@ -1,0 +1,55 @@
+# MyOS — Alacritty: tema minimalista (lavanda escuro)
+# Fonte sugerida: jetbrains-mono-fonts (instalada pelo bootstrap)
+
+[window]
+padding = { x = 14, y = 12 }
+opacity = 0.97
+dynamic_title = true
+
+[scrolling]
+history = 10000
+
+[font]
+size = 11.5
+
+[font.normal]
+family = "JetBrains Mono"
+style = "Regular"
+
+[font.bold]
+family = "JetBrains Mono"
+style = "Bold"
+
+[cursor]
+style = { shape = "Beam", blinking = "Off" }
+
+[colors.primary]
+background = "#16121d"
+foreground = "#cfc9dd"
+
+[colors.cursor]
+cursor = "#b9a7f0"
+text = "#16121d"
+
+[colors.selection]
+background = "#2d2640"
+
+[colors.normal]
+black = "#262031"
+red = "#e07a8b"
+green = "#9ece9a"
+yellow = "#e6c384"
+blue = "#82a8e0"
+magenta = "#c5a3e8"
+cyan = "#8fd0c9"
+white = "#cfc9dd"
+
+[colors.bright]
+black = "#3a3348"
+red = "#ef92a1"
+green = "#b3dcb0"
+yellow = "#f0d19a"
+blue = "#9bbcf0"
+magenta = "#d6bcf5"
+cyan = "#a5e0da"
+white = "#efeaf7"

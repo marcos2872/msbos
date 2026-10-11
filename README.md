@@ -18,6 +18,7 @@ todas as otimizações de memória.
 | Shell | **Noctalia v5** — barra, launcher, notificações, OSD e lock screen |
 | Login | **greetd** + Noctalia Greeter (substitui o GDM) |
 | Terminal | alacritty + **zsh com autocomplete** (sugestões inline do histórico, syntax highlight, fzf no Ctrl+R) — `Super+T` |
+| Dev | Rust (rustup), Node.js LTS via nvm (npm/pnpm/yarn), gcc/make |
 | Apps | Zed (editor), OpenCode v2 (IA no terminal, configurado com o [agents-config](https://github.com/marcos2872/agents-config)), Brave (navegador padrão), ONLYOFFICE, SSH_Orchestrator (RPM da release oficial), lazydocker (TUI para containers) |
 
 Nada do GNOME/GDM permanece: o objetivo é um desktop enxuto que fica **abaixo de ~600 MB
@@ -74,12 +75,13 @@ cd my-os
 | `--gpu-profile P` | Força `auto\|intel\|amd\|nvidia\|hybrid\|none` |
 | `--skip-remove` | Nunca remove pacotes (só instala e ajusta serviços) |
 
-## O que o script faz (5 etapas)
+## O que o script faz (6 etapas)
 
 | Etapa | O que faz |
 |---|---|
 | `10-gpu.sh` | Detecta GPUs (Intel/AMD/NVIDIA, **híbridos** também) e instala o driver certo: NVIDIA (binário/akmod + `nvidia-drm.modeset=1` + offload GL), AMD/Intel (Mesa + microcódigo) |
 | `20-stack.sh` | Instala o núcleo (niri, Noctalia, greetd, PipeWire, portais, fontes) e os apps: **Zed** e **OpenCode v2** pelos scripts oficiais (`curl`), **Brave** e **ONLYOFFICE** pelos repos oficiais e **SSH_Orchestrator** pelo RPM da release no GitHub; instala o terminal (**zsh + plugins + fonte JetBrains Mono**) e o **lazydocker**; remove GDM/GNOME |
+| `25-devtools.sh` | Ferramentas de desenvolvimento: gcc/make, **Rust** (rustup), **Node.js LTS via nvm** (+ npm) e **pnpm/yarn** — detecta e pula o que já existe |
 | `30-services.sh` | greetd assume o boot (GDM mascarado); desativa avahi/cups/sssd/fprintd/etc.; habilita zram, oomd, tuned e power-profiles-daemon |
 | `40-tuning.sh` | **zram** (swap comprimido zstd), sysctl de memória, **btrfs `compress=zstd`**, governor `performance` (só em desktop sem bateria), oomd conservador |
 | `50-configs.sh` | Escreve as configs do niri/Noctalia/greetd, instala os wallpapers, aplica o **agents-config** no OpenCode (agentes/skills/commands), define o **Brave como navegador padrão** e instala o tema do **alacritty** + `.zshrc` com autocomplete (zsh vira o shell padrão) |
@@ -110,13 +112,14 @@ ps aux --sort=-rss | head -12    # top consumidores de RAM
 ## Estrutura do projeto
 
 ```
-install.sh              # orquestrador (roda as 5 etapas em ordem)
+install.sh              # orquestrador (roda as 6 etapas em ordem)
 lib/common.sh           # helpers: logs, dry-run, backups, resolução de usuário
 scripts/10-gpu.sh       # detecção multi-GPU + drivers
 scripts/20-stack.sh     # pacotes do stack + aplicativos
+scripts/25-devtools.sh  # ferramentas de desenvolvimento (Rust, Node/nvm, pnpm/yarn)
 scripts/30-services.sh  # serviços systemd
 scripts/40-tuning.sh    # otimizações de memória/desempenho
-scripts/50-configs.sh   # configurações (niri, greetd, Noctalia, Brave)
+scripts/50-configs.sh   # configurações (niri, greetd, Noctalia, Brave, alacritty, zsh)
 assets/                 # arquivos instalados (configs, wallpapers, helpers)
 ```
 

@@ -66,7 +66,6 @@ else
   on power-profiles-daemon
 fi
 on tuned
-on systemd-zram-setup@root.service
 on podman.socket   # API do Podman (usada pelo lazydocker)
 
 # compat: ferramentas que esperam /var/run/docker.sock (lazydocker/docker CLI)

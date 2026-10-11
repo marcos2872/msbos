@@ -12,9 +12,16 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/lib/common.sh"
 require_fedora
 
 # ─── 1. zram (swap comprimido) ──────────────────────────────────────────────
-install_file "zram-generator.conf" "/etc/zram-generator.conf"
-run_sh "systemctl enable systemd-zram-setup@root.service >/dev/null 2>&1 || true"
-ok "zram configurado (50% da RAM como swap zstd; ativa no boot)"
+# Path correto: /etc/systemd/zram-generator.conf (o zram-generator IGNORA
+# /etc/zram-generator.conf). O generator cria e liga as units no boot
+# (swap.target → dev-zram0.swap) — não é preciso habilitar serviço.
+install_file "zram-generator.conf" "/etc/systemd/zram-generator.conf"
+# limpa arquivo antigo do MyOS no path errado (versões anteriores)
+if [[ -f /etc/zram-generator.conf ]] && grep -q 'MyOS' /etc/zram-generator.conf; then
+  run_cmd rm -f /etc/zram-generator.conf
+  log "tuning: removido /etc/zram-generator.conf (path errado de versão antiga)"
+fi
+ok "zram configurado (50% da RAM como swap zstd; aplica no próximo boot)"
 
 # ─── 2. sysctl de memória ───────────────────────────────────────────────────
 mem_kb="$(awk '/^MemTotal:/{print $2}' /proc/meminfo)"

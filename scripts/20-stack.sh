@@ -99,10 +99,24 @@ log "stack: Zed (script oficial: curl -fsSL https://zed.dev/install.sh | sh)"
 run_sh "runuser -u ${TU} -- env HOME='${TU_HOME}' SHELL='${TU_SHELL}' bash -c 'curl -fsSL https://zed.dev/install.sh | sh'" \
   || warn "Zed: falha na instalação pelo script oficial"
 
-# OpenCode v2 CLI — script oficial (instala em ~/.opencode/bin)
-log "stack: OpenCode v2 CLI (script oficial: curl -fsSL https://opencode.ai/v2/install | bash)"
-run_sh "runuser -u ${TU} -- env HOME='${TU_HOME}' SHELL='${TU_SHELL}' bash -c 'curl -fsSL https://opencode.ai/v2/install | bash'" \
-  || warn "OpenCode: falha na instalação pelo script oficial"
+# OpenCode v2 CLI — script oficial (instala em ~/.opencode/bin).
+# Se já houver versão >= a mais recente instalada, pula a instalação e vai
+# direto para a configuração (agents-config, em 50-configs.sh).
+OC_BIN="$(command -v opencode 2>/dev/null || true)"
+OC_LOCAL=''; OC_LATEST=''
+if [[ -n ${OC_BIN} ]]; then
+  OC_LOCAL="$("${OC_BIN}" --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+[^ ]*' | head -n1 || true)"
+fi
+OC_LATEST="$(curl -fsSL --retry 2 --max-time 15 https://opencode.ai/update/api/latest/cli/npm 2>/dev/null \
+  | sed -n 's/.*"version":"\([^"]*\)".*/\1/p' | head -n1 || true)"
+if [[ -n ${OC_LOCAL} && -n ${OC_LATEST} ]] \
+   && [[ "$(printf '%s\n%s\n' "${OC_LOCAL}" "${OC_LATEST}" | sort -V | tail -n1)" == "${OC_LOCAL}" ]]; then
+  ok "OpenCode já está atualizado (${OC_LOCAL}) — pulando instalação; indo para a configuração"
+else
+  log "stack: OpenCode v2 CLI (script oficial: curl -fsSL https://opencode.ai/v2/install | bash)"
+  run_sh "runuser -u ${TU} -- env HOME='${TU_HOME}' SHELL='${TU_SHELL}' bash -c 'curl -fsSL https://opencode.ai/v2/install | bash'" \
+    || warn "OpenCode: falha na instalação pelo script oficial"
+fi
 # o instalador v2 instala em ~/.opencode/bin e mexe no PATH dos shells;
 # o symlink abaixo garante o comando em qualquer sessão (gráfica inclusive)
 run_sh "ln -sf '${TU_HOME}/.opencode/bin/opencode' /usr/local/bin/opencode" \

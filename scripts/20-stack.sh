@@ -157,22 +157,42 @@ else
 fi
 
 # ─── 8. Peso morto (destrutivo → exige --yes) ───────────────────────────────
+# gdm/gnome-shell/gnome-session/etc. são interdependentes: precisam sair na
+# MESMA transação. O gnome-shell também é pacote protegido pelo
+# fedora-release-workstation (/etc/dnf/protected.d) — removemos apenas essa
+# proteção, mantendo as demais (dnf5, systemd, sudo, grub, selinux…).
+protected_sem_gnome_shell() {
+  local f line out='dnf5'
+  for f in /etc/dnf/protected.d/*.conf; do
+    [[ -r ${f} ]] || continue
+    while IFS= read -r line; do
+      line="${line%%#*}"
+      line="${line//[[:space:]]/}"
+      if [[ -n ${line} && ${line} != gnome-shell ]]; then
+        out+=",${line}"
+      fi
+    done < "${f}"
+  done
+  echo "${out}"
+}
+
 if [[ ${SKIP_REMOVE:-0} == 1 ]]; then
   log "stack: remoções desativadas (--skip-remove)"
 else
-  if rpm -q gdm >/dev/null 2>&1; then
-    if exige_ok "remover o GDM (será substituído pelo greetd no próximo boot)?"; then
-      run_sh "dnf -y ${DNFOPT} remove gdm" || warn "falha ao remover gdm"
-    else
-      warn "GDM mantido — será apenas mascarado em 30-services.sh"
-    fi
-  fi
-  for heavy in gnome-shell gnome-session gnome-settings-daemon gnome-control-center gnome-software; do
-    rpm -q "${heavy}" >/dev/null 2>&1 || continue
-    if exige_ok "remover '${heavy}' (substituído por niri/Noctalia)?"; then
-      run_sh "dnf -y ${DNFOPT} remove ${heavy}" || warn "falha ao remover ${heavy}"
+  REMOVE_PKGS=()
+  for heavy in gdm gnome-shell gnome-session gnome-settings-daemon gnome-control-center gnome-software; do
+    if rpm -q "${heavy}" >/dev/null 2>&1; then
+      REMOVE_PKGS+=("${heavy}")
     fi
   done
+  if ((${#REMOVE_PKGS[@]} > 0)); then
+    if exige_ok "remover GDM/GNOME (${REMOVE_PKGS[*]})? O login passará a ser pelo greetd"; then
+      run_sh "dnf -y ${DNFOPT} remove --setopt=protected_packages='$(protected_sem_gnome_shell)' ${REMOVE_PKGS[*]}" \
+        || warn "falha ao remover GDM/GNOME — rode manualmente: dnf remove --setopt=protected_packages= ${REMOVE_PKGS[*]}"
+    else
+      warn "GDM/GNOME mantidos — serão apenas mascarados em 30-services.sh"
+    fi
+  fi
 fi
 
 run_sh "dnf clean all" || true

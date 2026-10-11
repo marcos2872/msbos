@@ -43,7 +43,24 @@ else
   log "greeter: padrão do greetd (noctalia-greeter não instalado)"
 fi
 render_file "greetd/config.toml" "/etc/greetd/config.toml" "__GREETER_CMD__" "${GREETER_CMD}"
-install_file "pam.d/greetd" "/etc/pam.d/greetd"
+
+# PAM do greetd: o pacote do Fedora já traz o arquivo correto (com pam_selinux —
+# sem ele o SELinux em enforcing bloqueia o systemctl --user da sessão e o niri
+# volta para a tela de login). NÃO sobrescrevemos; apenas restauramos se
+# detectarmos uma versão antiga do MyOS sem pam_selinux.
+if [[ -f /etc/pam.d/greetd ]] && ! grep -q 'pam_selinux' /etc/pam.d/greetd; then
+  if [[ -f /etc/pam.d/greetd.myos-bak ]]; then
+    warn "greetd: /etc/pam.d/greetd sem pam_selinux — restaurando backup do pacote"
+    run_cmd cp -f /etc/pam.d/greetd.myos-bak /etc/pam.d/greetd
+  else
+    warn "greetd: /etc/pam.d/greetd sem pam_selinux — instalando versão correta do MyOS"
+    install_file "pam.d/greetd" "/etc/pam.d/greetd"
+  fi
+elif [[ ! -f /etc/pam.d/greetd ]]; then
+  install_file "pam.d/greetd" "/etc/pam.d/greetd"
+else
+  log "greetd: /etc/pam.d/greetd ok (mantendo o do pacote)"
+fi
 
 # ─── 5. OpenCode — configuração pessoal (agents-config) ─────────────────────
 # Repo público https://github.com/marcos2872/agents-config: agentes, skills,

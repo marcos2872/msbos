@@ -1,0 +1,15 @@
+[Unit]
+Description=MyOS — remove GDM/GNOME (uma vez, antes da sessão gráfica)
+Documentation=https://github.com/marcos2872/my-os
+Before=graphical.target
+After=local-fs.target network.target
+Wants=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/libexec/myos-remove-gnome
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -170,13 +170,12 @@ else
   fi
 fi
 
-# ─── 8. Peso morto (destrutivo → exige --yes) ───────────────────────────────
-# gdm/gnome-shell/gnome-session/etc. são interdependentes: precisam sair na
-# MESMA transação. O gnome-shell é pacote protegido pelo
-# fedora-release-identity-workstation (/etc/dnf/protected.d/fedora-workstation.conf);
-# o dnf5 trata protected_packages como lista APPEND (setopt soma, não substitui),
-# então desativamos só esse arquivo durante a transação e o restauramos em
-# seguida — as demais proteções (dnf5, systemd, sudo, grub, selinux…) seguem valendo.
+# ─── 8. GDM/GNOME (remoção AGENDADA para o próximo boot) ────────────────────
+# NUNCA removemos o desktop em uso: o %preun do gdm executa
+# "systemctl disable --now gdm.service", que para o gdm e derruba a sessão
+# gráfica atual — matando o instalador no meio da transação dnf (isso já
+# congelou uma máquina de verdade). A remoção é agendada via systemd para
+# rodar no próximo boot, ANTES do login (myos-remove-gnome.service).
 if [[ ${SKIP_REMOVE:-0} == 1 ]]; then
   log "stack: remoções desativadas (--skip-remove)"
 else
@@ -187,23 +186,12 @@ else
     fi
   done
   if ((${#REMOVE_PKGS[@]} > 0)); then
-    if exige_ok "remover GDM/GNOME (${REMOVE_PKGS[*]})? O login passará a ser pelo greetd"; then
-      PROT_FILE=/etc/dnf/protected.d/fedora-workstation.conf
-      PROT_OFF="${PROT_FILE}.myos-off"
-      restore_prot() { { [[ -e ${PROT_OFF} ]] && mv -f "${PROT_OFF}" "${PROT_FILE}"; } || true; }
-      if [[ ${DRY_RUN} == 1 ]]; then
-        log "dry-run: desativaria '${PROT_FILE}' (temporário) e rodaria: dnf -y remove ${REMOVE_PKGS[*]}"
-      else
-        trap restore_prot EXIT   # restaura a proteção mesmo se interromper/falhar
-        mv -f "${PROT_FILE}" "${PROT_OFF}" 2>/dev/null || true
-        if dnf -y ${DNFOPT} remove "${REMOVE_PKGS[@]}"; then
-          ok "GDM/GNOME removidos"
-        else
-          warn "falha ao remover GDM/GNOME — manualmente: mv ${PROT_FILE} ${PROT_OFF} && dnf remove ${REMOVE_PKGS[*]} && mv ${PROT_OFF} ${PROT_FILE}"
-        fi
-        restore_prot
-        trap - EXIT
-      fi
+    if exige_ok "agendar a remoção do GDM/GNOME (${REMOVE_PKGS[*]}) para o próximo boot?"; then
+      install_file "libexec/myos-remove-gnome" "/usr/local/libexec/myos-remove-gnome"
+      run_cmd chmod 755 /usr/local/libexec/myos-remove-gnome
+      install_file "myos-remove-gnome.service" "/etc/systemd/system/myos-remove-gnome.service"
+      run_sh "systemctl enable myos-remove-gnome.service >/dev/null 2>&1 || true"
+      ok "GDM/GNOME serão removidos no PRÓXIMO BOOT (antes do login, sem sessão em uso)"
     else
       warn "GDM/GNOME mantidos — serão apenas mascarados em 30-services.sh"
     fi

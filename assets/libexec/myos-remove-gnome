@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+# MyOS — remove o GDM/GNOME no boot (antes da sessão gráfica).
+#
+# Executado UMA vez pelo myos-remove-gnome.service, antes do greetd/graphical.
+#
+# Por que no boot? Remover o desktop em uso congela a máquina: o %preun do gdm
+# executa "systemctl disable --now gdm.service", que para o gdm e derruba a
+# sessão gráfica atual — matando o instalador no meio da transação dnf.
+#
+# Comportamento:
+#   - desativa temporariamente a proteção do fedora-release-workstation
+#     (NetworkManager + gnome-shell) e re-protege NetworkManager/tuned/tuned-ppd
+#     via --setopt append (o dnf5 soma, não substitui)
+#   - remove o que ainda estiver instalado numa única transação
+#   - sucesso: desabilita e remove a si mesmo
+#   - falha: permanece habilitado para tentar de novo no próximo boot
+
+set -u
+
+LOG_TAG="myos-remove-gnome"
+PROT_FILE="${MYOS_PROT_FILE:-/etc/dnf/protected.d/fedora-workstation.conf}"
+PROT_OFF="${PROT_FILE}.myos-off"
+
+log() { echo "[${LOG_TAG}] $*"; }
+
+restore_prot() { { [[ -e ${PROT_OFF} ]] && mv -f "${PROT_OFF}" "${PROT_FILE}"; } || true; }
+trap restore_prot EXIT
+
+restore_prot   # limpa sobra de execução anterior interrompida
+[[ -e ${PROT_FILE} ]] && mv -f "${PROT_FILE}" "${PROT_OFF}"
+
+PKGS=()
+for p in gdm gnome-shell gnome-session gnome-settings-daemon gnome-control-center gnome-software; do
+  if rpm -q "$p" >/dev/null 2>&1; then
+    PKGS+=("$p")
+  fi
+done
+
+rc=0
+if ((${#PKGS[@]} > 0)); then
+  log "removendo: ${PKGS[*]}"
+  # tenta primeiro só com cache (boot pode estar sem rede); depois com rede
+  if ! dnf -C -y remove --setopt=protected_packages=NetworkManager,tuned,tuned-ppd "${PKGS[@]}"; then
+    log "cache indisponível — tentando com acesso a repositórios..."
+    dnf -y remove --setopt=protected_packages=NetworkManager,tuned,tuned-ppd "${PKGS[@]}" || rc=1
+  fi
+else
+  log "nada a remover (já limpo)"
+fi
+
+restore_prot
+trap - EXIT
+
+if (( rc == 0 )); then
+  log "concluído — desabilitando o serviço"
+  systemctl disable myos-remove-gnome.service >/dev/null 2>&1 || true
+  rm -f /usr/local/libexec/myos-remove-gnome /etc/systemd/system/myos-remove-gnome.service || true
+  systemctl daemon-reload >/dev/null 2>&1 || true
+else
+  log "FALHOU — nova tentativa no próximo boot (veja: journalctl -u myos-remove-gnome)"
+fi
+exit "${rc}"

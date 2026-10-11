@@ -1,26 +1,32 @@
-// MyOS — configuração padrão do niri
-// Referência: https://github.com/YaLTeR/niri/wiki/Configuration:-Introduction
+// MyOS — configuração do niri
+// Referência offline: /usr/share/doc/niri/wiki (ou niri-wm.github.io/niri)
 
-config {
-    gap-inset 4
-    focus-closest true
-}
-
+// Teclado: delay/rate do repeat (ms)
 input {
-    repeat-delay-msec 300
-    repeat-rate-msec 33
+    keyboard {
+        repeat-delay 300
+        repeat-rate 33
+    }
 }
 
-// Papel de parede via swaybg: usa a 1ª imagem de ~/.config/myos-walls/
-// ou /usr/share/myos-walls/; sem imagens → cor sólida lavanda.
-// Comente a linha abaixo se preferir o wallpaper nativo do Noctalia.
-spawn-at-startup "myos-wallpaper"
+// Janelas: gaps discretos
+layout {
+    gaps 6
+}
 
-// Shell Noctalia v5: barra, launcher, notificações, OSD, lock screen, etc.
+// Inicialização: wallpaper (swaybg) + shell Noctalia
+spawn-at-startup "myos-wallpaper"
 spawn-at-startup "noctalia"
 
-// Atalhos do MyOS (sobrescrevem os padrões do niri)
-bind "super T" spawn "alacritty"
-bind "super B" spawn "brave-browser"
-bind "super E" spawn "zed"
-bind "super Print" action "screenshot"
+binds {
+    Super+T { spawn "alacritty"; }
+    Super+B { spawn "brave-browser"; }
+    Super+E { spawn "zed"; }
+    Super+Print { screenshot; }
+
+    XF86AudioRaiseVolume allow-when-locked=true { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.1+ -l 1.0"; }
+    XF86AudioLowerVolume allow-when-locked=true { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.1-"; }
+    XF86AudioMute        allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"; }
+    XF86MonBrightnessUp   allow-when-locked=true { spawn "brightnessctl" "--class=backlight" "set" "+10%"; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn "brightnessctl" "--class=backlight" "set" "10%-"; }
+}

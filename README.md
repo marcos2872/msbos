@@ -80,7 +80,7 @@ cd my-os
 | Etapa | O que faz |
 |---|---|
 | `10-gpu.sh` | Detecta GPUs (Intel/AMD/NVIDIA, **híbridos** também) e instala o driver certo: NVIDIA (binário/akmod + `nvidia-drm.modeset=1` + offload GL), AMD/Intel (Mesa + microcódigo) |
-| `20-stack.sh` | Instala o núcleo (niri, Noctalia, greetd, PipeWire, portais, fontes) e os apps: **Zed** e **OpenCode v2** pelos scripts oficiais (`curl`), **Brave** e **ONLYOFFICE** pelos repos oficiais e **SSH_Orchestrator** pelo RPM da release no GitHub; instala o terminal (**zsh + plugins + fonte JetBrains Mono**) e o **lazydocker**; remove GDM/GNOME |
+| `20-stack.sh` | Instala o núcleo (niri, Noctalia, greetd, PipeWire, portais, fontes) e os apps: **Zed** e **OpenCode v2** pelos scripts oficiais (`curl`), **Brave** e **ONLYOFFICE** pelos repos oficiais e **SSH_Orchestrator** pelo RPM da release no GitHub; instala o terminal (**zsh + plugins + fonte JetBrains Mono**) e o **lazydocker**; **agenda** a remoção do GDM/GNOME para o próximo boot |
 | `25-devtools.sh` | Ferramentas de desenvolvimento: gcc/make, **Rust** (rustup), **Node.js LTS via nvm** (+ npm) e **pnpm/yarn** — detecta e pula o que já existe |
 | `30-services.sh` | greetd assume o boot (GDM mascarado); desativa avahi/cups/sssd/fprintd/etc.; habilita zram, oomd, tuned e power-profiles-daemon |
 | `40-tuning.sh` | **zram** (swap comprimido zstd), sysctl de memória, **btrfs `compress=zstd`**, governor `performance` (só em desktop sem bateria), oomd conservador |
@@ -127,6 +127,10 @@ assets/                 # arquivos instalados (configs, wallpapers, helpers)
 
 - **Nada é parado durante a instalação** — a sessão atual continua funcionando; a troca
   para o greetd/niri vale a partir do próximo boot.
+- **A remoção do GDM/GNOME é agendada para o próximo boot**
+  (`myos-remove-gnome.service`, roda antes do login): remover o desktop em uso derruba a
+  sessão (o scriptlet do gdm executa `systemctl disable --now gdm.service`), então a
+  remoção nunca acontece dentro da sessão. É só reiniciar após a instalação.
 - `noctalia-greeter` vem do repositório **comunitário Terra** (o Fedora oficial ainda não
   o empacota); use `--no-greeter` para evitá-lo.
 - Zed e OpenCode são instalados pelos **scripts oficiais** (`zed.dev/install.sh` e

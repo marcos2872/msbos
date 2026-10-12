@@ -80,6 +80,15 @@ background_opacity = 0.80
 [shell]
 settings_window_translucent = true
 
+# Animações 2× mais rápidas (1.0 = normal, 0.5 = 2× mais lento, 2.0 = 2× mais
+# rápido). Deixa a abertura de painéis/apps mais seca — o atraso percebido ao
+# lançar um app costuma vir da animação, já que o Noctalia v5 não expõe nenhum
+# delay de lançamento (as únicas chaves com "delay" são hot_corners e o hide
+# do OSD).
+[shell.animation]
+enabled = true
+speed = 2.0
+
 # ─── Painéis flutuantes em vidro ────────────────────────────────────────────
 # transparency_mode: solid | soft | glass. Control Center, wallpaper e sessão
 # são "attached" por padrão e ignoram o modo glass — por isso viram floating.
@@ -92,3 +101,8 @@ session_placement         = "floating"
 # Switcher em tirinha horizontal (estilo Cmd+Tab), não o carrossel default.
 [shell.window_switcher]
 style = "compact"
+
+# Dica MyOS: para trocar o papel de parede, coloque imagens em
+#   ~/.config/myos-walls/   (usuário)
+#   /usr/share/myos-walls/  (sistema)
+# e o helper myos-wallpaper (swaybg) usa a primeira delas no próximo login.

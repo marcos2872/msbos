@@ -1,9 +1,22 @@
-# MyOS — Alacritty: tema minimalista (lavanda escuro)
-# Fonte sugerida: jetbrains-mono-fonts (instalada pelo bootstrap)
+# MyOS — Alacritty: tema macOS (Liquid Glass)
+#
+# Cores espelhadas do bloco `terminal` (variante dark) de
+# assets/noctalia/palettes/macOS.json, para terminal e shell combinarem.
+# ATENÇÃO: a cópia é MANUAL. Se a paleta do Noctalia mudar, este arquivo
+# precisa ser atualizado junto — não existe integração automática.
+#
+# Fonte sugerida: jetbrains-mono-fonts (instalada por 20-stack.sh).
 
 [window]
 padding = { x = 14, y = 12 }
-opacity = 0.97
+
+# Translúcido, no mesmo espírito da barra do Noctalia. Exige a window-rule do
+# Alacritty em assets/niri/config.kdl: ela liga o blur atrás da janela
+# (background-effect, recurso do niri 26.04+) e desativa o anel de foco
+# desenhado atrás da janela, que senão apareceria como um tom escuro
+# atravessando a transparência.
+opacity = 0.85
+
 dynamic_title = true
 
 [scrolling]
@@ -24,32 +37,33 @@ style = "Bold"
 style = { shape = "Beam", blinking = "Off" }
 
 [colors.primary]
-background = "#16121d"
-foreground = "#cfc9dd"
+background = "#0B0B0D"
+foreground = "#F5F5F7"
 
 [colors.cursor]
-cursor = "#b9a7f0"
-text = "#16121d"
+cursor = "#F5F5F7"
+text = "#0B0B0D"
 
 [colors.selection]
-background = "#2d2640"
+background = "#1F1F22"
+foreground = "#F5F5F7"
 
 [colors.normal]
-black = "#262031"
-red = "#e07a8b"
-green = "#9ece9a"
-yellow = "#e6c384"
-blue = "#82a8e0"
-magenta = "#c5a3e8"
-cyan = "#8fd0c9"
-white = "#cfc9dd"
+black = "#1C1C1E"
+red = "#FF453A"
+green = "#32D74B"
+yellow = "#FFD60A"
+blue = "#0A84FF"
+magenta = "#BF5AF2"
+cyan = "#64D2FF"
+white = "#C7C7CC"
 
 [colors.bright]
-black = "#3a3348"
-red = "#ef92a1"
-green = "#b3dcb0"
-yellow = "#f0d19a"
-blue = "#9bbcf0"
-magenta = "#d6bcf5"
-cyan = "#a5e0da"
-white = "#efeaf7"
+black = "#3A3A3C"
+red = "#FF6961"
+green = "#4CD964"
+yellow = "#FFE066"
+blue = "#409CFF"
+magenta = "#DA8FFF"
+cyan = "#70D7FF"
+white = "#F5F5F7"

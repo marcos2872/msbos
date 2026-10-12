@@ -27,6 +27,18 @@ install_file "niri/config.kdl" "/etc/xdg/niri/config.kdl"
 # ─── 2. Noctalia (esqueleto; padrões da instalação já funcionam) ────────────
 install_file_once "noctalia/config.toml" "${TU_HOME}/.config/noctalia/config.toml"
 
+# ─── 2a. Noctalia: paleta(s) do tema ────────────────────────────────────────
+# [theme] custom_palette (config.toml) aponta para "macOS", que o Noctalia
+# procura em ~/.config/noctalia/palettes/macOS.json. A paleta é parte do tema
+# que o MyOS entrega, então usa install_file (com backup .myos-bak): para
+# customizar, crie outra paleta nessa pasta e aponte custom_palette para ela.
+NOCT_CONF="${TU_HOME}/.config/noctalia"
+for paleta in "${MYOS_ROOT}"/assets/noctalia/palettes/*.json; do
+  [[ -f ${paleta} ]] || continue
+  install_file "noctalia/palettes/$(basename "${paleta}")" \
+    "${NOCT_CONF}/palettes/$(basename "${paleta}")"
+done
+
 # ─── 2b. Noctalia: defaults do MyOS (settings + plugins) ────────────────────
 # A config real do Noctalia v5 vive em ~/.local/state/noctalia/ (settings.toml
 # + plugins/). Instalamos os defaults do repo SOMENTE se ainda não existirem —

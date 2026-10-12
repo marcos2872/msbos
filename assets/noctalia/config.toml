@@ -1,12 +1,94 @@
-# MyOS — nota sobre a configuração do Noctalia v5
+# MyOS — camada BASE da configuração do Noctalia v5
 #
-# O Noctalia v5 NÃO lê este arquivo: a configuração real fica em
-#   ~/.local/state/noctalia/settings.toml
-# (gerenciada pela interface gráfica do próprio shell).
+# O Noctalia v5 LÊ este arquivo, sim (docs oficiais, "How configuration works"):
+# a config é montada em 3 camadas —
+#   1. defaults do shell
+#   2. seus *.toml em ~/.config/noctalia/   ← ESTE ARQUIVO
+#   3. ~/.local/state/noctalia/settings.toml  (override escrito pela GUI)
+# A camada 3 é carregada por último e vence chave-a-chave a camada 2.
 #
-# Os defaults do MyOS (layout da barra, plugin system-monitor, wallpaper)
-# estão em assets/noctalia/settings.toml + assets/noctalia/plugins/ do
-# repositório e são instalados pelo 50-configs.sh somente quando ainda
-# não existem — sua personalização nunca é sobrescrita.
+# Divisão de responsabilidade no MyOS:
+#   • aqui (config.toml) → ESTILO: tema, barra, dock, painéis, shell
+#   • settings.toml      → CONTEÚDO da GUI: listas de widgets, wallpaper,
+#                          plugins, geometria da lock screen. O Noctalia
+#                          reescreve esse arquivo sozinho — não editar à mão.
+# Com essa divisão uma personalização feita na GUI nunca é sobrescrita pelo
+# instalador, e o estilo sobrevive a mudanças de widget.
 #
-# Referência completa: https://docs.noctalia.dev
+# Instalação: 50-configs.sh usa install_file_once — só cria se ainda não
+# existir, então uma personalização nunca é sobrescrita.
+# Referência: https://docs.noctalia.dev
+
+[theme]
+mode           = "dark"
+shell_mode     = "follow"
+source         = "custom"
+custom_palette = "macOS"
+
+# ─── Barra no topo, translúcida, itens em texto puro ────────────────────────
+# Corta o visual do Liquid Glass do macOS: barra 100% transparente (só blur e
+# sombra fraca) e itens sem ícone. capsule = false = sem pílulas nos widgets.
+[bar.default]
+position           = "top"
+thickness          = 28
+background_opacity = 0.40
+compositor_blur    = true
+shadow             = true
+margin_ends        = 0
+radius             = 0
+padding            = 10
+widget_spacing     = 4
+capsule            = false
+capsule_opacity    = 0.6
+font_weight        = 500
+font_scale         = 0.95
+font_family        = "Noto Sans"   # instalado por 20-stack.sh
+
+# ─── Dock: metade do tamanho, auto-hide, indicador de apps abertos ──────────
+# icon_size 24 (metade do default 48) + magnification 1.9 = ícone pequeno que
+# cresce sob o mouse. auto_hide + reserve_space = false = some ao tirar o
+# mouse e fica como overlay, sem roubar espaço das janelas (como no macOS).
+[dock]
+enabled              = true
+position             = "bottom"
+icon_size            = 24
+magnification        = true
+magnification_scale  = 1.9
+radius               = 16
+background_opacity   = 0.35
+shadow               = true
+margin_edge          = 0
+concave_edge_corners = true
+auto_hide            = true
+reserve_space        = false
+show_running         = true
+show_dots            = true            # bolinha abaixo do ícone do app aberto
+show_instance_count  = true            # badge com nº de janelas (2+)
+active_scale         = 1.0
+inactive_scale       = 0.85
+active_opacity       = 1.0
+inactive_opacity     = 0.80
+# IDs de desktop entry (stem do .desktop, StartupWMClass ou Name).
+# Brave é "brave-browser", NÃO "com.brave.Browser".
+pinned = ["brave-browser", "dev.zed.Zed", "Alacritty", "onlyoffice-desktopeditors", "org.gnome.Nautilus"]
+
+# ─── Notificações e janela de Settings em vidro ─────────────────────────────
+# Os defaults são quase opacos (notificação 0.97, Settings opaca).
+[notification]
+background_opacity = 0.80
+
+[shell]
+settings_window_translucent = true
+
+# ─── Painéis flutuantes em vidro ────────────────────────────────────────────
+# transparency_mode: solid | soft | glass. Control Center, wallpaper e sessão
+# são "attached" por padrão e ignoram o modo glass — por isso viram floating.
+[shell.panel]
+transparency_mode         = "glass"
+control_center_placement  = "floating"
+wallpaper_placement       = "floating"
+session_placement         = "floating"
+
+# Switcher em tirinha horizontal (estilo Cmd+Tab), não o carrossel default.
+[shell.window_switcher]
+style = "compact"

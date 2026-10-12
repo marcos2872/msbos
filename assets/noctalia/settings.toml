@@ -13,11 +13,16 @@
 #
 # Instalação: 50-configs.sh copia este arquivo e plugins/ somente se ainda
 # não existirem no destino — uma config já personalizada nunca é sobrescrita.
+#
+# Atenção: o ESTILO do tema (barra, dock, painéis, paleta) NÃO vai aqui — vai
+# em assets/noctalia/config.toml. Este arquivo é só o que a GUI reescreve.
 config_version = 14
 
 [bar.default]
-center = [ "media", "clock" ]
+center = [ "clock" ]
 end = [
+    "cpu",
+    "ram",
     "tray",
     "notifications",
     "clipboard",
@@ -29,7 +34,9 @@ end = [
     "control-center",
     "session"
 ]
-start = [ "cpu", "ram", "workspaces", "taskbar" ]
+# taskbar sai da barra: o dock (config.toml) assume os apps abertos.
+# cpu/ram saem do start — menu bar de mac não mostra monitor de sistema.
+start = [ "launcher", "workspaces" ]
 
 [plugins]
 enabled = [ "tmelik/system-monitor", "raycursive/niri-displays" ]

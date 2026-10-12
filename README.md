@@ -17,7 +17,7 @@ todas as otimizações de memória.
 | Sessão gráfica | **niri** (compositor Wayland com tiling rolável) |
 | Shell | **Noctalia v5** — barra, launcher, notificações, OSD e lock screen |
 | Login | **greetd** + Noctalia Greeter (substitui o GDM) |
-| Noctalia (defaults) | Barra: `cpu ram workspaces taskbar` · `media clock` · `tray … session`; plugins **tmelik/system-monitor** e **raycursive/niri-displays** (gerenciador de monitores); wallpaper padrão do MyOS |
+| Noctalia (defaults) | **Tema Liquid Glass** (inspirado no macOS atual): barra no topo translúcida com itens em texto puro, dock de meia altura com auto-hide, painéis em vidro e paleta própria `macOS` (accent cinza); barra em `launcher workspaces` · `clock` · `cpu ram tray … session`; plugins **tmelik/system-monitor** e **raycursive/niri-displays**; wallpaper padrão do MyOS |
 | Terminal | alacritty + **zsh com autocomplete** (sugestões inline do histórico, syntax highlight, fzf no Ctrl+R) — `Super+T` |
 | Dev | Rust (rustup), Node.js LTS via nvm (npm/pnpm/yarn), gcc/make |
 | Apps | Zed (editor), OpenCode v2 (IA no terminal, configurado com o [agents-config](https://github.com/marcos2872/agents-config)), Brave (navegador padrão), ONLYOFFICE, SSH_Orchestrator (RPM da release oficial), lazydocker (TUI para containers) |
@@ -85,7 +85,7 @@ cd my-os
 | `25-devtools.sh` | Ferramentas de desenvolvimento: gcc/make, **Rust** (rustup), **Node.js LTS via nvm** (+ npm) e **pnpm/yarn** — detecta e pula o que já existe |
 | `30-services.sh` | greetd assume o boot (GDM mascarado); desativa avahi/cups/sssd/fprintd/etc.; habilita zram, oomd, tuned e power-profiles-daemon |
 | `40-tuning.sh` | **zram** (swap comprimido zstd), sysctl de memória, **btrfs `compress=zstd`**, governor `performance` (só em desktop sem bateria), oomd conservador |
-| `50-configs.sh` | Escreve as configs do niri/Noctalia/greetd, instala os wallpapers, aplica os **defaults do Noctalia** (`settings.toml` + plugins, só se ausentes), aplica o **agents-config** no OpenCode (agentes/skills/commands), define o **Brave como navegador padrão** e instala o tema do **alacritty** + `.zshrc` com autocomplete (zsh vira o shell padrão) |
+| `50-configs.sh` | Escreve as configs do niri/Noctalia/greetd, instala os wallpapers, aplica os **defaults do Noctalia** (`settings.toml` + plugins, só se ausentes), instala a **paleta do tema** (`assets/noctalia/palettes/*.json`), aplica o **agents-config** no OpenCode (agentes/skills/commands), define o **Brave como navegador padrão** e instala o tema do **alacritty** + `.zshrc` com autocomplete (zsh vira o shell padrão) |
 
 ## Depois de instalar
 
@@ -142,6 +142,15 @@ assets/                 # arquivos instalados (configs, wallpapers, helpers)
   Para voltar ao padrão do MyOS, apague o arquivo e rode `sudo bash scripts/50-configs.sh`.
   (Arquivos que o MyOS é dono — wallpapers, fallback `/etc/xdg/niri/config.kdl`,
   `settings.toml`/plugins do Noctalia — seguem a mesma regra: só instalam se ausentes.)
+  A **paleta do tema** segue outra: o MyOS é dono dela, então é atualizada com
+  backup `.myos-bak` — para customizar, crie outra paleta em
+  `~/.config/noctalia/palettes/` e aponte `custom_palette` para ela.
+- **Noctalia em duas camadas**: o `~/.config/noctalia/config.toml` carrega o
+  **estilo** (tema, barra, dock, painéis) e o `~/.local/state/noctalia/settings.toml`
+  carrega o que a **GUI reescreve** (listas de widgets, wallpaper, plugins,
+  geometria da lock screen — e o `[dock]` que o próprio dock persiste). O
+  `settings.toml` é lido por último e vence chave-a-chave, então um ajuste de
+  aparência que "não pega" quase sempre é uma chave repetida nele.
 - **Registro de etapas**: cada etapa concluída é marcada em `/var/lib/myos/steps/`. Se uma
   etapa falhar, o instalador mostra o código de erro, até onde chegou e como retomar
   (`sudo ./install.sh` ou só a etapa que falhou) — as etapas são idempotentes.

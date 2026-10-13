@@ -274,5 +274,29 @@ else
   fi
 fi
 
+# ─── 9. Flatpak × controle parental (malcontent) ────────────────────────────
+# Todo `flatpak run` consulta parental controls via AccountsService, e a ação
+# polkit dessa consulta vive no pacote malcontent. Sem ele a consulta é negada
+# e NENHUM flatpak abre ("Not allowed to query parental controls data for
+# user N" — flatpak/flatpak#6142). No Workstation ele chega como dependência
+# do GNOME; aqui garantimos que exista (reparo para máquinas onde a remoção o
+# levou embora) e o fixamos como escolha do usuário, para a cascata do dnf5
+# não removê-lo de novo (libexec/myos-remove-gnome também o protege).
+if command -v flatpak >/dev/null 2>&1; then
+  if rpm -q malcontent >/dev/null 2>&1; then
+    run_cmd dnf -y mark user malcontent \
+      || warn "malcontent: falha ao marcar como user-installed"
+  else
+    warn "flatpak: malcontent ausente — nenhum flatpak abriria; reinstalando"
+    run_cmd dnf -y "${DNFOPT}" install malcontent \
+      || warn "malcontent: falha na instalação — flatpaks podem não abrir"
+    # o accounts-daemon expõe as interfaces de parental controls ao subir;
+    # o try-restart recarrega (não faz nada se o serviço estiver parado)
+    run_cmd systemctl try-restart accounts-daemon || true
+  fi
+else
+  log "stack: flatpak ausente — malcontent não é necessário"
+fi
+
 run_cmd dnf clean all || true
 ok "stack instalado"

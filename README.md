@@ -136,6 +136,9 @@ assets/                 # arquivos instalados (configs, wallpapers, helpers)
   (`myos-remove-gnome.service`, roda antes do login): remover o desktop em uso derruba a
   sessão (o scriptlet do gdm executa `systemctl disable --now gdm.service`), então a
   remoção nunca acontece dentro da sessão. É só reiniciar após a instalação.
+  O pacote `malcontent` é preservado de propósito: o Flatpak consulta os controles parentais
+  a cada execução e, sem ele, nenhum flatpak abriria (`Not allowed to query parental controls
+  data`).
 - **Configs pessoais são instaladas só uma vez**: `~/.config/niri/config.kdl`,
   `~/.config/noctalia/config.toml`, `~/.config/alacritty/alacritty.toml` e `~/.zshrc` **não
   são sobrescritos** em uma reexecução — sua personalização de atalhos/temas sobrevive.

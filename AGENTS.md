@@ -89,6 +89,11 @@ Fluxo: `install.sh` (orquestrador) → `lib/common.sh` (helpers) → `scripts/NN
 - Segurança de sessão: nada é parado durante a instalação; efeitos valem no próximo boot. A
   remoção do GDM/GNOME é agendada via `myos-remove-gnome.service` (roda antes do login) — nunca na
   sessão viva (o `%preun` do gdm derruba a sessão no meio da transação dnf).
+- Malcontent protegido de propósito: todo `flatpak run` consulta parental controls via
+  AccountsService, e a permissão polkit da consulta vem do pacote `malcontent` (dependência do
+  GNOME). Sem ele a consulta é negada e **nenhum flatpak abre** ("Not allowed to query parental
+  controls data for user N" — flatpak/flatpak#6142). `myos-remove-gnome` o marca como `user` +
+  `protected_packages`, e a seção 9 do `20-stack.sh` o garante/reinstala quando há flatpak.
 
 ## Convenções
 

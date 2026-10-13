@@ -11,6 +11,10 @@
 #   - desativa temporariamente a proteção do fedora-release-workstation
 #     (NetworkManager + gnome-shell) e re-protege NetworkManager/tuned/tuned-ppd
 #     via --setopt append (o dnf5 soma, não substitui)
+#   - fixa o malcontent como escolha do usuário e o protege da transação: o
+#     Flatpak consulta parental controls a cada execução e, sem o pacote,
+#     NENHUM flatpak abre ("Not allowed to query parental controls data for
+#     user N" — flatpak/flatpak#6142). Ele veio como dependência do GNOME.
 #   - remove o que ainda estiver instalado numa única transação
 #   - sucesso: desabilita e remove a si mesmo
 #   - falha: permanece habilitado para tentar de novo no próximo boot
@@ -36,13 +40,25 @@ for p in gdm gnome-shell gnome-session gnome-settings-daemon gnome-control-cente
   fi
 done
 
+# Pacotes que a transação NUNCA pode levar na cascata (clean_requirements_on_remove):
+# NetworkManager/tuned/tuned-ppd são essenciais ao sistema, e o malcontent é
+# exigido pelo Flatpak (ver cabeçalho). Marcar como "user" também protege de
+# um `dnf autoremove` futuro; o protected_packages cobre a transação atual.
+PROT_PKGS='NetworkManager,tuned,tuned-ppd'
+if rpm -q malcontent >/dev/null 2>&1; then
+  PROT_PKGS+=",malcontent"
+  log "protegendo o malcontent (sem ele nenhum flatpak abre)"
+  dnf -y mark user malcontent >/dev/null 2>&1 \
+    || log "aviso: falha ao marcar o malcontent como user-installed"
+fi
+
 rc=0
 if ((${#PKGS[@]} > 0)); then
   log "removendo: ${PKGS[*]}"
   # tenta primeiro só com cache (boot pode estar sem rede); depois com rede
-  if ! dnf -C -y remove --setopt=protected_packages=NetworkManager,tuned,tuned-ppd "${PKGS[@]}"; then
+  if ! dnf -C -y remove --setopt=protected_packages="${PROT_PKGS}" "${PKGS[@]}"; then
     log "cache indisponível — tentando com acesso a repositórios..."
-    dnf -y remove --setopt=protected_packages=NetworkManager,tuned,tuned-ppd "${PKGS[@]}" || rc=1
+    dnf -y remove --setopt=protected_packages="${PROT_PKGS}" "${PKGS[@]}" || rc=1
   fi
 else
   log "nada a remover (já limpo)"

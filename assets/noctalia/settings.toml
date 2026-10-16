@@ -19,11 +19,10 @@
 config_version = 14
 
 [bar.default]
-center = [ "clock" ]
+center = [ "clock", "media" ]
 end = [
-    "cpu",
-    "ram",
     "tray",
+    "group:g1",
     "notifications",
     "clipboard",
     "network",
@@ -35,11 +34,25 @@ end = [
     "session"
 ]
 # taskbar sai da barra: o dock (config.toml) assume os apps abertos.
-# cpu/ram saem do start — menu bar de mac não mostra monitor de sistema.
+# cpu/ram ficam num grupo cápsula (g1) no end, depois do tray.
 start = [ "launcher", "workspaces" ]
+
+    [[bar.default.capsule_group]]
+    accordion = false
+    accordion_direction = "end"
+    border_width = 1.0
+    enabled = true
+    fill = "surface_variant"
+    id = "g1"
+    members = [ "cpu", "ram" ]
+    opacity = 0.60000002384185791
+    padding = 6.0
 
 [plugins]
 enabled = [ "tmelik/system-monitor", "raycursive/niri-displays" ]
+
+[shell]
+app_icon_color = "secondary"
 
 # Mesmo wallpaper usado como padrão do MyOS (instalado pelo 50-configs.sh
 # em /usr/share/myos-walls/). As entradas por monitor são criadas em runtime.
@@ -53,3 +66,6 @@ path = "/usr/share/myos-walls/pexels-wearelivingart-7862142.jpg"
 hide_when_no_media = true
 max_length = 108
 rotate_album_art = true
+
+[widget.network]
+show_label = false

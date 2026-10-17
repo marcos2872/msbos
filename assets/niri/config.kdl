@@ -64,6 +64,9 @@ debug {
 // (o wallpaper é gerenciado pelo Noctalia; para usar swaybg no lugar,
 //  descomente a linha abaixo e remova a layer-rule do noctalia-wallpaper)
 spawn-at-startup "noctalia"
+// Agente de autenticação polkit: sem ele o udisks2 nega montar volumes
+// externos no Nautilus ("Not authorized to perform operation").
+spawn-at-startup "lxpolkit"
 // spawn-at-startup "myos-wallpaper"
 
 binds {

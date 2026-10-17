@@ -87,7 +87,8 @@ CORE=(
   greetd niri noctalia jemalloc
   pipewire pipewire-pulse wireplumber
   xdg-desktop-portal xdg-desktop-portal-gtk
-  polkit NetworkManager
+  polkit lxpolkit udisks2 gvfs-udisks2 gvfs-mtp
+  NetworkManager
   tuned
   curl git xdg-utils
   google-noto-sans-fonts google-noto-sans-mono-fonts
@@ -111,7 +112,9 @@ else
 fi
 
 # ─── 2. Utilitários leves ───────────────────────────────────────────────────
-UTILS=(alacritty grim slurp brightnessctl playerctl)
+# nautilus + ntfs/exfat: sem eles o erro é "Not authorized to perform operation"
+# (udisks2 sem gvfs) ou volume ilegível (NTFS/exFAT de SSDs externos).
+UTILS=(alacritty grim slurp brightnessctl playerctl nautilus ntfs-3g exfatprogs dosfstools)
 for p in "${UTILS[@]}"; do
   run_cmd dnf -y "${DNFOPT}" install "${p}" || warn "utilitário '${p}' indisponível — ignorado"
 done

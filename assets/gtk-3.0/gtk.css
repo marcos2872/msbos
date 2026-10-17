@@ -1,0 +1,47 @@
+/* MyOS — overlay escuro para apps GTK3 (ex.: diálogo do xfce-polkit).
+ * Cores derivadas da paleta do Noctalia (assets/noctalia/palettes/macOS.json,
+ * variante dark): mSurface #0B0B0D, mSurfaceVariant #17171A, mHover #1F1F22,
+ * mOnSurface #F5F5F7, mOutline #2C2C2E. Se a paleta mudar, atualize aqui junto.
+ * O settings.ini já pede prefer-dark, mas o Raleigh/fallback pode vazar
+ * gradientes claros em botões, headerbar e combobox — este overlay cobre.
+ */
+window, dialog, messagedialog, .background {
+    background-color: #0B0B0D;
+    background-image: none;
+    color: #F5F5F7;
+}
+label, menuitem { color: #F5F5F7; }
+button, .button {
+    background-color: #17171A;
+    background-image: none;
+    color: #F5F5F7;
+    border-color: #2C2C2E;
+}
+button:hover, .button:hover {
+    background-color: #1F1F22;
+    background-image: none;
+}
+entry, textview text {
+    background-color: #0B0B0D;
+    background-image: none;
+    color: #F5F5F7;
+}
+combobox button.combo {
+    background-color: #17171A;
+    color: #F5F5F7;
+}
+/* Cabeçalho do diálogo e campo Identity (combobox): vinham claros. */
+headerbar, .titlebar,
+headerbar label, .titlebar label,
+headerbar button, .titlebar button {
+    background-color: #0B0B0D;
+    background-image: none;
+    color: #F5F5F7;
+    border-color: #2C2C2E;
+}
+combobox entry, combobox button,
+combobox window, combobox menu {
+    background-color: #0B0B0D;
+    background-image: none;
+    color: #F5F5F7;
+}

@@ -47,6 +47,14 @@ window-rule {
     draw-border-with-background false
 }
 
+// Diálogo do polkit: modal pequeno e centralizado, nunca tela cheia.
+window-rule {
+    match app-id="xfce-polkit"
+    open-floating true
+    default-column-width { fixed 480; }
+    default-window-height { fixed 240; }
+}
+
 // Janela de settings do Noctalia flutuante e dimensionada
 window-rule {
     match app-id="dev.noctalia.Noctalia"
@@ -66,7 +74,9 @@ debug {
 spawn-at-startup "noctalia"
 // Agente de autenticação polkit: sem ele o udisks2 nega montar volumes
 // externos no Nautilus ("Not authorized to perform operation").
-spawn-at-startup "lxpolkit"
+// xfce-polkit (GTK3, 23 KiB): segue o tema escuro e não cria janela na taskbar
+// (lxpolkit é GTK2 datado; mate-polkit poluía a taskbar do Noctalia).
+spawn-at-startup "/usr/libexec/xfce-polkit"
 // spawn-at-startup "myos-wallpaper"
 
 binds {

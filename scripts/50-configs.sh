@@ -86,6 +86,71 @@ else
   done
 fi
 
+# ─── 2c. Tema escuro (sistema + usuário) — derivado da paleta macOS ──────────
+# O tema dark do Noctalia só pinta o shell Quickshell — apps GTK (xfce-polkit,
+# gnome-keyring, Nautilus), Qt (ONLYOFFICE) e Electron (OpenCode/Zed) leem o
+# dconf/portal + settings.ini + qt6ct/qt5ct + env, que por padrão é claro.
+# Fonte única da verdade: assets/noctalia/palettes/macOS.json (dark). Os
+# arquivos abaixo espelham essas cores (mSurface #0B0B0D, mSurfaceVariant
+# #17171A, mHover #1F1F22, mOnSurface #F5F5F7, mOutline #2C2C2E, acento
+# #5E5CE6); se a paleta mudar, atualize gtk*.css + qt*ct.conf junto.
+#   • /etc/dconf/db/local.d/00-myos-dark: padrão de sistema (color-scheme +
+#     gtk/icon/cursor-theme) aplicado via `dconf update` — vale para todo usuário.
+#   • ~/.config/gtk-3.0|4.0/settings.ini + gtk.css: fallback lido direto pelo
+#     GTK, sem precisar de sessão D-Bus (cobre o xfce-polkit no primeiro login).
+#   • /etc/profile.d/myos-theme.sh: XCURSOR_* (cursor único no niri e nos apps)
+#     + QT_QPA_PLATFORMTHEME (Qt escuro via qt6ct/qt5ct).
+#   • ~/.config/qt6ct|qt5ct.conf: Fusion escuro para apps Qt.
+#   • gsettings como TU: atualiza o banco dconf EXISTENTE do usuário (o default
+#     de sistema sozinho não muda um user db já criado como claro).
+# No Fedora 44+ não existe tema "Adwaita-dark" em disco — o Adwaita é embutido
+# no GTK e o escuro vem de prefer-dark-theme (GTK3) + color-scheme (GTK4).
+# Idempotente: arquivos de tema são dono do MyOS (install_file, com backup
+# .myos-bak); o gsettings só escreve quando o valor atual ainda não é o escuro.
+install_file "gtk-3.0/settings.ini" "${TU_HOME}/.config/gtk-3.0/settings.ini"
+install_file "gtk-4.0/settings.ini" "${TU_HOME}/.config/gtk-4.0/settings.ini"
+# overlay escuro (testado no diálogo do xfce-polkit): cobre o que o
+# prefer-dark não alcança no fallback (botões, headerbar, combobox).
+install_file "gtk-3.0/gtk.css" "${TU_HOME}/.config/gtk-3.0/gtk.css"
+install_file "gtk-4.0/gtk.css" "${TU_HOME}/.config/gtk-4.0/gtk.css"
+install_file "profile.d/myos-theme.sh" "/etc/profile.d/myos-theme.sh"
+install_file "qt6ct/qt6ct.conf" "${TU_HOME}/.config/qt6ct/qt6ct.conf"
+install_file "qt5ct/qt5ct.conf" "${TU_HOME}/.config/qt5ct/qt5ct.conf"
+# migração: a 1ª versão do MyOS apontava para "Adwaita-dark" (inexistente no
+# F44+) — o GTK caía no claro. Corrige só esse valor, sem tocar no resto.
+for _gtkrc in "${TU_HOME}/.config/gtk-3.0/settings.ini" "${TU_HOME}/.config/gtk-4.0/settings.ini"; do
+  if [[ -f ${_gtkrc} ]] && grep -q '^gtk-theme-name=Adwaita-dark' "${_gtkrc}"; then
+    run_cmd sed -i 's/^gtk-theme-name=Adwaita-dark/gtk-theme-name=Adwaita/' "${_gtkrc}" \
+      || warn "gtk: falha ao migrar ${_gtkrc} para Adwaita"
+  fi
+done
+install_file "dconf/db/local.d/00-myos-dark" "/etc/dconf/db/local.d/00-myos-dark"
+run_cmd dconf update || warn "dconf update falhou — padrão de sistema pode não aplicar"
+if [[ ${DRY_RUN} == 1 ]]; then
+  log "dry-run: definiria gtk/icon/cursor-theme=Adwaita e color-scheme=prefer-dark para ${TU}"
+else
+  # dbus-run-session permite rodar o gsettings sem sessão gráfica ativa; o
+  # dconf persiste em ~/.config/dconf/user, então vale no próximo login.
+  GSET_BASE=(runuser -u "${TU}" -- env "HOME=${TU_HOME}")
+  if command -v dbus-run-session >/dev/null 2>&1; then
+    GSET_BASE+=(dbus-run-session --)
+  fi
+  gset() {
+    local chave="$1" valor="$2"
+    local atual
+    atual="$("${GSET_BASE[@]}" gsettings get org.gnome.desktop.interface "${chave}" 2>/dev/null || true)"
+    [[ ${atual} == "${valor}" ]] \
+      || run_cmd "${GSET_BASE[@]}" gsettings set org.gnome.desktop.interface "${chave}" "${valor}" \
+      || warn "tema: falha ao definir ${chave}=${valor} para ${TU}"
+  }
+  gset gtk-theme "'Adwaita'"
+  gset color-scheme "'prefer-dark'"
+  gset icon-theme "'Adwaita'"
+  gset cursor-theme "'Adwaita'"
+  gset cursor-size "24"
+  gset font-name "'Noto Sans 10'"
+fi
+
 # ─── 3. Papel de parede + helper ────────────────────────────────────────────
 install_file "bin/myos-wallpaper" "/usr/local/bin/myos-wallpaper"
 run_cmd chmod 755 /usr/local/bin/myos-wallpaper
@@ -169,8 +234,12 @@ if command -v zsh >/dev/null 2>&1 || [[ ${DRY_RUN} == 1 ]]; then
 fi
 
 # ─── 8. Permissões dos arquivos do usuário ──────────────────────────────────
-run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.config/niri" "${TU_HOME}/.config/noctalia" "${TU_HOME}/.config/alacritty" "${TU_HOME}/.local/state/noctalia" "${TU_HOME}/.local/share/noctalia"
+run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.config/niri" "${TU_HOME}/.config/noctalia" "${TU_HOME}/.config/alacritty" "${TU_HOME}/.config/gtk-3.0" "${TU_HOME}/.config/gtk-4.0" "${TU_HOME}/.config/qt6ct" "${TU_HOME}/.config/qt5ct" "${TU_HOME}/.local/state/noctalia" "${TU_HOME}/.local/share/noctalia"
 run_cmd chown "${TU}:${TU}" "${TU_HOME}/.zshrc"
+# o banco dconf do usuário pode ter sido criado agora pelo gsettings acima
+if [[ -e ${TU_HOME}/.config/dconf ]]; then
+  run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.config/dconf"
+fi
 
 cat <<EOF
 

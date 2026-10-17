@@ -4,7 +4,9 @@
 # Ordem de busca (1ª imagem encontrada):
 #   1) ~/.config/myos-walls/
 #   2) /usr/share/myos-walls/
-# Sem imagens → cor sólida lavanda.
+# Sem imagens → cor sólida mSurface da paleta macOS (#0B0B0D). O dono do
+# wallpaper é o Noctalia ([wallpaper.default] no settings.toml); este helper
+# é só fallback (ex.: sessão sem Noctalia).
 
 set -u
 
@@ -20,4 +22,4 @@ for d in "${DIRS[@]}"; do
   fi
 done
 
-exec swaybg --color "#221c3a"
+exec swaybg --color "#0B0B0D"

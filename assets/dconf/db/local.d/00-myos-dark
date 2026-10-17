@@ -1,0 +1,18 @@
+# MyOS — padrão escuro para GTK/libadwaita/portal (lido via `dconf update`).
+# Sem isto, apps GTK (xfce-polkit, gnome-keyring, Nautilus) e o portal
+# org.freedesktop.appearance caem no Adwaita claro, mesmo com o Noctalia em dark
+# (o tema do Noctalia só pinta o shell Quickshell, não o GTK).
+# NOTA: o caminho org/gnome/desktop/interface é só o transporte do padrão
+# freedesktop (lido por GTK/libadwaita/portais) — o desktop GNOME não está
+# instalado; foi removido de propósito (ver 20-stack.sh).
+# ATENÇÃO: no Fedora 44+ não existe tema "Adwaita-dark" em disco — o Adwaita é
+# embutido no GTK e a variante escura vem de prefer-dark-theme (GTK3) +
+# color-scheme (GTK4/libadwaita). Apontar para "Adwaita-dark" quebra o tema e
+# o GTK cai no claro.
+[org/gnome/desktop/interface]
+gtk-theme='Adwaita'
+color-scheme='prefer-dark'
+icon-theme='Adwaita'
+cursor-theme='Adwaita'
+cursor-size=24
+font-name='Noto Sans 10'

@@ -87,11 +87,12 @@ CORE=(
   greetd niri noctalia jemalloc
   pipewire pipewire-pulse wireplumber
   xdg-desktop-portal xdg-desktop-portal-gtk
-  polkit lxpolkit udisks2 gvfs-udisks2 gvfs-mtp
+  polkit xfce-polkit udisks2 gvfs gvfs-mtp
   NetworkManager
   tuned
   curl git xdg-utils
   google-noto-sans-fonts google-noto-sans-mono-fonts
+  adwaita-icon-theme adwaita-cursor-theme
 )
 log "stack: instalando núcleo: ${CORE[*]}"
 if ! run_cmd dnf -y "${DNFOPT}" install "${CORE[@]}"; then
@@ -114,12 +115,28 @@ fi
 # ─── 2. Utilitários leves ───────────────────────────────────────────────────
 # nautilus + ntfs/exfat: sem eles o erro é "Not authorized to perform operation"
 # (udisks2 sem gvfs) ou volume ilegível (NTFS/exFAT de SSDs externos).
-UTILS=(alacritty grim slurp brightnessctl playerctl nautilus ntfs-3g exfatprogs dosfstools)
+# seahorse: gerencia o cofre "Login" do gnome-keyring (sincronizar a senha do
+# cofre com a do login para o PAM do greetd destravar sozinho no boot).
+UTILS=(alacritty grim slurp brightnessctl playerctl nautilus seahorse ntfs-3g exfatprogs dosfstools)
 for p in "${UTILS[@]}"; do
   run_cmd dnf -y "${DNFOPT}" install "${p}" || warn "utilitário '${p}' indisponível — ignorado"
 done
 for p in swaybg wlsunset ddcutil pipewire-alsa; do
   run_cmd dnf -y "${DNFOPT}" install "${p}" || warn "opcional '${p}' indisponível — ignorado"
+done
+
+# ─── 2a. Tema escuro GTK/libadwaita/Qt ─────────────────────────────────────────
+# Os diálogos GTK (xfce-polkit, gnome-keyring, Nautilus) caem no Adwaita claro
+# mesmo com o Noctalia em dark se o color-scheme não for prefer-dark. O dconf
+# persiste esse padrão (libadwaita/portal/Electron). O Adwaita é embutido no
+# GTK no Fedora 44+ — nenhum pacote extra de tema GTK é necessário, mas os
+# pacotes de ícones/cursor são declarados no CORE para a remoção do GNOME não
+# os levar embora. Apps Qt (ex.: ONLYOFFICE) usam qt6ct/qt5ct com Fusion escuro
+# (config em assets/qt6ct|qt5ct + env em assets/profile.d/myos-theme.sh).
+run_cmd dnf -y "${DNFOPT}" install dconf \
+  || warn "tema escuro: 'dconf' indisponível — diálogos GTK podem ficar claros"
+for p in qt6ct qt5ct; do
+  run_cmd dnf -y "${DNFOPT}" install "${p}" || warn "tema Qt: '${p}' indisponível — app Qt pode ficar claro"
 done
 
 # ─── 3. Terminal: zsh com autocomplete + fonte ──────────────────────────────

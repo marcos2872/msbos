@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # 25-devtools.sh — ferramentas de desenvolvimento (por usuário):
 #   • compiladores básicos (gcc/g++/make) — necessários p/ linkar crates Rust
+#   • GitHub CLI (gh) — PRs, issues e releases pelo terminal
 #   • Rust via rustup (script oficial → ~/.cargo)
 #   • Node.js via nvm (Node Version Manager → ~/.nvm) + npm
 #   • pnpm e yarn (globais do Node)
@@ -22,6 +23,14 @@ DNFOPT='--setopt=install_weak_deps=0'
 for p in gcc gcc-c++ make pkgconf-pkg-config; do
   run_cmd dnf -y "${DNFOPT}" install "${p}" || warn "dev: '${p}' indisponível — ignorado"
 done
+
+# ─── 1b. GitHub CLI ─────────────────────────────────────────────────────────
+# Idempotente: se já existe, pula.
+if command -v gh >/dev/null 2>&1; then
+  ok "gh já instalado — pulando"
+else
+  run_cmd dnf -y "${DNFOPT}" install gh || warn "dev: 'gh' indisponível — ignorado"
+fi
 
 # ─── 2. Rust (rustup) ───────────────────────────────────────────────────────
 if [[ -x ${TU_HOME}/.cargo/bin/cargo ]]; then
@@ -69,4 +78,4 @@ EOS
   rm -f "${SETUP}"
 fi
 
-ok "dev tools prontos (Rust, Node/nvm, npm, pnpm, yarn)"
+ok "dev tools prontos (gcc, gh, Rust, Node/nvm, npm, pnpm, yarn)"

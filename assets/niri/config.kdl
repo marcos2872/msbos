@@ -16,6 +16,13 @@ layout {
     gaps 6
     // Noctalia (Option 2): wallpaper estacionário no backdrop
     background-color "transparent"
+    // Anel de foco fino na cor da paleta macOS (mSecondary #5E5CE6).
+    // Sem isto o niri usa o padrão (width 4, azul #7fc8ff).
+    focus-ring {
+        width 1
+        active-color "#5E5CE6"
+        inactive-color "#2C2C2E"
+    }
 }
 
 // Wallpaper do Noctalia no backdrop do overview (Option 2 da doc oficial)

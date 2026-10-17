@@ -13,7 +13,7 @@ input {
 }
 
 layout {
-    gaps 6
+    gaps 2
     // Noctalia (Option 2): wallpaper estacionário no backdrop
     background-color "transparent"
     // Anel de foco fino na cor da paleta macOS (mSecondary #5E5CE6).
@@ -31,9 +31,9 @@ layer-rule {
     place-within-backdrop true
 }
 
-// Cantos arredondados
+// Cantos arredondados (metade do padrão inicial: 20 → 10).
 window-rule {
-    geometry-corner-radius 20
+    geometry-corner-radius 10
     clip-to-geometry true
 }
 
@@ -68,6 +68,14 @@ window-rule {
     open-floating true
     default-column-width { fixed 1080; }
     default-window-height { fixed 920; }
+}
+
+// ONLYOFFICE (X11 via xwayland, CSD próprio): o anel como fundo sólido vaza
+// em volta da janela e parece moldura grossa — desenha o anel ao redor.
+window-rule {
+    match app-id="ONLYOFFICE"
+    match app-id="onlyoffice"
+    draw-border-with-background false
 }
 
 // Permite ações de notificação e ativação de janela vindas do Noctalia

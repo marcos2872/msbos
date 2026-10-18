@@ -5,6 +5,8 @@
 #   • Rust via rustup (script oficial → ~/.cargo)
 #   • Node.js via nvm (Node Version Manager → ~/.nvm) + npm
 #   • pnpm e yarn (globais do Node)
+#   • Virtualização: grupo @virtualization (KVM/QEMU + libvirt + virt-manager),
+#     libvirtd no boot e o usuário no grupo libvirt (acesso sem senha)
 # Idempotente: detecta o que já existe e pula.
 
 set -euo pipefail
@@ -78,4 +80,31 @@ EOS
   rm -f "${SETUP}"
 fi
 
-ok "dev tools prontos (gcc, gh, Rust, Node/nvm, npm, pnpm, yarn)"
+# ─── 5. Virtualização (KVM/QEMU + libvirt + virt-manager) ───────────────────
+# Fluxo clássico do Fedora: grupo @virtualization, daemon habilitado no boot e
+# o usuário no grupo libvirt (virt-manager gerencia as VMs sem senha; o grupo
+# só passa a valer no PRÓXIMO login do usuário).
+# Sem --setopt de weak deps AQUI: parte do suporte a VMs (ex.: edk2-ovmf para
+# UEFI) pode chegar como weak dep do grupo.
+run_cmd dnf -y install @virtualization \
+  || warn "dev: falha ao instalar o grupo @virtualization — ignorado"
+if rpm -q libvirt-daemon >/dev/null 2>&1; then
+  run_cmd systemctl enable --now libvirtd \
+    || warn "dev: falha ao habilitar/iniciar o libvirtd"
+fi
+if [[ -e /dev/kvm ]]; then
+  log "dev: /dev/kvm presente — aceleração KVM disponível"
+else
+  warn "dev: /dev/kvm ausente (BIOS/virtualização aninhada?) — VMs rodariam sem aceleração"
+fi
+if id -nG "${TU}" 2>/dev/null | grep -qw libvirt; then
+  ok "dev: ${TU} já está no grupo libvirt"
+else
+  if run_cmd usermod -aG libvirt "${TU}"; then
+    ok "dev: ${TU} adicionado ao grupo libvirt (vale no próximo login)"
+  else
+    warn "dev: falha ao adicionar ${TU} ao grupo libvirt"
+  fi
+fi
+
+ok "dev tools prontos (gcc, gh, Rust, Node/nvm, npm, pnpm, yarn, KVM/libvirt)"

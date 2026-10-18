@@ -1,9 +1,10 @@
 # AGENTS.md — MyOS
 
-Distro pessoal baseada em **Fedora 44/45** que transforma um sistema já instalado (rota C, sem ISO
-própria) num desktop com **niri** (compositor Wayland) + **Noctalia v5**, focada em baixo uso de RAM
-(alvo: < ~600 MB em idle). O repositório é uma suíte de **scripts bash idempotentes** — não há
-código compilado, pacote ou build.
+Distro pessoal baseada em **Fedora 44/45 KDE** que transforma um sistema já instalado (rota C, sem
+ISO própria) num desktop com **niri** (compositor Wayland) + **Noctalia v5**, focada em baixo uso de
+RAM (alvo: < ~600 MB em idle) — mantendo os **apps do KDE** e o tema dark padrão do KDE (**Breeze
+Dark**) nos aplicativos. O repositório é uma suíte de **scripts bash idempotentes** — não há código
+compilado, pacote ou build.
 
 ## Comandos
 
@@ -14,14 +15,14 @@ disponível é o modo `--dry-run` e a checagem de sintaxe.
 ```bash
 ./install.sh --help        # ajuda (extraída do cabeçalho do próprio install.sh)
 ./install.sh --dry-run     # simula tudo, sem alterar nada (roda as 6 etapas; 1ª verificação recomendada)
-./install.sh               # instala de verdade (reexecuta com sudo; pergunta antes de remover GDM/GNOME)
+./install.sh               # instala de verdade (reexecuta com sudo; pergunta antes de remover o shell do Plasma)
 ./install.sh --yes         # sem perguntas (VMs descartáveis / CI)
 ```
 
 | Opção | Efeito |
 |---|---|
 | `--dry-run` | Simula tudo (não instala, não remove, não escreve) |
-| `--yes`, `-y` | Autoriza remoções (GDM/GNOME) sem perguntar |
+| `--yes`, `-y` | Autoriza remoções (shell do Plasma) sem perguntar |
 | `--no-greeter` | Não adiciona o repo Terra (usa o greeter padrão do greetd) |
 | `--user NOME` | Usuário-alvo da configuração (padrão: quem chamou o sudo) |
 | `--gpu-profile P` | Força `auto\|intel\|amd\|nvidia\|hybrid\|none` |
@@ -70,30 +71,49 @@ Fluxo: `install.sh` (orquestrador) → `lib/common.sh` (helpers) → `scripts/NN
     `auto/intel/amd/nvidia/hybrid/none`; NVIDIA (binário ou `akmod`, `nvidia-drm.modeset=1`,
     offload GL via `/etc/profile.d/myos-nvidia.sh`).
   - `20-stack.sh` — núcleo (niri, Noctalia, greetd, PipeWire, portais), utilitários, zsh + fonte,
-    lazydocker, apps (Zed, OpenCode v2, Brave, ONLYOFFICE, SSH_Orchestrator) e **agendamento** da
-    remoção do GDM/GNOME.
-  - `25-devtools.sh` — gcc/make, Rust (rustup), Node LTS via nvm, pnpm/yarn (idempotente).
-  - `30-services.sh` — greetd assume o boot (GDM mascarado), desativa daemons dispensáveis,
-    habilita tuned/tuned-ppd/oomd/podman.socket; **nada é parado na sessão atual**.
+    lazydocker, apps (Zed, OpenCode v2, Brave, ONLYOFFICE, SSH_Orchestrator, LocalSend), **curadoria dos apps
+    KDE** (remove jogos/PIM/ajuda; garante Dolphin, Konsole, Kate/KWrite, Okular, Spectacle,
+    Dragon, Elisa…, marcando os garantidos como user-installed — imunes à cascata; tema Breeze Dark
+    via plasma-integration/breeze-*) e **agendamento** da remoção do shell do Plasma.
+  - `25-devtools.sh` — gcc/make, Rust (rustup), Node LTS via nvm, pnpm/yarn e
+    virtualização (@virtualization + libvirtd no boot + usuário no grupo libvirt) — idempotente.
+  - `30-services.sh` — greetd assume o boot (plasmalogin/gdm/sddm mascarados), desativa daemons
+    dispensáveis (PackageKit/Discover ficam), habilita tuned/tuned-ppd/oomd/podman.socket;
+    **nada é parado na sessão atual**.
   - `40-tuning.sh` — zram zstd, sysctl de memória (`__MINFREE__` calculado), `compress=zstd:1` no
     `/etc/fstab` (se btrfs), governor `performance` (só sem bateria), oomd, perfil tuned.
   - `50-configs.sh` — configurações finais: niri, Noctalia (`settings.toml` + plugins, só se
-    ausentes), greetd/PAM, alacritty, zsh, wallpapers, Brave padrão e agents-config do OpenCode.
+    ausentes), greetd/PAM, tema Breeze Dark (kdeglobals/kcminputrc — só chaves vazias — + GTK via
+    dconf/gsettings), apps padrão (Dolphin/KWrite/Gwenview/Okular/Dragon/Elisa), alacritty, zsh,
+    wallpapers, Brave padrão e agents-config do OpenCode.
 - `assets/` espelha os caminhos de destino e é instalado via `install_file`/`render_file`:
   `niri/`, `greetd/`, `pam.d/` (não sobrescrever o pam_selinux do pacote!), `alacritty/`, `zsh/`,
-  `sysctl.d/`, `oomd.conf`, `zram-generator.conf`, `yum.repos.d/terra.repo`, `wallpapers/`
-  (→ `/usr/share/myos-walls/`), `plugins-local/` (→ `~/.local/share/noctalia/plugins/`).
+  `gtk-3.0/` + `gtk-4.0/` (settings.ini com Breeze), `dconf/db/local.d/00-myos-dark`,
+  `profile.d/`, `sysctl.d/`, `oomd.conf`, `zram-generator.conf`, `yum.repos.d/terra.repo`,
+  `wallpapers/` (→ `/usr/share/myos-walls/`), `plugins-local/`
+  (→ `~/.local/share/noctalia/plugins/`).
   `assets/bin/` e `assets/libexec/` trazem helpers (`myos-wallpaper`, `myos-cpu-governor`,
-  `myos-remove-gnome`) e units systemd (`myos-cpu-governor.service`,
-  `myos-remove-gnome.service`).
+  `myos-remove-plasma`) e units systemd (`myos-cpu-governor.service`,
+  `myos-remove-plasma.service`).
 - Segurança de sessão: nada é parado durante a instalação; efeitos valem no próximo boot. A
-  remoção do GDM/GNOME é agendada via `myos-remove-gnome.service` (roda antes do login) — nunca na
-  sessão viva (o `%preun` do gdm derruba a sessão no meio da transação dnf).
-- Malcontent protegido de propósito: todo `flatpak run` consulta parental controls via
-  AccountsService, e a permissão polkit da consulta vem do pacote `malcontent` (dependência do
-  GNOME). Sem ele a consulta é negada e **nenhum flatpak abre** ("Not allowed to query parental
-  controls data for user N" — flatpak/flatpak#6142). `myos-remove-gnome` o marca como `user` +
-  `protected_packages`, e a seção 9 do `20-stack.sh` o garante/reinstala quando há flatpak.
+  remoção do shell do Plasma é agendada via `myos-remove-plasma.service` (roda antes do login) —
+  nunca na sessão viva (o `%preun` do plasmalogin mexe nos serviços systemd e derruba a sessão no
+  meio da transação dnf). O script move `/etc/dnf/protected.d/plasma-desktop.conf` durante a
+  remoção e protege da cascata o que mantém os apps KDE funcionais (`plasma-integration`,
+  `plasma-breeze`, `plasma-systemsettings`, `polkit-kde`, `xdg-desktop-portal-kde`) e o
+  `konsole` (terminal do dia a dia: nunca pode ser removido).
+- Malcontent (condicional): o `flatpak` consulta parental controls via AccountsService; **se** o
+  `accountsservice` da versão expõe a interface `com.endlessm.ParentalControls` (build com
+  malcontent) e o pacote `malcontent` for removido, todo `flatpak run` falha ("Not allowed to
+  query parental controls data for user N" — flatpak/flatpak#6142). O `myos-remove-plasma` o
+  protege quando presente, e a seção 9 do `20-stack.sh` só instala/repara quando o daemon tem o
+  suporte (checagem compile-time via `strings`); no Fedora 44 ele não tem, então nada é instalado.
+- VM de teste: o niri **rejeita renderização por software** (`llvmpipe`) por design — a VM
+  precisa de virtio-gpu com `accel3d=yes` + `gl=on` no Spice, senão a sessão fica em tela preta
+  (só aparece o aviso de depreciação do `systemd` no VT). Com o GL ligado ainda podem surgir
+  artefatos/cursor invertido (bug do QEMU — qemu#2315): o bloco `debug` comentado no
+  `assets/niri/config.kdl` (`disable-cursor-plane`, `disable-direct-scanout`,
+  `wait-for-frame-completion-before-queueing`) é o contorno — flags confirmadas no niri 26.04.
 
 ## Convenções
 

@@ -8,7 +8,7 @@
 # Fonte sugerida: jetbrains-mono-fonts (instalada por 20-stack.sh).
 
 [window]
-padding = { x = 14, y = 12 }
+padding = { x = 1, y = 1 }
 
 # Translúcido, no mesmo espírito da barra do Noctalia. Exige a window-rule do
 # Alacritty em assets/niri/config.kdl: ela liga o blur atrás da janela

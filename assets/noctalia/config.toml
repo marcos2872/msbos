@@ -70,7 +70,7 @@ active_opacity       = 1.0
 inactive_opacity     = 0.80
 # IDs de desktop entry (stem do .desktop, StartupWMClass ou Name).
 # Brave é "brave-browser", NÃO "com.brave.Browser".
-pinned = ["brave-browser", "dev.zed.Zed", "Alacritty", "onlyoffice-desktopeditors", "org.gnome.Nautilus"]
+pinned = ["brave-browser", "dev.zed.Zed", "Alacritty", "onlyoffice-desktopeditors", "org.kde.dolphin"]
 
 # ─── Notificações e janela de Settings em vidro ─────────────────────────────
 # Os defaults são quase opacos (notificação 0.97, Settings opaca).

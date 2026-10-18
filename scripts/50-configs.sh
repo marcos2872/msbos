@@ -2,6 +2,7 @@
 # 50-configs.sh — configurações finais:
 #   • niri (config.kdl do usuário + fallback do sistema)
 #   • Noctalia (esqueleto de config do usuário)
+#   • tema dark dos apps: Breeze Dark (o dark padrão do KDE) + GTK
 #   • greetd + PAM (greeter Noctalia se disponível)
 #   • papel de parede padrão + helper myos-wallpaper
 #   • Brave como navegador padrão do usuário
@@ -86,48 +87,54 @@ else
   done
 fi
 
-# ─── 2c. Tema escuro (sistema + usuário) — derivado da paleta macOS ──────────
-# O tema dark do Noctalia só pinta o shell Quickshell — apps GTK (xfce-polkit,
-# gnome-keyring, Nautilus), Qt (ONLYOFFICE) e Electron (OpenCode/Zed) leem o
-# dconf/portal + settings.ini + qt6ct/qt5ct + env, que por padrão é claro.
-# Fonte única da verdade: assets/noctalia/palettes/macOS.json (dark). Os
-# arquivos abaixo espelham essas cores (mSurface #0B0B0D, mSurfaceVariant
-# #17171A, mHover #1F1F22, mOnSurface #F5F5F7, mOutline #2C2C2E, acento
-# #5E5CE6); se a paleta mudar, atualize gtk*.css + qt*ct.conf junto.
+# ─── 2c. Tema dark dos apps: Breeze Dark (o dark padrão do KDE) ─────────────
+# O MyOS não entrega tema próprio: os apps usam o "Breeze Dark" do KDE. O
+# shell (Noctalia) segue com o visual próprio dele — ele não é KDE/GTK/Qt.
+# A fonte da verdade é o KDE do próprio usuário: o 1º bloco só PREENCHE chaves
+# que o usuário ainda não definiu no ~/.config/kdeglobals/kcminputrc (o System
+# Settings mexe nos MESMOS arquivos — uma escolha feita na GUI nunca é
+# sobrescrita). O resto garante o mesmo dark nos apps GTK/Electron, que leem
+# dconf/portal + settings.ini:
 #   • /etc/dconf/db/local.d/00-myos-dark: padrão de sistema (color-scheme +
 #     gtk/icon/cursor-theme) aplicado via `dconf update` — vale para todo usuário.
-#   • ~/.config/gtk-3.0|4.0/settings.ini + gtk.css: fallback lido direto pelo
-#     GTK, sem precisar de sessão D-Bus (cobre o xfce-polkit no primeiro login).
-#   • /etc/profile.d/myos-theme.sh: XCURSOR_* (cursor único no niri e nos apps)
-#     + QT_QPA_PLATFORMTHEME (Qt escuro via qt6ct/qt5ct).
-#   • ~/.config/qt6ct|qt5ct.conf: Fusion escuro para apps Qt.
+#   • ~/.config/gtk-3.0|4.0/settings.ini: fallback lido direto pelo GTK, sem
+#     precisar de sessão D-Bus (cobre diálogos no primeiro login).
+#   • /etc/profile.d/myos-theme.sh: XCURSOR_* (cursor breeze_cursors único no
+#     niri e nos apps) + QT_QPA_PLATFORMTHEME=kde (platform theme do KDE,
+#     plasma-integration — sem ele os apps Qt não aplicam o Breeze).
 #   • gsettings como TU: atualiza o banco dconf EXISTENTE do usuário (o default
 #     de sistema sozinho não muda um user db já criado como claro).
-# No Fedora 44+ não existe tema "Adwaita-dark" em disco — o Adwaita é embutido
-# no GTK e o escuro vem de prefer-dark-theme (GTK3) + color-scheme (GTK4).
 # Idempotente: arquivos de tema são dono do MyOS (install_file, com backup
-# .myos-bak); o gsettings só escreve quando o valor atual ainda não é o escuro.
+# .myos-bak); o gsettings só escreve quando o valor atual ainda não é o escuro;
+# o kwriteconfig6 só escreve no kdeglobals o que o usuário não escolheu.
+if [[ ${DRY_RUN} == 1 ]]; then
+  log "dry-run: preencheria Breeze Dark (ColorScheme/widgetStyle/Icons/cursor) no kdeglobals/kcminputrc de ${TU} — só o que ainda não foi definido"
+elif command -v kwriteconfig6 >/dev/null 2>&1; then
+  kcfg() {  # preenche a chave SÓ se o usuário ainda não escolheu (System Settings manda)
+    local file="$1" group="$2" key="$3" val="$4"
+    if [[ -f ${TU_HOME}/.config/${file} ]] \
+       && grep -qE "^${key}[[:space:]]*=" "${TU_HOME}/.config/${file}"; then
+      log "tema: ${file} ${key} já definido pelo usuário — mantido"
+      return 0
+    fi
+    run_cmd runuser -u "${TU}" -- env "HOME=${TU_HOME}" \
+      kwriteconfig6 --file "${file}" --group "${group}" --key "${key}" "${val}" \
+      || warn "tema: falha ao definir ${key}=${val} em ${file}"
+  }
+  kcfg kdeglobals General ColorScheme BreezeDark
+  kcfg kdeglobals KDE widgetStyle Breeze
+  kcfg kdeglobals Icons Theme breeze-dark
+  kcfg kcminputrc Mouse cursorTheme breeze_cursors
+else
+  warn "tema: kwriteconfig6 ausente (kde-cli-tools) — apps KDE/Qt usam o padrão do sistema"
+fi
 install_file "gtk-3.0/settings.ini" "${TU_HOME}/.config/gtk-3.0/settings.ini"
 install_file "gtk-4.0/settings.ini" "${TU_HOME}/.config/gtk-4.0/settings.ini"
-# overlay escuro (testado no diálogo do xfce-polkit): cobre o que o
-# prefer-dark não alcança no fallback (botões, headerbar, combobox).
-install_file "gtk-3.0/gtk.css" "${TU_HOME}/.config/gtk-3.0/gtk.css"
-install_file "gtk-4.0/gtk.css" "${TU_HOME}/.config/gtk-4.0/gtk.css"
 install_file "profile.d/myos-theme.sh" "/etc/profile.d/myos-theme.sh"
-install_file "qt6ct/qt6ct.conf" "${TU_HOME}/.config/qt6ct/qt6ct.conf"
-install_file "qt5ct/qt5ct.conf" "${TU_HOME}/.config/qt5ct/qt5ct.conf"
-# migração: a 1ª versão do MyOS apontava para "Adwaita-dark" (inexistente no
-# F44+) — o GTK caía no claro. Corrige só esse valor, sem tocar no resto.
-for _gtkrc in "${TU_HOME}/.config/gtk-3.0/settings.ini" "${TU_HOME}/.config/gtk-4.0/settings.ini"; do
-  if [[ -f ${_gtkrc} ]] && grep -q '^gtk-theme-name=Adwaita-dark' "${_gtkrc}"; then
-    run_cmd sed -i 's/^gtk-theme-name=Adwaita-dark/gtk-theme-name=Adwaita/' "${_gtkrc}" \
-      || warn "gtk: falha ao migrar ${_gtkrc} para Adwaita"
-  fi
-done
 install_file "dconf/db/local.d/00-myos-dark" "/etc/dconf/db/local.d/00-myos-dark"
 run_cmd dconf update || warn "dconf update falhou — padrão de sistema pode não aplicar"
 if [[ ${DRY_RUN} == 1 ]]; then
-  log "dry-run: definiria gtk/icon/cursor-theme=Adwaita e color-scheme=prefer-dark para ${TU}"
+  log "dry-run: definiria gtk-theme=Breeze, color-scheme=prefer-dark, icon-theme=breeze-dark e cursor=breeze_cursors para ${TU}"
 else
   # dbus-run-session permite rodar o gsettings sem sessão gráfica ativa; o
   # dconf persiste em ~/.config/dconf/user, então vale no próximo login.
@@ -143,10 +150,10 @@ else
       || run_cmd "${GSET_BASE[@]}" gsettings set org.gnome.desktop.interface "${chave}" "${valor}" \
       || warn "tema: falha ao definir ${chave}=${valor} para ${TU}"
   }
-  gset gtk-theme "'Adwaita'"
+  gset gtk-theme "'Breeze'"
   gset color-scheme "'prefer-dark'"
-  gset icon-theme "'Adwaita'"
-  gset cursor-theme "'Adwaita'"
+  gset icon-theme "'breeze-dark'"
+  gset cursor-theme "'breeze_cursors'"
   gset cursor-size "24"
   gset font-name "'Noto Sans 10'"
 fi
@@ -220,6 +227,37 @@ if command -v brave-browser >/dev/null 2>&1 || [[ ${DRY_RUN} == 1 ]]; then
   ok "Brave definido como navegador padrão (https/http)"
 fi
 
+# ─── 6b. Apps KDE como padrões (do usuário) ───────────────────────────────────
+mime_default() {
+  local desktop="$1"; shift
+  run_cmd runuser -u "${TU}" -- env "HOME=${TU_HOME}" \
+    xdg-mime default "${desktop}" "$@" >/dev/null 2>&1 || true
+}
+if [[ -f /usr/share/applications/org.kde.dolphin.desktop ]] || [[ ${DRY_RUN} == 1 ]]; then
+  mime_default org.kde.dolphin.desktop inode/directory application/x-gnome-saved-search
+  ok "Dolphin definido como gerenciador de arquivos padrão"
+fi
+if [[ -f /usr/share/applications/org.kde.kwrite.desktop ]] || [[ ${DRY_RUN} == 1 ]]; then
+  mime_default org.kde.kwrite.desktop text/plain
+  ok "KWrite definido como editor de texto padrão"
+fi
+if [[ -f /usr/share/applications/org.kde.gwenview.desktop ]] || [[ ${DRY_RUN} == 1 ]]; then
+  mime_default org.kde.gwenview.desktop image/png image/jpeg image/webp
+  ok "Gwenview definido como visualizador de imagens padrão"
+fi
+if [[ -f /usr/share/applications/org.kde.okular.desktop ]] || [[ ${DRY_RUN} == 1 ]]; then
+  mime_default org.kde.okular.desktop application/pdf
+  ok "Okular definido como leitor de PDF padrão"
+fi
+if [[ -f /usr/share/applications/org.kde.dragonplayer.desktop ]] || [[ ${DRY_RUN} == 1 ]]; then
+  mime_default org.kde.dragonplayer.desktop video/mp4 video/x-matroska
+  ok "Dragon definido como player de vídeo padrão"
+fi
+if [[ -f /usr/share/applications/org.kde.elisa.desktop ]] || [[ ${DRY_RUN} == 1 ]]; then
+  mime_default org.kde.elisa.desktop audio/mpeg audio/flac audio/x-wav
+  ok "Elisa definido como player de áudio padrão"
+fi
+
 # ─── 7. Terminal: tema do alacritty + zsh com autocomplete ──────────────────
 # Também install_file_once: .zshrc e alacritty.toml são configs pessoais.
 install_file_once "alacritty/alacritty.toml" "${TU_HOME}/.config/alacritty/alacritty.toml"
@@ -234,7 +272,7 @@ if command -v zsh >/dev/null 2>&1 || [[ ${DRY_RUN} == 1 ]]; then
 fi
 
 # ─── 8. Permissões dos arquivos do usuário ──────────────────────────────────
-run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.config/niri" "${TU_HOME}/.config/noctalia" "${TU_HOME}/.config/alacritty" "${TU_HOME}/.config/gtk-3.0" "${TU_HOME}/.config/gtk-4.0" "${TU_HOME}/.config/qt6ct" "${TU_HOME}/.config/qt5ct" "${TU_HOME}/.local/state/noctalia" "${TU_HOME}/.local/share/noctalia"
+run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.config/niri" "${TU_HOME}/.config/noctalia" "${TU_HOME}/.config/alacritty" "${TU_HOME}/.config/gtk-3.0" "${TU_HOME}/.config/gtk-4.0" "${TU_HOME}/.local/state/noctalia" "${TU_HOME}/.local/share/noctalia"
 run_cmd chown "${TU}:${TU}" "${TU_HOME}/.zshrc"
 # o banco dconf do usuário pode ter sido criado agora pelo gsettings acima
 if [[ -e ${TU_HOME}/.config/dconf ]]; then
@@ -248,11 +286,15 @@ cat <<EOF
 
    • Tela de login do greetd (Noctalia Greeter, se instalado)
      com a sessão "niri" já disponível
+   • O shell do Plasma é removido no PRÓXIMO boot; os apps KDE ficam
+     (Dolphin, Konsole, Kate/KWrite, Okular, Gwenview, Spectacle...)
    • Shell: Noctalia v5 (barra, launcher, notificações, lock, OSD)
-   • Atalhos: Super+T terminal · Super+Space launcher · Super+S control center
+   • Tema dos apps: Breeze Dark (o dark padrão do KDE); Noctalia como está
+   • Atalhos: Super+T terminal (alacritty) · Super+Space launcher · Super+S control center
               Super+B Brave · Super+E Zed · Super+P monitores · Alt+Tab switcher
               Print screenshot (o restante são os defaults oficiais do niri)
    • Editor: Zed · IA no terminal: opencode · Office: ONLYOFFICE
+     Arquivos na LAN: LocalSend · VMs: virt-manager (libvirt no próximo login)
 
  Verificações pós-reboot:
    systemctl status greetd

@@ -176,7 +176,7 @@ para reinstalação/migração idêntica.
 
 ## 13. Relação com o MyOS atual
 
-- **MyOS (hoje)**: rota C — scripts bash idempotentes sobre Fedora Workstation. Serve como
+- **MyOS (hoje)**: rota C — scripts bash idempotentes sobre Fedora KDE. Serve como
   fonte dos perfis de GPU, tuning, serviços e configs.
 - **Agentic OS (ideia)**: evolução possível — empacotar o MyOS como imagem bootc, adicionar o
   daemon de agente e o chat. O noção de "plugáveis" e "reversível" já está no DNA dos scripts;

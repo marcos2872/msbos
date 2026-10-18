@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# MyOS — bootstrap de uma base Fedora para o stack niri + Noctalia (baixo uso de RAM).
+# MyOS — bootstrap de uma base Fedora KDE para o stack niri + Noctalia (baixo uso de RAM).
 #
 # Uso:
 #   ./install.sh [opções]
 #
 # Opções:
 #   --dry-run              Simula tudo (não instala, não remove, não escreve)
-#   --yes, -y              Autoriza operações destrutivas (remover GDM/GNOME) sem perguntar
+#   --yes, -y              Autoriza operações destrutivas (remover o shell do Plasma) sem perguntar
 #   --no-greeter           Não adiciona o repo Terra (usa o greeter padrão do greetd)
 #   --user NOME            Usuário-alvo da configuração (padrão: quem chamou o sudo)
 #   --gpu-profile PERFIL   Força: auto|intel|amd|nvidia|hybrid|none (padrão: auto)
@@ -14,14 +14,15 @@
 #   -h, --help             Esta ajuda
 #
 # Imagem base:
-#   Funciona em qualquer Fedora 44/45 já instalado — Workstation (remove o GNOME/GDM)
-#   ou instalação mínima (adiciona o stack).
-#   Download: Workstation → https://fedoraproject.org/workstation/download
+#   Funciona em qualquer Fedora 44/45 já instalado — Fedora KDE (remove o shell do
+#   Plasma/Plasma Login Manager e mantém os apps KDE) ou instalação mínima
+#   (adiciona o stack completo).
+#   Download: KDE → https://fedoraproject.org/kde/download
 #             mínima (Everything, "Minimal Install") → https://fedoraproject.org/misc
 #
 #   Para testar numa VM:
 #     virt-install --name myos --memory 4096 --vcpus 3 --disk size=25 \
-#       --cdrom /caminho/Fedora-Workstation-Live-x86_64-44.iso \
+#       --cdrom /caminho/Fedora-KDE-Desktop-Live-44.iso \
 #       --os-variant fedora-unknown --graphics spice
 #
 #   Depois, dentro da VM: git clone https://github.com/marcos2872/my-os && ./install.sh
@@ -66,7 +67,7 @@ if [[ ${EUID} -ne 0 && ${DRY_RUN} -eq 0 ]]; then
 fi
 
 printf '\n%s\n' "╔══════════════════════════════════════════════════════════╗"
-printf '%s\n'   "║  MyOS — Fedora + niri + Noctalia (baixo uso de RAM)      ║"
+printf '%s\n'   "║  MyOS — Fedora KDE + niri + Noctalia (baixo uso de RAM)  ║"
 printf '%s\n\n' "╚══════════════════════════════════════════════════════════╝"
 
 if [[ ${DRY_RUN} == 1 ]]; then

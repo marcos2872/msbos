@@ -54,9 +54,10 @@ window-rule {
     draw-border-with-background false
 }
 
-// Diálogo do polkit: modal pequeno e centralizado, nunca tela cheia.
+// Diálogo do polkit (KDE): modal pequeno e centralizado, nunca tela cheia.
 window-rule {
-    match app-id="xfce-polkit"
+    match app-id="polkit-kde-authentication-agent-1"
+    match app-id="polkit-kde"
     open-floating true
     default-column-width { fixed 480; }
     default-window-height { fixed 240; }
@@ -81,17 +82,23 @@ window-rule {
 // Permite ações de notificação e ativação de janela vindas do Noctalia
 debug {
     honor-xdg-activation-with-invalid-serial
+
+    // VM (QEMU/KVM + virtio-gpu-gl/virgl): contorna bugs de driver do QEMU — o
+    // cursor aparece de cabeça para baixo (qemu#2315) e/ou surgem artefatos na
+    // tela. Descomente as 3 linhas ao rodar o MyOS dentro de uma VM:
+    // disable-cursor-plane
+    // disable-direct-scanout
+    // wait-for-frame-completion-before-queueing
 }
 
 // Shell Noctalia: barra, launcher, notificações, OSD, lock e wallpaper
 // (o wallpaper é gerenciado pelo Noctalia; para usar swaybg no lugar,
 //  descomente a linha abaixo e remova a layer-rule do noctalia-wallpaper)
 spawn-at-startup "noctalia"
-// Agente de autenticação polkit: sem ele o udisks2 nega montar volumes
-// externos no Nautilus ("Not authorized to perform operation").
-// xfce-polkit (GTK3, 23 KiB): segue o tema escuro e não cria janela na taskbar
-// (lxpolkit é GTK2 datado; mate-polkit poluía a taskbar do Noctalia).
-spawn-at-startup "/usr/libexec/xfce-polkit"
+// Agente de autenticação polkit (KDE): sem ele o udisks2 nega montar volumes
+// externos no Dolphin ("Not authorized to perform operation").
+// polkit-kde segue o tema Breeze do KDE (o MyOS não usa mais Kvantum).
+spawn-at-startup "/usr/libexec/kf6/polkit-kde-authentication-agent-1"
 // spawn-at-startup "myos-wallpaper"
 
 binds {
@@ -111,6 +118,7 @@ binds {
     Mod+Shift+Slash { show-hotkey-overlay; }
 
     Mod+T hotkey-overlay-title="Open a Terminal: alacritty" { spawn "alacritty"; }
+    Mod+Shift+T hotkey-overlay-title="New Terminal window: alacritty" { spawn "alacritty"; }
     Mod+D hotkey-overlay-title="Launcher (Noctalia)" { spawn-sh "noctalia msg panel-toggle launcher"; }
     Super+Alt+L hotkey-overlay-title="Lock (Noctalia)" { spawn-sh "noctalia msg session lock"; }
 

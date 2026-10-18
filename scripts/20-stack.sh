@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # 20-stack.sh — stack base (niri + Noctalia + greetd + áudio + utilitários)
+# sobre a base Fedora KDE: apps KDE mantidos, tema dark do KDE (Breeze Dark)
 # e aplicativos do usuário (Zed, OpenCode v2, Brave, ONLYOFFICE).
 #
 # Métodos de instalação:
@@ -9,6 +10,10 @@
 #   OpenCode v2 CLI              → script oficial  (curl -fsSL https://opencode.ai/v2/install | bash)
 #   Brave                        → repo oficial RPM da Brave Software
 #   ONLYOFFICE                   → repo oficial RPM da ONLYOFFICE
+#   LocalSend                    → flatpak oficial do Flathub (o Fedora não empacota; a release não tem RPM)
+#
+# A base é o Fedora KDE: os APPS KDE ficam (o usuário pediu mantê-los) e só o
+# shell do Plasma sai de cena — remoção AGENDADA para o próximo boot (seção 8).
 
 set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/lib/common.sh"
@@ -83,21 +88,30 @@ install_lazydocker_verified() {
 }
 
 # ─── 1. Núcleo (obrigatório) ────────────────────────────────────────────────
+# breeze-icon-theme/breeze-cursor-theme: ícones (breeze-dark) e cursor
+# (breeze_cursors) do KDE — entram no CORE para sobreviverem a qualquer
+# limpeza/remoção (a cascata do dnf não leva pacotes instalados como user).
 CORE=(
   greetd niri noctalia jemalloc
   pipewire pipewire-pulse wireplumber
   xdg-desktop-portal xdg-desktop-portal-gtk
-  polkit xfce-polkit udisks2 gvfs gvfs-mtp
+  polkit polkit-kde udisks2 gvfs gvfs-mtp
   NetworkManager
   tuned
   curl git xdg-utils
   google-noto-sans-fonts google-noto-sans-mono-fonts
-  adwaita-icon-theme adwaita-cursor-theme
+  breeze-icon-theme breeze-cursor-theme
 )
 log "stack: instalando núcleo: ${CORE[*]}"
 if ! run_cmd dnf -y "${DNFOPT}" install "${CORE[@]}"; then
-  err "falha ao instalar o núcleo do stack — abortando"
-  exit 1
+  # espelho fora de sincronia (checksum de repomd/404 de repodata) é
+  # transitório: limpa o cache e tenta UMA vez de novo antes de desistir
+  warn "núcleo: falha na 1ª tentativa (espelho fora de sincronia?) — limpando cache e tentando de novo"
+  run_cmd dnf clean all || true
+  if ! run_cmd dnf -y "${DNFOPT}" install "${CORE[@]}"; then
+    err "falha ao instalar o núcleo do stack — abortando"
+    exit 1
+  fi
 fi
 ok "núcleo instalado"
 
@@ -113,11 +127,13 @@ else
 fi
 
 # ─── 2. Utilitários leves ───────────────────────────────────────────────────
-# nautilus + ntfs/exfat: sem eles o erro é "Not authorized to perform operation"
-# (udisks2 sem gvfs) ou volume ilegível (NTFS/exFAT de SSDs externos).
-# seahorse: gerencia o cofre "Login" do gnome-keyring (sincronizar a senha do
-# cofre com a do login para o PAM do greetd destravar sozinho no boot).
-UTILS=(alacritty grim slurp brightnessctl playerctl nautilus seahorse ntfs-3g exfatprogs dosfstools)
+# dolphin + gvfs/ntfs-exfat: sem eles o erro é "Not authorized to perform
+# operation" (udisks2 sem gvfs) ou volume ilegível (NTFS/exFAT de SSDs externos).
+# spectacle: capturas/anotações (grim/slurp saíram — os atalhos Print usam o
+# screenshot nativo do niri).
+# Cofre: a base KDE usa o KWallet (kwalletd + pam-kwallet — destrava no login
+# pelo PAM do greetd); não há seahorse/gnome-keyring no stack.
+UTILS=(alacritty brightnessctl playerctl ntfs-3g exfatprogs dosfstools)
 for p in "${UTILS[@]}"; do
   run_cmd dnf -y "${DNFOPT}" install "${p}" || warn "utilitário '${p}' indisponível — ignorado"
 done
@@ -125,19 +141,72 @@ for p in swaybg wlsunset ddcutil pipewire-alsa; do
   run_cmd dnf -y "${DNFOPT}" install "${p}" || warn "opcional '${p}' indisponível — ignorado"
 done
 
-# ─── 2a. Tema escuro GTK/libadwaita/Qt ─────────────────────────────────────────
-# Os diálogos GTK (xfce-polkit, gnome-keyring, Nautilus) caem no Adwaita claro
-# mesmo com o Noctalia em dark se o color-scheme não for prefer-dark. O dconf
-# persiste esse padrão (libadwaita/portal/Electron). O Adwaita é embutido no
-# GTK no Fedora 44+ — nenhum pacote extra de tema GTK é necessário, mas os
-# pacotes de ícones/cursor são declarados no CORE para a remoção do GNOME não
-# os levar embora. Apps Qt (ex.: ONLYOFFICE) usam qt6ct/qt5ct com Fusion escuro
-# (config em assets/qt6ct|qt5ct + env em assets/profile.d/myos-theme.sh).
-run_cmd dnf -y "${DNFOPT}" install dconf \
-  || warn "tema escuro: 'dconf' indisponível — diálogos GTK podem ficar claros"
-for p in qt6ct qt5ct; do
-  run_cmd dnf -y "${DNFOPT}" install "${p}" || warn "tema Qt: '${p}' indisponível — app Qt pode ficar claro"
+# ─── 2b. Curadoria dos apps KDE ─────────────────────────────────────────────
+# A base KDE já traz os apps padrão; o MyOS remove só o que não se usa num
+# desktop de dev: jogos, a suíte PIM/e-mail (substituível por webmail) e o
+# pacote de ajuda/acessibilidade. Remoção ao vivo é segura — são apps, sem
+# scriptlet que derruba a sessão (o SHELL do Plasma sai de cena no próximo
+# boot, agendado na seção 8: esse sim derrubaria a sessão).
+KDE_REMOVE=(
+  kmahjongg kmines kpat                            # jogos
+  kmail kontact korganizer kaddressbook akregator  # PIM/e-mail (cascata kdepim-*)
+  neochat                                          # cliente Matrix
+  kmouth kcharselect khelpcenter                   # fala/char picker/ajuda
+)
+for p in "${KDE_REMOVE[@]}"; do
+  if rpm -q "${p}" >/dev/null 2>&1; then
+    run_cmd dnf -y "${DNFOPT}" remove "${p}" || warn "manter '${p}': falha na remoção"
+  fi
 done
+
+# ─── 2c. Tema dark do KDE (Breeze) + apps garantidos ────────────────────────
+# O MyOS não entrega tema próprio: os apps usam o "Breeze Dark", o dark padrão
+# do KDE (o mesmo que o Plasma usa). Nada de Kvantum/qt6ct/qt5ct — o visual vem
+# de:
+#   • ~/.config/kdeglobals (ColorScheme=BreezeDark, widgetStyle=Breeze,
+#     ícones breeze-dark, cursor breeze_cursors) — preenchido na etapa
+#     50-configs via kwriteconfig6 (o System Settings mexe no MESMO arquivo e
+#     o MyOS só preenche chaves ainda vazias);
+#   • plasma-integration: platform theme Qt6 "kde" (QT_QPA_PLATFORMTHEME em
+#     /etc/profile.d/myos-theme.sh) — sem ele os apps Qt ficam sem o Breeze;
+#   • breeze-gtk-common: tema GTK Breeze/Breeze-Dark (lido pelo settings.ini);
+#   • pam-kwallet: destrava o cofre KWallet no login (o PAM do greetd no
+#     Fedora já chama o pam_kwallet5.so).
+# Todos são exigidos pelo Plasma: após a remoção do shell (seção 8) eles são
+# marcados como user-installed para a cascata do dnf não levá-los embora.
+for p in plasma-integration plasma-breeze breeze-gtk-common pam-kwallet kde-cli-tools dconf; do
+  run_cmd dnf -y "${DNFOPT}" install "${p}" \
+    || warn "tema: '${p}' indisponível — o visual dos apps pode divergir do KDE"
+done
+# Apps KDE que o MyOS garante presentes (a base KDE já os tem — o Dolphin, o
+# Konsole, o Kate/KWrite etc. são os apps do dia a dia; numa instalação mínima
+# eles completam o desktop). Sem haruna/strawberry/ksystemlog: os equivalentes
+# padrão do KDE são dragon/elisa/kjournald.
+KDE_APPS=(dolphin dolphin-plugins konsole kwrite okular gwenview ark kcalc
+  kamoso spectacle skanpage krdc krfb kolourpaint kde-connect kfind
+  keditbookmarks kwalletmanager5 kjournald dragon elisa-player filelight
+  kde-partitionmanager plasma-systemmonitor plasma-systemsettings kinfocenter)
+for p in "${KDE_APPS[@]}"; do
+  run_cmd dnf -y "${DNFOPT}" install "${p}" || warn "kde: '${p}' indisponível — ignorado"
+done
+# Marca os apps garantidos como user-installed (uma única chamada do dnf).
+# Sem isso, um app que já veio como dependência do Plasma (ex.: o Konsole)
+# poderia ser levado na cascata da remoção do shell no próximo boot
+# (clean_requirements_on_remove). Marcar como user-installed protege da
+# cascata, mas o pacote continua removível se o usuário quiser.
+KDE_INSTALADOS=()
+for p in "${KDE_APPS[@]}"; do
+  rpm -q "${p}" >/dev/null 2>&1 && KDE_INSTALADOS+=("${p}")
+done
+if ((${#KDE_INSTALADOS[@]} > 0)); then
+  run_cmd dnf -y mark user "${KDE_INSTALADOS[@]}" \
+    || warn "kde: falha ao marcar os apps garantidos como user-installed"
+fi
+# Baloo (indexador do Dolphin): come RAM/CPU — desligado de propósito.
+if command -v balooctl6 >/dev/null 2>&1; then
+  run_cmd runuser -u "${TU}" -- env "HOME=${TU_HOME}" balooctl6 disable \
+    || warn "baloo: falha ao desligar o indexador"
+fi
 
 # ─── 3. Terminal: zsh com autocomplete + fonte ──────────────────────────────
 TERM_PKGS=(zsh zsh-autosuggestions zsh-syntax-highlighting fzf bash-completion jetbrains-mono-fonts)
@@ -266,53 +335,78 @@ else
   fi
 fi
 
-# ─── 8. GDM/GNOME (remoção AGENDADA para o próximo boot) ────────────────────
-# NUNCA removemos o desktop em uso: o %preun do gdm executa
-# "systemctl disable --now gdm.service", que para o gdm e derruba a sessão
-# gráfica atual — matando o instalador no meio da transação dnf (isso já
-# congelou uma máquina de verdade). A remoção é agendada via systemd para
-# rodar no próximo boot, ANTES do login (myos-remove-gnome.service).
+# LocalSend — compartilhamento de arquivos na LAN (alternativa ao AirDrop).
+# O Fedora não empacota e a release oficial não publica RPM: instalamos o
+# flatpak OFICIAL do desenvolvedor no Flathub (org.localsend.localsend_app —
+# o mesmo canal indicado no site oficial). O remote flathub é criado se faltar.
+# Idempotente: se o app já está instalado, não faz nada.
+LOCALSEND_ID='org.localsend.localsend_app'
+if ! command -v flatpak >/dev/null 2>&1; then
+  warn "LocalSend: flatpak ausente — instale pelo Flathub (${LOCALSEND_ID})"
+elif flatpak list --app --columns=application 2>/dev/null | grep -qx "${LOCALSEND_ID}"; then
+  ok "LocalSend já instalado (flatpak)"
+else
+  log "stack: LocalSend (flatpak oficial do Flathub)"
+  flatpak remotes --columns=name 2>/dev/null | grep -qx flathub \
+    || run_cmd flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo \
+    || warn "LocalSend: falha ao adicionar o remote flathub"
+  run_cmd flatpak install -y flathub "${LOCALSEND_ID}" \
+    || warn "LocalSend: falha na instalação pelo flatpak"
+fi
+
+# ─── 8. Shell do Plasma (remoção AGENDADA para o próximo boot) ──────────────
+# NUNCA removemos o desktop em uso: o %preun do plasmalogin/plasma-* mexe nos
+# serviços systemd (remove-system-units para/desabilita o plasmalogin), o que
+# derruba a sessão gráfica atual — matando o instalador no meio da transação
+# dnf (o mesmo valia para o gdm). A remoção é agendada via systemd para rodar
+# no próximo boot, ANTES do login (myos-remove-plasma.service).
+# Sai só o SHELL do Plasma (desktop/workspace/login manager + wizard de
+# primeiro login). Os apps KDE ficam — inclusive o plasma-discover, que segue
+# funcionando com o PackageKit.
 if [[ ${SKIP_REMOVE:-0} == 1 ]]; then
   log "stack: remoções desativadas (--skip-remove)"
 else
   REMOVE_PKGS=()
-  for heavy in gdm gnome-shell gnome-session gnome-settings-daemon gnome-control-center gnome-software; do
+  for heavy in plasma-desktop plasma-workspace plasma-login-manager plasma-setup plasma-welcome; do
     if rpm -q "${heavy}" >/dev/null 2>&1; then
       REMOVE_PKGS+=("${heavy}")
     fi
   done
   if ((${#REMOVE_PKGS[@]} > 0)); then
-    if exige_ok "agendar a remoção do GDM/GNOME (${REMOVE_PKGS[*]}) para o próximo boot?"; then
-      install_file "libexec/myos-remove-gnome" "/usr/local/libexec/myos-remove-gnome"
-      run_cmd chmod 755 /usr/local/libexec/myos-remove-gnome
-      install_file "myos-remove-gnome.service" "/etc/systemd/system/myos-remove-gnome.service"
-      run_cmd systemctl enable myos-remove-gnome.service >/dev/null 2>&1 || true
-      ok "GDM/GNOME serão removidos no PRÓXIMO BOOT (antes do login, sem sessão em uso)"
+    if exige_ok "agendar a remoção do shell do Plasma (${REMOVE_PKGS[*]}) para o próximo boot?"; then
+      install_file "libexec/myos-remove-plasma" "/usr/local/libexec/myos-remove-plasma"
+      run_cmd chmod 755 /usr/local/libexec/myos-remove-plasma
+      install_file "myos-remove-plasma.service" "/etc/systemd/system/myos-remove-plasma.service"
+      run_cmd systemctl enable myos-remove-plasma.service >/dev/null 2>&1 || true
+      ok "shell do Plasma será removido no PRÓXIMO BOOT (antes do login, sem sessão em uso)"
     else
-      warn "GDM/GNOME mantidos — serão apenas mascarados em 30-services.sh"
+      warn "shell do Plasma mantido — será apenas mascarado em 30-services.sh"
     fi
   fi
 fi
 
 # ─── 9. Flatpak × controle parental (malcontent) ────────────────────────────
-# Todo `flatpak run` consulta parental controls via AccountsService, e a ação
-# polkit dessa consulta vive no pacote malcontent. Sem ele a consulta é negada
-# e NENHUM flatpak abre ("Not allowed to query parental controls data for
-# user N" — flatpak/flatpak#6142). No Workstation ele chega como dependência
-# do GNOME; aqui garantimos que exista (reparo para máquinas onde a remoção o
-# levou embora) e o fixamos como escolha do usuário, para a cascata do dnf5
-# não removê-lo de novo (libexec/myos-remove-gnome também o protege).
+# Só importa quando o accounts-daemon desta versão do Fedora tem o suporte a
+# parental controls compilado (interface com.endlessm.ParentalControls). Nesse
+# caso, se o pacote malcontent (dono da regra polkit da consulta) for removido,
+# TODO `flatpak run` falha com "Not allowed to query parental controls data
+# for user N" (flatpak/flatpak#6142). A checagem abaixo é compile-time: sem a
+# interface no daemon, o flatpak usa o fallback e o malcontent é dispensável.
 if command -v flatpak >/dev/null 2>&1; then
-  if rpm -q malcontent >/dev/null 2>&1; then
-    run_cmd dnf -y mark user malcontent \
-      || warn "malcontent: falha ao marcar como user-installed"
+  if grep -qs 'com\.endlessm\.ParentalControls' /usr/libexec/accounts-daemon 2>/dev/null; then
+    if rpm -q malcontent >/dev/null 2>&1; then
+      run_cmd dnf -y mark user malcontent \
+        || warn "malcontent: falha ao marcar como user-installed"
+    else
+      warn "flatpak + parental controls: malcontent ausente — reparando (sem ele nenhum flatpak abriria)"
+      run_cmd dnf -y "${DNFOPT}" install malcontent \
+        || warn "malcontent: falha na instalação — flatpaks podem não abrir"
+      # o accounts-daemon expõe as interfaces de parental controls ao subir;
+      # o try-restart recarrega (não faz nada se o serviço estiver parado)
+      run_cmd systemctl try-restart accounts-daemon || true
+    fi
   else
-    warn "flatpak: malcontent ausente — nenhum flatpak abriria; reinstalando"
-    run_cmd dnf -y "${DNFOPT}" install malcontent \
-      || warn "malcontent: falha na instalação — flatpaks podem não abrir"
-    # o accounts-daemon expõe as interfaces de parental controls ao subir;
-    # o try-restart recarrega (não faz nada se o serviço estiver parado)
-    run_cmd systemctl try-restart accounts-daemon || true
+    log "stack: accounts-daemon sem parental controls — malcontent não é necessário"
   fi
 else
   log "stack: flatpak ausente — malcontent não é necessário"

@@ -43,25 +43,28 @@ window-rule {
 // depois (a ordem importa: regra posterior sobrepõe). A opacidade é
 // multiplicada pela própria da janela (ex.: alacritty com 0.85 no
 // alacritty.toml fica ~0.8 na tela).
+// draw-border-with-background false: por padrão o niri desenha o anel de foco
+// (que só existe na janela ATIVA) como retângulo sólido ATRÁS da janela — com
+// transparência, o retângulo tapava o wallpaper e o efeito "sumia" ao focar.
+// Com false, o anel vira um contorno AO REDOR da janela e a transparência fica
+// igual com ou sem foco (como no KWin, que é 94 para ativa e inativa).
 window-rule {
     opacity 0.94
+    draw-border-with-background false
 }
 
-// Terminal translúcido no formato vidro. ATENÇÃO: `background-effect` só
-// existe a partir do niri 26.04 — em versão mais antiga o config inteiro
-// falha ao carregar (nó inesperado), então remova este bloco se um dia o
-// pacote de `niri` voltar a ser mais velho.
+// Terminal translúcido no formato vidro (combina com opacity = 0.85 em
+// assets/alacritty/alacritty.toml; o draw-border-with-background da regra
+// global cuida do anel de foco). ATENÇÃO: `background-effect` só existe a
+// partir do niri 26.04 — em versão mais antiga o config inteiro falha ao
+// carregar (nó inesperado), então remova este bloco se um dia o pacote de
+// `niri` voltar a ser mais velho.
 window-rule {
     match app-id="Alacritty"
 
     background-effect {
         blur true
     }
-
-    // Sem isso o anel de foco é desenhado como retângulo sólido ATRÁS da
-    // janela e aparece através da transparência (tom escuro ao focar o
-    // terminal). Combina com opacity = 0.85 em assets/alacritty/alacritty.toml.
-    draw-border-with-background false
 }
 
 // Diálogo do polkit (KDE): modal pequeno e centralizado, nunca tela cheia.
@@ -79,14 +82,6 @@ window-rule {
     open-floating true
     default-column-width { fixed 1080; }
     default-window-height { fixed 920; }
-}
-
-// ONLYOFFICE (X11 via xwayland, CSD próprio): o anel como fundo sólido vaza
-// em volta da janela e parece moldura grossa — desenha o anel ao redor.
-window-rule {
-    match app-id="ONLYOFFICE"
-    match app-id="onlyoffice"
-    draw-border-with-background false
 }
 
 // Permite ações de notificação e ativação de janela vindas do Noctalia

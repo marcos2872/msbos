@@ -37,6 +37,16 @@ window-rule {
     clip-to-geometry true
 }
 
+// Transparência global: 94% de opacidade em todas as janelas. O MyOS não roda
+// o KWin, então a regra "Transparência Global" do KDE (opacityactive/inactive
+// = 94) vira esta window-rule sem match — genérica primeiro, específicas
+// depois (a ordem importa: regra posterior sobrepõe). A opacidade é
+// multiplicada pela própria da janela (ex.: alacritty com 0.85 no
+// alacritty.toml fica ~0.8 na tela).
+window-rule {
+    opacity 0.94
+}
+
 // Terminal translúcido no formato vidro. ATENÇÃO: `background-effect` só
 // existe a partir do niri 26.04 — em versão mais antiga o config inteiro
 // falha ao carregar (nó inesperado), então remova este bloco se um dia o

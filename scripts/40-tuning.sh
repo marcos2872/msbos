@@ -21,7 +21,19 @@ if [[ -f /etc/zram-generator.conf ]] && grep -q 'MyOS' /etc/zram-generator.conf;
   run_cmd rm -f /etc/zram-generator.conf
   log "tuning: removido /etc/zram-generator.conf (path errado de versão antiga)"
 fi
-ok "zram configurado (50% da RAM como swap zstd; aplica no próximo boot)"
+# Sanidade: roda o próprio generator contra a config recém-instalada. Um parse
+# inválido (ex.: "50%") não daria erro visível no boot — apenas o sistema
+# ficaria sem swap. Falha aqui = bug nosso: aborta o install na hora.
+if [[ ${DRY_RUN} == 0 && -x /usr/lib/systemd/system-generators/zram-generator ]]; then
+  gen_dir="$(mktemp -d)"
+  if ! /usr/lib/systemd/system-generators/zram-generator "${gen_dir}" >/dev/null 2>"${gen_dir}/err"; then
+    err "zram-generator rejeitou /etc/systemd/zram-generator.conf: $(head -n1 "${gen_dir}/err")"
+    rm -rf "${gen_dir}"
+    exit 1
+  fi
+  rm -rf "${gen_dir}"
+fi
+ok "zram configurado (~50% da RAM, máx 8 GiB, como swap zstd; aplica no próximo boot)"
 
 # ─── 2. sysctl de memória ───────────────────────────────────────────────────
 mem_kb="$(awk '/^MemTotal:/{print $2}' /proc/meminfo)"

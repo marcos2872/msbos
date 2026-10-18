@@ -2,6 +2,12 @@
 # Autocomplete: sugestões inline do histórico (aceite com → ou End),
 # syntax highlighting e fzf (Ctrl+R para histórico fuzzy, Ctrl+T arquivos).
 
+# ─── PATH do usuário ────────────────────────────────────────────────────────
+# ~/.local/bin: instaladores de apps (Zed, uv, pipx...) colocam binários aqui.
+typeset -U path
+path=("$HOME/.local/bin" $path)
+export PATH
+
 # ─── Histórico ──────────────────────────────────────────────────────────────
 HISTFILE=~/.zsh_history
 HISTSIZE=10000

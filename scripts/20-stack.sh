@@ -269,6 +269,10 @@ log "stack: Zed (script oficial: curl -fsSL https://zed.dev/install.sh | sh)"
 run_cmd runuser -u "${TU}" -- env "HOME=${TU_HOME}" "SHELL=${TU_SHELL}" \
   bash -c 'curl -fsSL https://zed.dev/install.sh | sh' \
   || warn "Zed: falha na instalação pelo script oficial"
+# o instalador oficial instala em ~/.local/bin, fora do PATH de sessões
+# gráficas (niri); o symlink garante o comando no Super+E e em qualquer shell
+run_cmd ln -sf "${TU_HOME}/.local/bin/zed" /usr/local/bin/zed \
+  || warn "Zed: falha ao criar symlink em /usr/local/bin"
 
 # OpenCode v2 CLI — script oficial (instala em ~/.opencode/bin).
 # Se já houver versão >= a mais recente instalada, pula a instalação e vai

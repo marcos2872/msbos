@@ -141,23 +141,35 @@ for p in swaybg wlsunset ddcutil pipewire-alsa; do
   run_cmd dnf -y "${DNFOPT}" install "${p}" || warn "opcional '${p}' indisponível — ignorado"
 done
 
-# ─── 2b. Curadoria dos apps KDE ─────────────────────────────────────────────
+# ─── 2b. Curadoria: apps KDE e LibreOffice que o MyOS não usa ───────────────
 # A base KDE já traz os apps padrão; o MyOS remove só o que não se usa num
-# desktop de dev: jogos, a suíte PIM/e-mail (substituível por webmail) e o
-# pacote de ajuda/acessibilidade. Remoção ao vivo é segura — são apps, sem
-# scriptlet que derruba a sessão (o SHELL do Plasma sai de cena no próximo
-# boot, agendado na seção 8: esse sim derrubaria a sessão).
-KDE_REMOVE=(
-  kmahjongg kmines kpat                            # jogos
-  kmail kontact korganizer kaddressbook akregator  # PIM/e-mail (cascata kdepim-*)
-  neochat                                          # cliente Matrix
-  kmouth kcharselect khelpcenter                   # fala/char picker/ajuda
-)
-for p in "${KDE_REMOVE[@]}"; do
-  if rpm -q "${p}" >/dev/null 2>&1; then
-    run_cmd dnf -y "${DNFOPT}" remove "${p}" || warn "manter '${p}': falha na remoção"
+# desktop de dev: jogos, a suíte PIM/e-mail (substituível por webmail), o
+# pacote de ajuda/acessibilidade e o LibreOffice (a suíte de escritório do
+# MyOS é o ONLYOFFICE, instalado na seção 7). Remoção ao vivo é segura — são
+# apps, sem scriptlet que derruba a sessão (o SHELL do Plasma sai de cena no
+# próximo boot, agendado na seção 8: esse sim derrubaria a sessão).
+if [[ ${SKIP_REMOVE:-0} == 1 ]]; then
+  log "stack: curadoria: remoções desativadas (--skip-remove)"
+else
+  KDE_REMOVE=(
+    kmahjongg kmines kpat                            # jogos
+    kmail kontact korganizer kaddressbook akregator  # PIM/e-mail (cascata kdepim-*)
+    neochat                                          # cliente Matrix
+    kmouth kcharselect khelpcenter                   # fala/char picker/ajuda
+  )
+  for p in "${KDE_REMOVE[@]}"; do
+    if rpm -q "${p}" >/dev/null 2>&1; then
+      run_cmd dnf -y "${DNFOPT}" remove "${p}" || warn "manter '${p}': falha na remoção"
+    fi
+  done
+  # LibreOffice inteiro (writer/calc/impress... + langpacks): o glob leva junto
+  # as dependências exclusivas dele (ex.: java headless) pela cascata padrão do
+  # dnf. Idempotente: só age se a suíte estiver instalada.
+  if rpm -q libreoffice-core >/dev/null 2>&1; then
+    log "curadoria: removendo o LibreOffice (escritório do MyOS = ONLYOFFICE)"
+    run_cmd dnf -y "${DNFOPT}" remove 'libreoffice*' || warn "libreoffice: falha na remoção"
   fi
-done
+fi
 
 # ─── 2c. Tema dark do KDE (Breeze) + apps garantidos ────────────────────────
 # O MyOS não entrega tema próprio: os apps usam o "Breeze Dark", o dark padrão

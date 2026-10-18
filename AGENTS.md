@@ -85,14 +85,16 @@ Fluxo: `install.sh` (orquestrador) → `lib/common.sh` (helpers) → `scripts/NN
   - `50-configs.sh` — configurações finais: niri, Noctalia (`settings.toml` + plugins, só se
     ausentes), greetd/PAM, tema Breeze Dark (kdeglobals/kcminputrc — só chaves vazias — + GTK via
     dconf/gsettings), apps padrão (Dolphin/KWrite/Gwenview/Okular/Dragon/Elisa), alacritty, zsh,
-    wallpapers, Brave padrão e agents-config do OpenCode.
+    **autostart do usuário** (desliga o XwaylandVideoBridge no niri e aponta o seapplet para a
+    cópia com patch), wallpapers, Brave padrão e agents-config do OpenCode.
 - `assets/` espelha os caminhos de destino e é instalado via `install_file`/`render_file`:
   `niri/`, `greetd/`, `pam.d/` (não sobrescrever o pam_selinux do pacote!), `alacritty/`, `zsh/`,
   `gtk-3.0/` + `gtk-4.0/` (settings.ini com Breeze), `dconf/db/local.d/00-myos-dark`,
   `profile.d/`, `sysctl.d/`, `oomd.conf`, `zram-generator.conf`, `yum.repos.d/terra.repo`,
   `wallpapers/` (→ `/usr/share/myos-walls/`), `plugins-local/`
-  (→ `~/.local/share/noctalia/plugins/`).
+  (→ `~/.local/share/noctalia/plugins/`), `autostart/` (→ `~/.config/autostart/`).
   `assets/bin/` e `assets/libexec/` trazem helpers (`myos-wallpaper`, `myos-cpu-governor`,
+  `myos-seapplet` — cópia do applet do setroubleshoot com patch do GLib.GError — e
   `myos-remove-plasma`) e units systemd (`myos-cpu-governor.service`,
   `myos-remove-plasma.service`).
 - Segurança de sessão: nada é parado durante a instalação; efeitos valem no próximo boot. A

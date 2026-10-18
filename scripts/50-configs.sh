@@ -271,8 +271,30 @@ if command -v zsh >/dev/null 2>&1 || [[ ${DRY_RUN} == 1 ]]; then
   ok "shell padrão: zsh (sugestões inline + syntax highlight + fzf no Ctrl+R)"
 fi
 
-# ─── 8. Permissões dos arquivos do usuário ──────────────────────────────────
-run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.config/niri" "${TU_HOME}/.config/noctalia" "${TU_HOME}/.config/alacritty" "${TU_HOME}/.config/gtk-3.0" "${TU_HOME}/.config/gtk-4.0" "${TU_HOME}/.local/state/noctalia" "${TU_HOME}/.local/share/noctalia"
+# ─── 8. Autostart do usuário (XDG) ─────────────────────────────────────────
+# O systemd (xdg-autostart-generator) lê ~/.config/autostart, e o arquivo do
+# usuário tem precedência sobre o de /etc/xdg/autostart (mesmo nome).
+# install_file_once nesses dois: apagar o arquivo reverte para o padrão.
+if [[ -f /etc/xdg/autostart/sealertauto.desktop || ${DRY_RUN} == 1 ]]; then
+  # seapplet: o applet do setroubleshoot fechava notificações órfãs tratando só
+  # IOError, mas o Noctalia responde GLib.GError ("NotFound") — a exceção
+  # escapava para o abrt (popup "uncaught exception" a cada AVC). Aponta para a
+  # cópia com patch em /usr/local/bin/myos-seapplet.
+  install_file "bin/myos-seapplet" "/usr/local/bin/myos-seapplet"
+  run_cmd chmod 755 /usr/local/bin/myos-seapplet
+  install_file_once "autostart/sealertauto.desktop" "${TU_HOME}/.config/autostart/sealertauto.desktop"
+  ok "autostart: seapplet com patch (notificação órfã não derruba mais o applet)"
+fi
+if [[ -f /etc/xdg/autostart/org.kde.xwaylandvideobridge.desktop || ${DRY_RUN} == 1 ]]; then
+  # XwaylandVideoBridge: o .desktop do KDE não tem OnlyShowIn — sobe em
+  # qualquer sessão e, sob o niri (sem tray do Plasma), vira uma janela que
+  # não fecha. Desligado com Hidden=true (apague para reativar).
+  install_file_once "autostart/org.kde.xwaylandvideobridge.desktop" "${TU_HOME}/.config/autostart/org.kde.xwaylandvideobridge.desktop"
+  ok "autostart: XwaylandVideoBridge desligado (janela fantasma no niri)"
+fi
+
+# ─── 9. Permissões dos arquivos do usuário ──────────────────────────────────
+run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.config/niri" "${TU_HOME}/.config/noctalia" "${TU_HOME}/.config/alacritty" "${TU_HOME}/.config/autostart" "${TU_HOME}/.config/gtk-3.0" "${TU_HOME}/.config/gtk-4.0" "${TU_HOME}/.local/state/noctalia" "${TU_HOME}/.local/share/noctalia"
 run_cmd chown "${TU}:${TU}" "${TU_HOME}/.zshrc"
 # o banco dconf do usuário pode ter sido criado agora pelo gsettings acima
 if [[ -e ${TU_HOME}/.config/dconf ]]; then

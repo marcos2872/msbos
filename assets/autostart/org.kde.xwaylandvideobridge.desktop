@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Xwayland Video Bridge
+Type=Application
+Hidden=true
+# MyOS: desligado por padrão. O .desktop do KDE não traz OnlyShowIn (sobe em
+# qualquer sessão) e, sob o niri — sem o tray do Plasma — o app aparece como
+# uma janela que não fecha. Para reativar, apague este arquivo
+# (~/.config/autostart/org.kde.xwaylandvideobridge.desktop).

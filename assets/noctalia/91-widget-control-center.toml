@@ -6,8 +6,8 @@
 # lê todos os .toml de ~/.config/noctalia/, a configuração vale também para
 # instalações existentes, sem tocar no settings.toml da GUI.
 #
-# custom_image_colorize = false mantém o violeta da marca. Mude para true se
-# preferir o ícone monocromático na cor do widget (Settings → Barra → ícone).
+# custom_image_colorize = true deixa o ícone na cor padrão dos widgets da
+# barra (monocromático). Mude para false para manter o violeta da marca.
 [widget.control-center]
 custom_image = "__TU_HOME__/.local/share/omyfedora/omyfedora-logo.png"
-custom_image_colorize = false
+custom_image_colorize = true

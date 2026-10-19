@@ -198,6 +198,33 @@ else
   log "greetd: /etc/pam.d/greetd ok (mantendo o do pacote)"
 fi
 
+# ─── 4b. Zed — configurações, temas e extensões ─────────────────────────────
+# O Zed é instalado pelo script oficial em 20-stack.sh; aqui replicamos o
+# ambiente do editor:
+#   • settings.json — tema, fontes, REPL/Jupyter, feature flags e a lista de
+#     extensões em auto_install_extensions (o Zed baixa/atualiza sozinho no
+#     primeiro start; a lista atual tem 15 extensões, incluindo temas de ícones)
+#   • arquivos extras em assets/zed/ (keymap.json, tasks.json, snippets/,
+#     themes/*.json) — qualquer arquivo presente é instalado no caminho espelho
+#   • kernelspec "zed-python" do REPL (aponta para o python3 do sistema; o
+#     pacote python3-ipykernel é instalado pelo 25-devtools.sh)
+# install_file_once: são configs pessoais — uma personalização feita no Zed
+# depois da instalação nunca é sobrescrita por uma reexecução do install.sh.
+ZED_CONF="${TU_HOME}/.config/zed"
+if [[ -d ${OMYFEDORA_ROOT}/assets/zed ]]; then
+  while IFS= read -r -d '' f; do
+    rel="${f#"${OMYFEDORA_ROOT}"/assets/zed/}"
+    install_file_once "zed/${rel}" "${ZED_CONF}/${rel}"
+  done < <(find "${OMYFEDORA_ROOT}/assets/zed" -type f -print0 | sort -z)
+fi
+if rpm -q python3-ipykernel >/dev/null 2>&1 || [[ ${DRY_RUN} == 1 ]]; then
+  install_file "jupyter/kernels/zed-python/kernel.json" \
+    "${TU_HOME}/.local/share/jupyter/kernels/zed-python/kernel.json"
+  ok "zed: settings, tema/extensões e kernel do REPL preparados"
+else
+  warn "zed: python3-ipykernel ausente — kernelspec do REPL não instalado (rode o 25-devtools.sh)"
+fi
+
 # ─── 5. OpenCode — configuração pessoal (agents-config) ─────────────────────
 # Repo público https://github.com/marcos2872/agents-config: agentes, skills,
 # commands e plugins. O sync.sh do repo copia tudo para ~/.config/opencode/
@@ -295,6 +322,7 @@ fi
 
 # ─── 9. Permissões dos arquivos do usuário ──────────────────────────────────
 run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.config/niri" "${TU_HOME}/.config/noctalia" "${TU_HOME}/.config/alacritty" "${TU_HOME}/.config/autostart" "${TU_HOME}/.config/gtk-3.0" "${TU_HOME}/.config/gtk-4.0" "${TU_HOME}/.local/state/noctalia" "${TU_HOME}/.local/share/noctalia"
+run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.config/zed" "${TU_HOME}/.local/share/jupyter"
 run_cmd chown "${TU}:${TU}" "${TU_HOME}/.zshrc"
 # o banco dconf do usuário pode ter sido criado agora pelo gsettings acima
 if [[ -e ${TU_HOME}/.config/dconf ]]; then

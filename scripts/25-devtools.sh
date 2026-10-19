@@ -2,6 +2,7 @@
 # 25-devtools.sh — ferramentas de desenvolvimento (por usuário):
 #   • compiladores básicos (gcc/g++/make) — necessários p/ linkar crates Rust
 #   • GitHub CLI (gh) — PRs, issues e releases pelo terminal
+#   • python3-ipykernel + python3-matplotlib — REPL e gráficos do Zed
 #   • Rust via rustup (script oficial → ~/.cargo)
 #   • Node.js via nvm (Node Version Manager → ~/.nvm) + npm
 #   • pnpm e yarn (globais do Node)
@@ -32,6 +33,26 @@ if command -v gh >/dev/null 2>&1; then
   ok "gh já instalado — pulando"
 else
   run_cmd dnf -y "${DNFOPT}" install gh || warn "dev: 'gh' indisponível — ignorado"
+fi
+
+# ─── 1c. Kernel Python para o REPL do Zed ───────────────────────────────────
+# O REPL do Zed roda Python via kernels Jupyter. O pacote do Fedora já traz o
+# kernelspec do sistema; o 50-configs.sh instala o kernelspec "zed-python"
+# (nome estável usado em ~/.config/zed/settings.json e nos notebooks).
+if rpm -q python3-ipykernel >/dev/null 2>&1; then
+  ok "python3-ipykernel já instalado — pulando"
+else
+  run_cmd dnf -y "${DNFOPT}" install python3-ipykernel \
+    || warn "dev: python3-ipykernel indisponível — REPL do Zed ficará sem kernel Python"
+fi
+
+# matplotlib: necessário para as células de gráfico do notebook de teste do Zed
+# (o kernel do repo aponta para o python3 do sistema, não para um venv).
+if rpm -q python3-matplotlib >/dev/null 2>&1; then
+  ok "python3-matplotlib já instalado — pulando"
+else
+  run_cmd dnf -y "${DNFOPT}" install python3-matplotlib \
+    || warn "dev: python3-matplotlib indisponível — gráficos no REPL ficarão sem matplotlib"
 fi
 
 # ─── 2. Rust (rustup) ───────────────────────────────────────────────────────
@@ -107,4 +128,4 @@ else
   fi
 fi
 
-ok "dev tools prontos (gcc, gh, Rust, Node/nvm, npm, pnpm, yarn, KVM/libvirt)"
+ok "dev tools prontos (gcc, gh, ipykernel, matplotlib, Rust, Node/nvm, npm, pnpm, yarn, KVM/libvirt)"

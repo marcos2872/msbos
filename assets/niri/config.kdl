@@ -1,6 +1,13 @@
 // omyfedora — configuração do niri (defaults completos + integração Noctalia)
 // Referência: /usr/share/doc/niri/wiki e docs.noctalia.dev/noctalia/compositor-settings/niri
 
+// Zed: o editor de notebooks (.ipynb) ainda é experimental e só é habilitado
+// quando o processo do Zed nasce com esta variável. O niri a repassa aos apps
+// que spawna (Super+E, launcher, terminal). O REPL em arquivos .py não depende dela.
+environment {
+    LOCAL_NOTEBOOK_DEV "1"
+}
+
 input {
     keyboard {
         repeat-delay 300

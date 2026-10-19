@@ -376,25 +376,34 @@ fi
 install_file_once "alacritty/alacritty.toml" "${TU_HOME}/.config/alacritty/alacritty.toml"
 install_file_once "zsh/zshrc" "${TU_HOME}/.zshrc"
 
-# shell do usuário → zsh (path resolvido, nunca fixo em /usr/bin/zsh)
+# shell do usuário → zsh (caminho canônico /usr/bin/zsh)
 if command -v zsh >/dev/null 2>&1 || [[ ${DRY_RUN} == 1 ]]; then
   ZSH_BIN="$(command -v zsh 2>/dev/null || true)"
   [[ -n ${ZSH_BIN} ]] || ZSH_BIN='/usr/bin/zsh'   # valor esperado pós-instalação
+  ZSH_RAW="${ZSH_BIN}"
   # Rodando como root, command -v pode devolver /usr/sbin/zsh. O pkexec (usado
   # pelo sync do greeter e outros helpers) exige que o shell do usuário esteja
   # no /etc/shells, que lista o caminho canônico /usr/bin/zsh.
   if [[ ${ZSH_BIN} == /usr/sbin/* && -x /usr/bin/${ZSH_BIN##*/} ]]; then
     ZSH_BIN="/usr/bin/${ZSH_BIN##*/}"
   fi
-  if ! grep -qxF "${ZSH_BIN}" /etc/shells 2>/dev/null; then
+  # A sessão já aberta mantém SHELL=<shell antigo>; o pkexec olha essa variável
+  # (não só o /etc/passwd). Garante o shell atual, o resolvido e o canônico no
+  # /etc/shells para o sync funcionar antes do próximo login.
+  OLD_SHELL="$(getent passwd "${TU}" | cut -d: -f7)"
+  SHELLS_TO_ADD=("${OLD_SHELL}" "${ZSH_BIN}")
+  [[ ${ZSH_RAW} != "${ZSH_BIN}" ]] && SHELLS_TO_ADD+=("${ZSH_RAW}")
+  for sh_path in "${SHELLS_TO_ADD[@]}"; do
+    [[ -n ${sh_path} && -x ${sh_path} && ${sh_path} != */nologin ]] || continue
+    grep -qxF "${sh_path}" /etc/shells 2>/dev/null && continue
     if [[ ${DRY_RUN} == 1 ]]; then
-      log "dry-run: adicionaria ${ZSH_BIN} ao /etc/shells (necessário para pkexec)"
+      log "dry-run: adicionaria ${sh_path} ao /etc/shells (necessário para pkexec)"
     else
-      run_cmd sh -c 'printf "%s\n" "$1" >> /etc/shells' _ "${ZSH_BIN}" \
-        || warn "shell: falha ao adicionar ${ZSH_BIN} ao /etc/shells"
-      log "shell: ${ZSH_BIN} adicionado ao /etc/shells (necessário para pkexec)"
+      run_cmd sh -c 'printf "%s\n" "$1" >> /etc/shells' _ "${sh_path}" \
+        || warn "shell: falha ao adicionar ${sh_path} ao /etc/shells"
+      log "shell: ${sh_path} adicionado ao /etc/shells (necessário para pkexec)"
     fi
-  fi
+  done
   run_cmd chsh -s "${ZSH_BIN}" "${TU}" || warn "chsh: falha ao definir o zsh como shell padrão"
   ok "shell padrão: zsh (sugestões inline + syntax highlight + fzf no Ctrl+R)"
 fi

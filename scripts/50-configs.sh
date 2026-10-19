@@ -254,8 +254,39 @@ if [[ -z ${GREETER_BIN} && ${DRY_RUN} == 1 && ${NO_GREETER} != 1 ]]; then
   GREETER_BIN="/usr/bin/noctalia-greeter-session"   # esperado após a instalação
 fi
 if [[ -n ${GREETER_BIN} ]]; then
-  GREETER_CMD="${GREETER_BIN} -- --session niri"
-  ok "greeter: Noctalia (${GREETER_BIN})"
+  # Logo do sistema na tela de login: o Noctalia Greeter desenha o logo de
+  # <assets>/noctalia.svg e não expõe uma chave de configuração para trocá-lo.
+  # Criamos um bundle próprio com o nosso SVG e os ícones/fontes do pacote
+  # (symlink, para acompanhar atualizações) e apontamos o greeter para ele via
+  # NOCTALIA_GREETER_ASSETS_DIR. O pacote original fica intacto e um upgrade
+  # do noctalia-greeter não desfaz a marca.
+  GREETER_SRC_ASSETS="/usr/share/noctalia-greeter/assets"
+  GREETER_ASSETS="/usr/share/omyfedora/greeter-assets"
+  if [[ -d ${GREETER_SRC_ASSETS}/fonts || ${DRY_RUN} == 1 ]]; then
+    run_cmd install -d -m 755 "${GREETER_ASSETS}"
+    if [[ -L ${GREETER_ASSETS}/fonts || ! -e ${GREETER_ASSETS}/fonts ]]; then
+      run_cmd ln -sfn "${GREETER_SRC_ASSETS}/fonts" "${GREETER_ASSETS}/fonts"
+    else
+      warn "greeter: ${GREETER_ASSETS}/fonts existe e não é symlink — mantendo"
+    fi
+    install_file "branding/omyfedora-logo.svg" "${GREETER_ASSETS}/noctalia.svg"
+    # O greeter só aceita o bundle se achar as fontes de ícones e o SVG; se
+    # algo faltar, mantém o comando original (logo padrão) em vez de apontar
+    # para um bundle inválido.
+    if [[ ${DRY_RUN} == 1 ]] ||
+      [[ -f ${GREETER_ASSETS}/fonts/tabler.ttf && -f ${GREETER_ASSETS}/fonts/tabler.json &&
+        -f ${GREETER_ASSETS}/noctalia.svg ]]; then
+      GREETER_CMD="/usr/bin/env NOCTALIA_GREETER_ASSETS_DIR=${GREETER_ASSETS} ${GREETER_BIN} -- --session niri"
+      ok "greeter: Noctalia (${GREETER_BIN}) com o logo do omyfedora"
+    else
+      warn "greeter: bundle de assets incompleto — mantendo o logo padrão"
+      GREETER_CMD="${GREETER_BIN} -- --session niri"
+    fi
+  else
+    warn "greeter: assets do noctalia-greeter ausentes — mantendo o logo padrão"
+    GREETER_CMD="${GREETER_BIN} -- --session niri"
+    ok "greeter: Noctalia (${GREETER_BIN})"
+  fi
 else
   GREETER_CMD="greetd"
   log "greeter: padrão do greetd (noctalia-greeter não instalado)"

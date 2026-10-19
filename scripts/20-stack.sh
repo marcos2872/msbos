@@ -101,6 +101,8 @@ CORE=(
   curl git xdg-utils
   google-noto-sans-fonts google-noto-sans-mono-fonts
   breeze-icon-theme breeze-cursor-theme
+  # assets do spinner usados pelo tema de boot omyfedora (ver 50-configs.sh)
+  plymouth-theme-spinner
 )
 log "stack: instalando núcleo: ${CORE[*]}"
 if ! run_cmd dnf -y "${DNFOPT}" install "${CORE[@]}"; then

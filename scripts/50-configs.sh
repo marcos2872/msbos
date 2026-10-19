@@ -162,6 +162,39 @@ else
   gset font-name "'Noto Sans 10'"
 fi
 
+# ─── 2d. Plymouth — tema de boot do omyfedora ───────────────────────────────
+# O splash do boot é do Plymouth (não do GRUB nem do greeter). O Fedora usa o
+# tema bgrt, que mostra o watermark do Fedora quando a máquina não tem logo
+# BGRT no firmware. O tema omyfedora reaproveita a animação do pacote
+# plymouth-theme-spinner e troca o watermark pelo wordmark do projeto, com o
+# fundo mSurface (#0B0B0D). O -R regenera o initramfs: sem ele o tema não
+# entra no boot (e um rebuild é necessário sempre que os assets mudarem).
+PLY_SRC="/usr/share/plymouth/themes/spinner"
+PLY_DST="/usr/share/plymouth/themes/omyfedora"
+if [[ -d ${PLY_SRC} || ${DRY_RUN} == 1 ]]; then
+  if [[ ${DRY_RUN} == 1 && ! -d ${PLY_SRC} ]]; then
+    log "dry-run: copiaria ${PLY_SRC}/*.png (exceto watermark.png) → ${PLY_DST}/"
+  else
+    # cópia system→system num único find+install (não install_file, que é para
+    # assets do repo): mantém modo/contexto e deixa o watermark do Fedora fora
+    run_cmd find "${PLY_SRC}" -maxdepth 1 -type f -name '*.png' ! -name watermark.png \
+      -exec install -D -m 644 {} "${PLY_DST}/" \;
+  fi
+  install_file "plymouth/omyfedora/omyfedora.plymouth" "${PLY_DST}/omyfedora.plymouth"
+  install_file "plymouth/omyfedora/watermark.png" "${PLY_DST}/watermark.png"
+  if command -v plymouth-set-default-theme >/dev/null 2>&1; then
+    if run_cmd plymouth-set-default-theme -R omyfedora; then
+      ok "plymouth: tema de boot omyfedora aplicado (initramfs regenerado)"
+    else
+      warn "plymouth: falha ao aplicar o tema de boot omyfedora"
+    fi
+  else
+    warn "plymouth: plymouth-set-default-theme ausente — tema de boot não aplicado"
+  fi
+else
+  warn "plymouth: tema spinner ausente — instale plymouth-theme-spinner para o tema de boot"
+fi
+
 # ─── 3. Papel de parede + helper ────────────────────────────────────────────
 install_file "bin/omyfedora-wallpaper" "/usr/local/bin/omyfedora-wallpaper"
 run_cmd chmod 755 /usr/local/bin/omyfedora-wallpaper

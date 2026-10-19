@@ -27,6 +27,10 @@ install_file "niri/config.kdl" "/etc/xdg/niri/config.kdl"
 
 # ─── 2. Noctalia (esqueleto; padrões da instalação já funcionam) ────────────
 install_file_once "noctalia/config.toml" "${TU_HOME}/.config/noctalia/config.toml"
+# Auto-Sync do Greeter em arquivo separado: o Noctalia lê todos os .toml de
+# ~/.config/noctalia/, então o omyfedora pode atualizar esta política sem
+# tocar no config.toml personalizado do usuário.
+install_file "noctalia/90-greeter-sync.toml" "${TU_HOME}/.config/noctalia/90-greeter-sync.toml"
 
 # ─── 2a. Noctalia: paleta(s) do tema ────────────────────────────────────────
 # [theme] custom_palette (config.toml) aponta para "macOS", que o Noctalia
@@ -196,6 +200,22 @@ elif [[ ! -f /etc/pam.d/greetd ]]; then
   install_file "pam.d/greetd" "/etc/pam.d/greetd"
 else
   log "greetd: /etc/pam.d/greetd ok (mantendo o do pacote)"
+fi
+
+# ─── 4a. Noctalia Greeter — Auto-Sync sem prompt ────────────────────────────
+# O [shell.greeter_sync] auto_sync (assets/noctalia/90-greeter-sync.toml) copia
+# wallpaper, paleta, tema e layout para a tela de login quando mudam. A regra
+# Polkit abaixo é restrita à ação org.noctalia.greeter.sync-appearance: o
+# helper valida PKEXEC_UID e o staging em /run/user/<uid>, e a regra não
+# libera sudo nem outros usos do helper.
+if command -v noctalia-greeter >/dev/null 2>&1; then
+  if run_cmd noctalia-greeter passwordless-sync enable "${TU}"; then
+    ok "greeter: Auto-Sync sem prompt habilitado para ${TU}"
+  else
+    warn "greeter: falha ao liberar o sync sem prompt — o Auto-Sync pedirá autenticação"
+  fi
+else
+  log "greeter: noctalia-greeter não instalado — Auto-Sync fica indisponível"
 fi
 
 # ─── 4b. Zed — configurações, temas e extensões ─────────────────────────────

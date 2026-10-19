@@ -58,10 +58,10 @@ app_icon_color = "secondary"
 # Mesmo wallpaper usado como padrão do omyfedora (instalado pelo 50-configs.sh
 # em /usr/share/omyfedora-walls/). As entradas por monitor são criadas em runtime.
 [wallpaper.default]
-path = "/usr/share/omyfedora-walls/pexels-wearelivingart-7862142.jpg"
+path = "/usr/share/omyfedora-walls/wp11280214-rx7-4k-wallpapers.jpg"
 
 [wallpaper.last]
-path = "/usr/share/omyfedora-walls/pexels-wearelivingart-7862142.jpg"
+path = "/usr/share/omyfedora-walls/wp11280214-rx7-4k-wallpapers.jpg"
 
 [widget.cpu]
 # Dentro do grupo cápsula g1: gráfico, sem o valor numérico ao lado.

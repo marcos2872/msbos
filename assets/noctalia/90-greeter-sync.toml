@@ -1,0 +1,11 @@
+# omyfedora — Auto-Sync do Noctalia Greeter
+#
+# O Noctalia carrega todos os .toml de ~/.config/noctalia/ (antes do
+# settings.toml da GUI), então este arquivo pode ser atualizado pelo
+# omyfedora sem tocar no config.toml personalizado do usuário.
+#
+# auto_sync = true copia wallpaper, paleta, tema e fonte para a tela de
+# login sempre que um deles mudar. O 50-configs.sh instala a regra Polkit
+# restrita ao sync, para não pedir autenticação a cada troca.
+[shell.greeter_sync]
+auto_sync = true

@@ -76,6 +76,9 @@ pinned = ["brave-browser", "dev.zed.Zed", "Alacritty", "onlyoffice-desktopeditor
 # Os defaults são quase opacos (notificação 0.97, Settings opaca).
 [notification]
 background_opacity = 0.80
+# Notificações críticas forçam um contorno vermelho de pelo menos 3 px;
+# border = false remove o contorno de todos os toasts.
+border = false
 
 [shell]
 settings_window_translucent = true

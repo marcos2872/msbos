@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # 30-services.sh — ajusta serviços do systemd para um desktop enxuto:
 #   greetd no lugar do Plasma Login Manager, menos daemons residentes,
-#   zram/oomd/tuned ligados.
+#   zram/oomd/tuned ligados e o socket rootless do Podman (lazydocker sem sudo).
 #
 # Importante: nada é PARADO agora (isso derrubaria a sessão gráfica atual).
 # As mudanças valem a partir do próximo boot.
@@ -9,6 +9,11 @@
 set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/lib/common.sh"
 require_fedora
+
+TU="$(resolve_target_user)" || exit 1
+TU_HOME="$(user_home "${TU}")"
+[[ -d ${TU_HOME} ]] || { err "home de ${TU} não encontrado (${TU_HOME})"; exit 1; }
+log "serviços: usuário-alvo: ${TU} (${TU_HOME})"
 
 off() {  # desativa no boot, se a unit existir
   local s=$1
@@ -129,6 +134,31 @@ on podman.socket   # API do Podman (usada pelo lazydocker)
 if [[ ! -e /var/run/docker.sock ]] && { rpm -q podman >/dev/null 2>&1 || [[ ${DRY_RUN} == 1 ]]; }; then
   run_cmd ln -sf /run/podman/podman.sock /var/run/docker.sock
   log "serviço: /var/run/docker.sock → socket do Podman (compatibilidade)"
+fi
+
+# ─── 4b. Podman rootless: lazydocker sem sudo ───────────────────────────────
+# O podman.socket do SISTEMA expõe /run/podman/podman.sock (root): clientes da
+# API Docker (lazydocker) só o acessam com sudo. O socket ROOTLESS vive em
+# /run/user/<uid>/podman/podman.sock, pertence ao usuário e é o alvo do
+# DOCKER_HOST que o pacote podman-docker exporta via /etc/profile.d. Habilitamos
+# o unit de usuário do alvo e, se o user manager já estiver rodando, iniciamos
+# agora; senão o symlink garante a subida no próximo login.
+if rpm -q podman >/dev/null 2>&1; then
+  UID_TU="$(id -u "${TU}")"
+  UNIT_USER='/usr/lib/systemd/user/podman.socket'
+  WANTS="${TU_HOME}/.config/systemd/user/sockets.target.wants"
+  if [[ -f ${UNIT_USER} ]]; then
+    run_cmd install -d -o "${TU}" -g "${TU}" -m 755 "${WANTS}"
+    run_cmd ln -sf "${UNIT_USER}" "${WANTS}/podman.socket"
+    if [[ -d /run/user/${UID_TU} ]] && command -v runuser >/dev/null 2>&1; then
+      run_cmd runuser -u "${TU}" -- env "XDG_RUNTIME_DIR=/run/user/${UID_TU}" \
+        systemctl --user start podman.socket \
+        || warn "podman rootless: falha ao iniciar o socket agora (sobe no próximo login)"
+    fi
+    ok "podman rootless: socket do usuário habilitado (lazydocker sem sudo)"
+  else
+    warn "podman rootless: ${UNIT_USER} não existe — socket do usuário não habilitado"
+  fi
 fi
 
 if [[ -f /usr/lib/systemd/system/systemd-oomd.service ]]; then

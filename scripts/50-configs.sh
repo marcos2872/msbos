@@ -14,6 +14,15 @@ require_fedora
 TU="$(resolve_target_user)" || exit 1
 TU_HOME="$(user_home "${TU}")"
 [[ -d ${TU_HOME} ]] || { err "home de ${TU} não encontrado (${TU_HOME})"; exit 1; }
+# Ambiente dos comandos rodados como o usuário-alvo: sem XDG_RUNTIME_DIR o
+# dconf/dbus do usuário tentam usar /run/user/0 quando o install roda com sudo.
+TU_UID="$(id -u "${TU}")"
+TU_ENV=("HOME=${TU_HOME}")
+if [[ -d /run/user/${TU_UID} ]]; then
+  TU_ENV+=("XDG_RUNTIME_DIR=/run/user/${TU_UID}")
+else
+  warn "config: /run/user/${TU_UID} ausente — dconf/dbus do usuário podem reclamar"
+fi
 log "config: configurando para o usuário: ${TU} (${TU_HOME})"
 
 # ─── 1. niri ────────────────────────────────────────────────────────────────
@@ -147,7 +156,7 @@ if [[ ${DRY_RUN} == 1 ]]; then
 else
   # dbus-run-session permite rodar o gsettings sem sessão gráfica ativa; o
   # dconf persiste em ~/.config/dconf/user, então vale no próximo login.
-  GSET_BASE=(runuser -u "${TU}" -- env "HOME=${TU_HOME}")
+  GSET_BASE=(runuser -u "${TU}" -- env "${TU_ENV[@]}")
   if command -v dbus-run-session >/dev/null 2>&1; then
     GSET_BASE+=(dbus-run-session --)
   fi
@@ -177,13 +186,21 @@ fi
 PLY_SRC="/usr/share/plymouth/themes/spinner"
 PLY_DST="/usr/share/plymouth/themes/omyfedora"
 if [[ -d ${PLY_SRC} || ${DRY_RUN} == 1 ]]; then
-  if [[ ${DRY_RUN} == 1 && ! -d ${PLY_SRC} ]]; then
+  # Uma execução interrompida da versão antiga podia deixar PLY_DST como
+  # ARQUIVO (install -D com destino terminando em / falhava); remove para
+  # recriar o diretório. Só remove se não for diretório.
+  if [[ -e ${PLY_DST} && ! -d ${PLY_DST} ]]; then
+    run_cmd rm -f "${PLY_DST}"
+    log "plymouth: removendo arquivo inválido em ${PLY_DST}"
+  fi
+  run_cmd install -d -m 755 "${PLY_DST}"
+  if [[ ${DRY_RUN} == 1 ]]; then
     log "dry-run: copiaria ${PLY_SRC}/*.png (exceto watermark.png) → ${PLY_DST}/"
   else
-    # cópia system→system num único find+install (não install_file, que é para
-    # assets do repo): mantém modo/contexto e deixa o watermark do Fedora fora
+    # cópia system→system: -t exige o diretório criado acima; o install
+    # mantém modo/contexto e o watermark do Fedora fica de fora.
     run_cmd find "${PLY_SRC}" -maxdepth 1 -type f -name '*.png' ! -name watermark.png \
-      -exec install -D -m 644 {} "${PLY_DST}/" \;
+      -exec install -m 644 -t "${PLY_DST}" {} +
   fi
   install_file "plymouth/omyfedora/omyfedora.plymouth" "${PLY_DST}/omyfedora.plymouth"
   install_file "plymouth/omyfedora/watermark.png" "${PLY_DST}/watermark.png"
@@ -316,9 +333,9 @@ fi
 
 # ─── 6. Brave como navegador padrão (do usuário) ────────────────────────────
 if command -v brave-browser >/dev/null 2>&1 || [[ ${DRY_RUN} == 1 ]]; then
-  run_cmd runuser -u "${TU}" -- env "HOME=${TU_HOME}" \
+  run_cmd runuser -u "${TU}" -- env "${TU_ENV[@]}" \
     xdg-settings set default-web-browser brave-browser.desktop >/dev/null 2>&1 || true
-  run_cmd runuser -u "${TU}" -- env "HOME=${TU_HOME}" \
+  run_cmd runuser -u "${TU}" -- env "${TU_ENV[@]}" \
     xdg-mime default brave-browser.desktop x-scheme-handler/https x-scheme-handler/http >/dev/null 2>&1 || true
   ok "Brave definido como navegador padrão (https/http)"
 fi
@@ -326,7 +343,7 @@ fi
 # ─── 6b. Apps KDE como padrões (do usuário) ───────────────────────────────────
 mime_default() {
   local desktop="$1"; shift
-  run_cmd runuser -u "${TU}" -- env "HOME=${TU_HOME}" \
+  run_cmd runuser -u "${TU}" -- env "${TU_ENV[@]}" \
     xdg-mime default "${desktop}" "$@" >/dev/null 2>&1 || true
 }
 if [[ -f /usr/share/applications/org.kde.dolphin.desktop ]] || [[ ${DRY_RUN} == 1 ]]; then

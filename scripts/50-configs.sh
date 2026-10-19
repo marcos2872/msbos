@@ -31,6 +31,11 @@ install_file_once "noctalia/config.toml" "${TU_HOME}/.config/noctalia/config.tom
 # ~/.config/noctalia/, então o omyfedora pode atualizar esta política sem
 # tocar no config.toml personalizado do usuário.
 install_file "noctalia/90-greeter-sync.toml" "${TU_HOME}/.config/noctalia/90-greeter-sync.toml"
+# Ícone da Central de Controle na barra: aponta para a logo instalada no home
+# pelo bloco 2d (render_file troca __TU_HOME__ pelo home do usuário-alvo).
+render_file "noctalia/91-widget-control-center.toml" \
+  "${TU_HOME}/.config/noctalia/91-widget-control-center.toml" \
+  "__TU_HOME__" "${TU_HOME}"
 
 # ─── 2a. Noctalia: paleta(s) do tema ────────────────────────────────────────
 # [theme] custom_palette (config.toml) aponta para "macOS", que o Noctalia
@@ -198,6 +203,9 @@ fi
 # Logo do sistema (mesma marca do watermark do boot): ícone hicolor + pixmap.
 install_file "branding/omyfedora-logo.png" "/usr/share/icons/hicolor/512x512/apps/omyfedora.png"
 install_file "branding/omyfedora-logo.png" "/usr/share/pixmaps/omyfedora-logo.png"
+# A mesma marca como ícone do widget control-center da barra do Noctalia
+# (config renderizado em ~/.config/noctalia/91-widget-control-center.toml).
+install_file "branding/omyfedora-logo.png" "${TU_HOME}/.local/share/omyfedora/omyfedora-logo.png"
 if command -v gtk-update-icon-cache >/dev/null 2>&1; then
   run_cmd gtk-update-icon-cache -q -t -f /usr/share/icons/hicolor \
     || warn "ícones: falha ao atualizar o cache do hicolor"
@@ -384,6 +392,7 @@ fi
 # ─── 9. Permissões dos arquivos do usuário ──────────────────────────────────
 run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.config/niri" "${TU_HOME}/.config/noctalia" "${TU_HOME}/.config/alacritty" "${TU_HOME}/.config/autostart" "${TU_HOME}/.config/gtk-3.0" "${TU_HOME}/.config/gtk-4.0" "${TU_HOME}/.local/state/noctalia" "${TU_HOME}/.local/share/noctalia"
 run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.config/zed" "${TU_HOME}/.local/share/jupyter"
+run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.local/share/omyfedora"
 run_cmd chown "${TU}:${TU}" "${TU_HOME}/.zshrc"
 # o banco dconf do usuário pode ter sido criado agora pelo gsettings acima
 if [[ -e ${TU_HOME}/.config/dconf ]]; then

@@ -1,0 +1,13 @@
+# omyfedora — ícone da Central de Controle na barra
+#
+# Usa a logo do omyfedora no widget control-center. O 50-configs.sh instala a
+# imagem em ~/.local/share/omyfedora/omyfedora-logo.png (além dos caminhos de
+# sistema) e renderiza este arquivo com o home do usuário-alvo; como o Noctalia
+# lê todos os .toml de ~/.config/noctalia/, a configuração vale também para
+# instalações existentes, sem tocar no settings.toml da GUI.
+#
+# custom_image_colorize = false mantém o violeta da marca. Mude para true se
+# preferir o ícone monocromático na cor do widget (Settings → Barra → ícone).
+[widget.control-center]
+custom_image = "__TU_HOME__/.local/share/omyfedora/omyfedora-logo.png"
+custom_image_colorize = false

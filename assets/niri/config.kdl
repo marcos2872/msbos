@@ -44,20 +44,26 @@ window-rule {
     clip-to-geometry true
 }
 
-// Transparência global: 94% de opacidade em todas as janelas. O omyfedora não roda
+// Transparência global: 90% de opacidade em todas as janelas. O omyfedora não roda
 // o KWin, então a regra "Transparência Global" do KDE (opacityactive/inactive
 // = 94) vira esta window-rule sem match — genérica primeiro, específicas
 // depois (a ordem importa: regra posterior sobrepõe). A opacidade é
 // multiplicada pela própria da janela (ex.: alacritty com 0.85 no
-// alacritty.toml fica ~0.8 na tela).
+// alacritty.toml fica ~0.77 na tela). O blur global usa `background-effect`
+// (niri 26.04+), que desfoca o wallpaper atrás das janelas semitransparentes.
 // draw-border-with-background false: por padrão o niri desenha o anel de foco
 // (que só existe na janela ATIVA) como retângulo sólido ATRÁS da janela — com
 // transparência, o retângulo tapava o wallpaper e o efeito "sumia" ao focar.
 // Com false, o anel vira um contorno AO REDOR da janela e a transparência fica
 // igual com ou sem foco (como no KWin, que é 94 para ativa e inativa).
 window-rule {
-    opacity 0.94
+    opacity 0.90
     draw-border-with-background false
+
+    // Desfoca o wallpaper atrás de qualquer janela semitransparente.
+    background-effect {
+        blur true
+    }
 }
 
 // Navegadores: opacidade total (100%) — página e devtools em fundo claro ficam

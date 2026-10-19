@@ -1,4 +1,10 @@
-# omyfedora
+<p align="center">
+  <img src="assets/branding/omyfedora-logo.png" alt="Logo do omyfedora" width="120" height="120">
+  &nbsp;&nbsp;&nbsp;
+  <img src="assets/branding/omyfedora-mascot.png" alt="Mascote do omyfedora" width="120" height="120">
+</p>
+
+<h1 align="center">omyfedora</h1>
 
 Distro pessoal baseada em **Fedora KDE** com o compositor **niri** e o shell **Noctalia v5**,
 focada em **baixo uso de RAM** e desempenho — com os **apps do KDE mantidos** e o tema dark

@@ -64,6 +64,43 @@ virt-install --name omyfedora --memory 4096 --vcpus 3 --disk size=25 \
 
 ## Como rodar
 
+### Sem clonar (pós-instalação)
+
+O `bootstrap.sh` baixa o repositório como `.tar.gz` do GitHub, extrai em `/tmp` e chama o
+`install.sh` — não precisa de `git`.
+
+```bash
+# salve o bootstrap primeiro: assim os prompts do install.sh leem o terminal
+curl -fsSL https://raw.githubusercontent.com/marcos2872/omyfedora/main/bootstrap.sh -o /tmp/omyfedora.sh
+
+sudo bash /tmp/omyfedora.sh --dry-run   # simula tudo (recomendado 1º)
+sudo bash /tmp/omyfedora.sh             # instala de verdade
+```
+
+Para fixar uma versão (branch, tag ou commit):
+
+```bash
+sudo env OMYFEDORA_REF=SEU_TAG_OU_COMMIT bash /tmp/omyfedora.sh --yes
+```
+
+Sem interação (VM descartável/CI):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/marcos2872/omyfedora/main/bootstrap.sh \
+  | sudo bash -s -- --yes
+```
+
+O bootstrap aceita todas as opções do `install.sh` e também `OMYFEDORA_REPO` (fork) e
+`OMYFEDORA_URL` (espelho/teste).
+
+> **Anaconda/Kickstart:** não execute o `install.sh` diretamente no `%post`. O `%post` roda
+> no chroot do sistema instalado, sem systemd como PID 1, e o omyfedora precisa de um sistema
+> já inicializado (`systemctl daemon-reload`, `runuser`, dconf/gsettings). O caminho certo é
+> rodar o bootstrap depois do primeiro boot — ou usar o `%post` só para instalar um serviço
+> de primeiro boot que execute o bootstrap.
+
+### Com clone (desenvolvimento)
+
 ```bash
 git clone <url-do-repo> omyfedora
 cd omyfedora
@@ -124,6 +161,7 @@ ps aux --sort=-rss | head -12    # top consumidores de RAM
 
 ```
 install.sh              # orquestrador (roda as 6 etapas em ordem)
+bootstrap.sh            # baixa o repo e chama o install.sh (sem git clone)
 lib/common.sh           # helpers: logs, dry-run, backups, resolução de usuário
 scripts/10-gpu.sh       # detecção multi-GPU + drivers
 scripts/20-stack.sh     # pacotes do stack + curadoria dos apps KDE + tema Breeze

@@ -25,7 +25,9 @@
 #       --cdrom /caminho/Fedora-KDE-Desktop-Live-44.iso \
 #       --os-variant fedora-unknown --graphics spice
 #
-#   Depois, dentro da VM: git clone https://github.com/marcos2872/omyfedora && ./install.sh
+#   Depois, dentro da VM (sem git clone):
+#     curl -fsSL https://raw.githubusercontent.com/marcos2872/omyfedora/main/bootstrap.sh -o /tmp/omyfedora.sh
+#     sudo bash /tmp/omyfedora.sh --dry-run   # e depois sem --dry-run
 
 set -euo pipefail
 

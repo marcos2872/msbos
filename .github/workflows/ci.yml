@@ -22,7 +22,7 @@ jobs:
         run: |
           # assets/bin/omyfedora-seapplet é Python; validar só quem tem shebang shell.
           scripts=()
-          for f in install.sh pessoal-pc.sh lib/common.sh scripts/*.sh assets/bin/* assets/libexec/*; do
+          for f in install.sh bootstrap.sh pessoal-pc.sh lib/common.sh scripts/*.sh assets/bin/* assets/libexec/*; do
             first="$(head -n1 "$f")"
             case "$first" in
               *bash*|*'/sh'*|*dash*|*ksh*) scripts+=("$f") ;;
@@ -47,7 +47,7 @@ jobs:
         run: |
           # O applet é Python; shellcheck só recebe os arquivos com shebang shell.
           scripts=()
-          for f in install.sh pessoal-pc.sh lib/common.sh scripts/*.sh assets/bin/* assets/libexec/*; do
+          for f in install.sh bootstrap.sh pessoal-pc.sh lib/common.sh scripts/*.sh assets/bin/* assets/libexec/*; do
             first="$(head -n1 "$f")"
             case "$first" in
               *bash*|*'/sh'*|*dash*|*ksh*) scripts+=("$f") ;;

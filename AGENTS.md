@@ -40,7 +40,7 @@ Verificação (local, igual ao CI em `.github/workflows/ci.yml`):
 ```bash
 # assets/bin/omyfedora-seapplet é Python: filtre só arquivos com shebang shell.
 scripts=()
-for f in install.sh pessoal-pc.sh lib/common.sh scripts/*.sh assets/bin/* assets/libexec/*; do
+for f in install.sh bootstrap.sh pessoal-pc.sh lib/common.sh scripts/*.sh assets/bin/* assets/libexec/*; do
   first="$(head -n1 "$f")"
   case "$first" in
     *bash*|*'/sh'*|*dash*|*ksh*) scripts+=("$f") ;;

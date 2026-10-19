@@ -195,6 +195,14 @@ else
   warn "plymouth: tema spinner ausente — instale plymouth-theme-spinner para o tema de boot"
 fi
 
+# Logo do sistema (mesma marca do watermark do boot): ícone hicolor + pixmap.
+install_file "branding/omyfedora-logo.png" "/usr/share/icons/hicolor/512x512/apps/omyfedora.png"
+install_file "branding/omyfedora-logo.png" "/usr/share/pixmaps/omyfedora-logo.png"
+if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+  run_cmd gtk-update-icon-cache -q -t -f /usr/share/icons/hicolor \
+    || warn "ícones: falha ao atualizar o cache do hicolor"
+fi
+
 # ─── 3. Papel de parede + helper ────────────────────────────────────────────
 install_file "bin/omyfedora-wallpaper" "/usr/local/bin/omyfedora-wallpaper"
 run_cmd chmod 755 /usr/local/bin/omyfedora-wallpaper

@@ -16,7 +16,7 @@
 #
 # Atenção: o ESTILO do tema (barra, dock, painéis, paleta) NÃO vai aqui — vai
 # em assets/noctalia/config.toml. Este arquivo é só o que a GUI reescreve.
-config_version = 14
+config_version = 15
 
 [bar.default]
 center = [ "clock", "media" ]
@@ -30,12 +30,13 @@ end = [
     "volume",
     "brightness",
     "battery",
-    "control-center",
     "session"
 ]
 # taskbar sai da barra: o dock (config.toml) assume os apps abertos.
 # cpu/ram ficam num grupo cápsula (g1) no end, depois do tray.
-start = [ "launcher", "workspaces" ]
+# O control center fica no início; o launcher continua acessível por atalho
+# (Super+Space), mas não aparece como widget da barra (ver [widget.launcher]).
+start = [ "control-center", "workspaces" ]
 
     [[bar.default.capsule_group]]
     accordion = false
@@ -62,6 +63,15 @@ path = "/usr/share/omyfedora-walls/pexels-wearelivingart-7862142.jpg"
 [wallpaper.last]
 path = "/usr/share/omyfedora-walls/pexels-wearelivingart-7862142.jpg"
 
+[widget.cpu]
+# Dentro do grupo cápsula g1: gráfico, sem o valor numérico ao lado.
+show_value = false
+visualization = "graph"
+
+[widget.launcher]
+# O launcher não ocupa a barra; continua no atalho Super+Space.
+enabled = false
+
 [widget.media]
 hide_when_no_media = true
 max_length = 108
@@ -69,3 +79,8 @@ rotate_album_art = true
 
 [widget.network]
 show_label = false
+
+[widget.ram]
+# Dentro do grupo cápsula g1: gráfico, sem o valor numérico ao lado.
+show_value = false
+visualization = "graph"

@@ -235,6 +235,10 @@ install_file "branding/omyfedora-logo.png" "/usr/share/pixmaps/omyfedora-logo.pn
 # A mesma marca como ícone do widget control-center da barra do Noctalia
 # (config renderizado em ~/.config/noctalia/91-widget-control-center.toml).
 install_file "branding/omyfedora-logo.png" "${TU_HOME}/.local/share/omyfedora/omyfedora-logo.png"
+# Avatar padrão do usuário: o AccountsService lê ~/.face (IconFile) e o
+# Control Center do Noctalia usa esse mesmo caminho. install_file_once: um
+# avatar escolhido pelo usuário nunca é sobrescrito por uma reexecução.
+install_file_once "branding/omyfedora-mascot.png" "${TU_HOME}/.face"
 if command -v gtk-update-icon-cache >/dev/null 2>&1; then
   run_cmd gtk-update-icon-cache -q -t -f /usr/share/icons/hicolor \
     || warn "ícones: falha ao atualizar o cache do hicolor"
@@ -254,7 +258,7 @@ if [[ -z ${GREETER_BIN} && ${DRY_RUN} == 1 && ${NO_GREETER} != 1 ]]; then
   GREETER_BIN="/usr/bin/noctalia-greeter-session"   # esperado após a instalação
 fi
 if [[ -n ${GREETER_BIN} ]]; then
-  # Logo do sistema na tela de login: o Noctalia Greeter desenha o logo de
+  # Mascote na tela de login: o Noctalia Greeter desenha o logo de
   # <assets>/noctalia.svg e não expõe uma chave de configuração para trocá-lo.
   # Criamos um bundle próprio com o nosso SVG e os ícones/fontes do pacote
   # (symlink, para acompanhar atualizações) e apontamos o greeter para ele via
@@ -269,7 +273,7 @@ if [[ -n ${GREETER_BIN} ]]; then
     else
       warn "greeter: ${GREETER_ASSETS}/fonts existe e não é symlink — mantendo"
     fi
-    install_file "branding/omyfedora-logo.svg" "${GREETER_ASSETS}/noctalia.svg"
+    install_file "branding/omyfedora-mascot.svg" "${GREETER_ASSETS}/noctalia.svg"
     # O greeter só aceita o bundle se achar as fontes de ícones e o SVG; se
     # algo faltar, mantém o comando original (logo padrão) em vez de apontar
     # para um bundle inválido.
@@ -277,7 +281,7 @@ if [[ -n ${GREETER_BIN} ]]; then
       [[ -f ${GREETER_ASSETS}/fonts/tabler.ttf && -f ${GREETER_ASSETS}/fonts/tabler.json &&
         -f ${GREETER_ASSETS}/noctalia.svg ]]; then
       GREETER_CMD="/usr/bin/env NOCTALIA_GREETER_ASSETS_DIR=${GREETER_ASSETS} ${GREETER_BIN} -- --session niri"
-      ok "greeter: Noctalia (${GREETER_BIN}) com o logo do omyfedora"
+      ok "greeter: Noctalia (${GREETER_BIN}) com o mascote do omyfedora"
     else
       warn "greeter: bundle de assets incompleto — mantendo o logo padrão"
       GREETER_CMD="${GREETER_BIN} -- --session niri"
@@ -484,6 +488,10 @@ run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.config/niri" "${TU_HOME}/.config/noc
 run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.config/zed" "${TU_HOME}/.local/share/jupyter"
 run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.local/share/omyfedora"
 run_cmd chown "${TU}:${TU}" "${TU_HOME}/.zshrc"
+# o avatar padrão (~/.face) é instalado root:root pelo install_file_once
+if [[ -f ${TU_HOME}/.face ]]; then
+  run_cmd chown "${TU}:${TU}" "${TU_HOME}/.face"
+fi
 # o banco dconf do usuário pode ter sido criado agora pelo gsettings acima
 if [[ -e ${TU_HOME}/.config/dconf ]]; then
   run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.config/dconf"

@@ -380,6 +380,21 @@ install_file_once "zsh/zshrc" "${TU_HOME}/.zshrc"
 if command -v zsh >/dev/null 2>&1 || [[ ${DRY_RUN} == 1 ]]; then
   ZSH_BIN="$(command -v zsh 2>/dev/null || true)"
   [[ -n ${ZSH_BIN} ]] || ZSH_BIN='/usr/bin/zsh'   # valor esperado pós-instalação
+  # Rodando como root, command -v pode devolver /usr/sbin/zsh. O pkexec (usado
+  # pelo sync do greeter e outros helpers) exige que o shell do usuário esteja
+  # no /etc/shells, que lista o caminho canônico /usr/bin/zsh.
+  if [[ ${ZSH_BIN} == /usr/sbin/* && -x /usr/bin/${ZSH_BIN##*/} ]]; then
+    ZSH_BIN="/usr/bin/${ZSH_BIN##*/}"
+  fi
+  if ! grep -qxF "${ZSH_BIN}" /etc/shells 2>/dev/null; then
+    if [[ ${DRY_RUN} == 1 ]]; then
+      log "dry-run: adicionaria ${ZSH_BIN} ao /etc/shells (necessário para pkexec)"
+    else
+      run_cmd sh -c 'printf "%s\n" "$1" >> /etc/shells' _ "${ZSH_BIN}" \
+        || warn "shell: falha ao adicionar ${ZSH_BIN} ao /etc/shells"
+      log "shell: ${ZSH_BIN} adicionado ao /etc/shells (necessário para pkexec)"
+    fi
+  fi
   run_cmd chsh -s "${ZSH_BIN}" "${TU}" || warn "chsh: falha ao definir o zsh como shell padrão"
   ok "shell padrão: zsh (sugestões inline + syntax highlight + fzf no Ctrl+R)"
 fi

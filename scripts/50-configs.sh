@@ -9,6 +9,18 @@
 
 set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/lib/common.sh"
+
+# Esta etapa grava em /etc, /usr/share, /var e no home do usuário. Sem root, o
+# set -e aborta no primeiro install de sistema (ex.: Plymouth) DEPOIS de já ter
+# alterado arquivos do usuário — deixando a configuração pela metade e sem o
+# sync do greeter. Melhor falhar aqui, antes de qualquer escrita.
+if [[ ${DRY_RUN} != 1 && ${EUID} -ne 0 ]]; then
+  err "50-configs.sh precisa de root para escrever em /etc, /usr/share e /var"
+  err "rode: sudo ./install.sh   (tudo)   ou   sudo bash scripts/50-configs.sh"
+  err "simulação sem root: DRY_RUN=1 bash scripts/50-configs.sh"
+  exit 1
+fi
+
 require_fedora
 
 TU="$(resolve_target_user)" || exit 1
@@ -274,8 +286,10 @@ fi
 # Polkit abaixo é restrita à ação org.noctalia.greeter.sync-appearance: o
 # helper valida PKEXEC_UID e o staging em /run/user/<uid>, e a regra não
 # libera sudo nem outros usos do helper.
+GREETER_SYNC_READY=0
 if command -v noctalia-greeter >/dev/null 2>&1; then
   if run_cmd noctalia-greeter passwordless-sync enable "${TU}"; then
+    GREETER_SYNC_READY=1
     ok "greeter: Auto-Sync sem prompt habilitado para ${TU}"
   else
     warn "greeter: falha ao liberar o sync sem prompt — o Auto-Sync pedirá autenticação"
@@ -391,7 +405,11 @@ if command -v zsh >/dev/null 2>&1 || [[ ${DRY_RUN} == 1 ]]; then
   # (não só o /etc/passwd). Garante o shell atual, o resolvido e o canônico no
   # /etc/shells para o sync funcionar antes do próximo login.
   OLD_SHELL="$(getent passwd "${TU}" | cut -d: -f7)"
-  SHELLS_TO_ADD=("${OLD_SHELL}" "${ZSH_BIN}")
+  # SHELL é o shell da sessão atual (o pkexec valida essa variável, não o
+  # /etc/passwd); OLD_SHELL cobre o valor antes do chsh e ZSH_RAW o caminho
+  # que o root resolve para o zsh. Qualquer um deles pode estar no processo
+  # gráfico que chama o helper do greeter.
+  SHELLS_TO_ADD=("${OLD_SHELL}" "${ZSH_BIN}" "${SHELL:-}")
   [[ ${ZSH_RAW} != "${ZSH_BIN}" ]] && SHELLS_TO_ADD+=("${ZSH_RAW}")
   for sh_path in "${SHELLS_TO_ADD[@]}"; do
     [[ -n ${sh_path} && -x ${sh_path} && ${sh_path} != */nologin ]] || continue
@@ -440,13 +458,54 @@ if [[ -e ${TU_HOME}/.config/dconf ]]; then
   run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.config/dconf"
 fi
 
+# ─── 10. Greeter: primeira sincronização da aparência ───────────────────────
+# O Auto-Sync só reage a MUDANÇAS de wallpaper/paleta/tema/fonte. Numa
+# reexecução em que nada mudou desde o último sync — ou numa instalação em que
+# o sync nunca rodou — a tela de login fica com a aparência antiga (ou sem
+# wallpaper) mesmo com o Auto-Sync ligado. O "Sync Now" abaixo entrega a
+# aparência atual ao greeter já para o próximo boot.
+#
+# Só dispara quando o passwordless-sync foi habilitado nesta execução: sem a
+# regra Polkit, o pkexec abriria um diálogo de autenticação e o script ficaria
+# preso esperando alguém clicar (o timeout evita, mas não há por que arriscar).
+if [[ ${DRY_RUN} == 1 ]]; then
+  log "dry-run: dispararia 'noctalia msg greeter-sync' para ${TU} (se a sessão estiver aberta)"
+elif [[ ${GREETER_SYNC_READY} == 1 ]] && pgrep -u "${TU}" -x noctalia >/dev/null 2>&1; then
+  # O CLI do Noctalia localiza o socket IPC pelo WAYLAND_DISPLAY (ex.:
+  # noctalia-wayland-1.sock); o sudo/runuser não o preserva. Lê o valor do
+  # processo do shell em execução, que é a sessão que queremos sincronizar.
+  NOCTALIA_PID="$(pgrep -u "${TU}" -x noctalia | head -n1 || true)"
+  NOCTALIA_DISPLAY="$(tr '\0' '\n' < "/proc/${NOCTALIA_PID}/environ" 2>/dev/null |
+    sed -n 's/^WAYLAND_DISPLAY=//p' | head -n1 || true)"
+  SYNC_ENV=("${TU_ENV[@]}")
+  [[ -n ${NOCTALIA_DISPLAY} ]] && SYNC_ENV+=("WAYLAND_DISPLAY=${NOCTALIA_DISPLAY}")
+  log "greeter: sincronizando a aparência atual (wallpaper) com a tela de login"
+  if run_cmd timeout 90 runuser -u "${TU}" -- env "${SYNC_ENV[@]}" \
+       noctalia msg greeter-sync; then
+    ok "greeter: aparência sincronizada com a tela de login"
+  else
+    warn "greeter: sync falhou — rode 'noctalia msg greeter-sync' na sessão de ${TU} e autentique"
+  fi
+  if [[ -f /var/lib/noctalia-greeter/sync.toml ]] &&
+    grep -qE '^[[:space:]]*\[appearance\.wallpaper\]' /var/lib/noctalia-greeter/sync.toml; then
+    ok "greeter: wallpaper presente em /var/lib/noctalia-greeter/sync.toml"
+  else
+    warn "greeter: sync.toml ainda sem wallpaper — confira o caminho da imagem no Noctalia"
+  fi
+elif [[ ${GREETER_SYNC_READY} == 1 ]]; then
+  log "greeter: sessão de ${TU} não está aberta — rode 'noctalia msg greeter-sync' depois de entrar"
+else
+  log "greeter: sync automático indisponível (regra Polkit não habilitada nesta execução)"
+fi
+
 cat <<EOF
 
 ──────────────────────────────────────────────────────────────
  omyfedora instalado. O que esperar no próximo boot:
 
    • Tela de login do greetd (Noctalia Greeter, se instalado)
-     com a sessão "niri" já disponível
+     com a sessão "niri" já disponível; o wallpaper é sincronizado
+     pelo Noctalia (se não aparecer: noctalia msg greeter-sync)
    • O shell do Plasma é removido no PRÓXIMO boot; os apps KDE ficam
      (Dolphin, Konsole, Kate/KWrite, Okular, Gwenview, Spectacle...)
    • Shell: Noctalia v5 (barra, launcher, notificações, lock, OSD)

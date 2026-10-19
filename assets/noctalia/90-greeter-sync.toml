@@ -6,6 +6,7 @@
 #
 # auto_sync = true copia wallpaper, paleta, tema e fonte para a tela de
 # login sempre que um deles mudar. O 50-configs.sh instala a regra Polkit
-# restrita ao sync, para não pedir autenticação a cada troca.
+# restrita ao sync (para não pedir autenticação a cada troca) e dispara um
+# Sync Now ao final, para valer já no próximo boot mesmo sem mudanças.
 [shell.greeter_sync]
 auto_sync = true

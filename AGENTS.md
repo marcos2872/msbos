@@ -99,6 +99,8 @@ Fluxo: `install.sh` (orquestrador) → `lib/common.sh` (helpers) → `scripts/NN
   `omyfedora-seapplet` — cópia do applet do setroubleshoot com patch do GLib.GError — e
   `omyfedora-remove-plasma`) e units systemd (`omyfedora-cpu-governor.service`,
   `omyfedora-remove-plasma.service`).
+  `assets/selinux/` não é copiado: contém módulos CIL instalados via `semodule` (ex.:
+  `omyfedora-loadkeys-dontaudit`, que suprime o AVC benigno do `loadkeys` no VT da sessão).
 - Segurança de sessão: nada é parado durante a instalação; efeitos valem no próximo boot. A
   remoção do shell do Plasma é agendada via `omyfedora-remove-plasma.service` (roda antes do login) —
   nunca na sessão viva (o `%preun` do plasmalogin mexe nos serviços systemd e derruba a sessão no

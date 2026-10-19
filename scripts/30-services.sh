@@ -73,6 +73,24 @@ if command -v noctalia-greeter-session >/dev/null 2>&1 || [[ ${DRY_RUN} == 1 ]];
   fi
 fi
 
+# ─── 2b. SELinux: falso positivo do loadkeys no login ───────────────────────
+# Quando o niri assume o console, o fbcon faz o deferred takeover e o udev
+# reinicia o systemd-vconsole-setup. Ele roda `loadkeys -C /dev/tty1`; o tty1
+# já pertence ao usuário da sessão (logind, modo 0600), então o loadkeys_t
+# tenta abrir o VT com O_RDWR e O_WRONLY, o SELinux nega dac_override nas duas
+# tentativas e o setroubleshoot notifica um falso positivo a cada login. O
+# fallback O_RDONLY funciona via dac_read_search e o keymap é aplicado — não há
+# arquivo com permissão errada nem motivo para conceder dac_override. O módulo
+# local apenas suprime o AVC. Idempotente: instala só se ainda não existir.
+if [[ -d /sys/fs/selinux ]] && command -v semodule >/dev/null 2>&1; then
+  if ! semodule -l 2>/dev/null | awk '{print $1}' | grep -qx 'omyfedora-loadkeys-dontaudit'; then
+    run_cmd semodule -i "${OMYFEDORA_ROOT}/assets/selinux/omyfedora-loadkeys-dontaudit.cil" ||
+      warn "SELinux: falha ao instalar o módulo local omyfedora-loadkeys-dontaudit"
+  else
+    log "SELinux: módulo omyfedora-loadkeys-dontaudit já instalado — mantido"
+  fi
+fi
+
 # ─── 3. Daemons dispensáveis num desktop Wayland enxuto ─────────────────────
 # Nota: cups.service sai de cena, mas o cups.socket continua — a impressão
 # segue funcionando sob demanda (socket activation). O PackageKit fica ativo

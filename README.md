@@ -1,11 +1,11 @@
-# MyOS
+# omyfedora
 
 Distro pessoal baseada em **Fedora KDE** com o compositor **niri** e o shell **Noctalia v5**,
 focada em **baixo uso de RAM** e desempenho — com os **apps do KDE mantidos** e o tema dark
 padrão do KDE (**Breeze Dark**) nos aplicativos.
 
 A instalação segue a *rota C*: em vez de gerar uma ISO própria, um **script de bootstrap**
-transforma um Fedora KDE já instalado no MyOS — trocando o shell do Plasma pelo niri/Noctalia,
+transforma um Fedora KDE já instalado no omyfedora — trocando o shell do Plasma pelo niri/Noctalia,
 instalando os drivers de GPU e aplicando todas as otimizações de memória.
 
 ---
@@ -19,7 +19,7 @@ instalando os drivers de GPU e aplicando todas as otimizações de memória.
 | Shell | **Noctalia v5** — barra, launcher, notificações, OSD e lock screen |
 | Login | **greetd** + Noctalia Greeter (substitui o Plasma Login Manager) |
 | Tema dos apps | **Breeze Dark** — o dark padrão do KDE (Qt via `kdeglobals` + GTK via dconf); o Noctalia mantém o visual próprio dele |
-| Noctalia (defaults) | **Tema Liquid Glass** (inspirado no macOS atual): barra no topo translúcida com itens em texto puro, dock de meia altura com auto-hide, painéis em vidro e paleta própria `macOS` (accent cinza); barra em `launcher workspaces` · `clock` · `cpu ram tray … session`; plugins **tmelik/system-monitor** e **raycursive/niri-displays**; wallpaper padrão do MyOS |
+| Noctalia (defaults) | **Tema Liquid Glass** (inspirado no macOS atual): barra no topo translúcida com itens em texto puro, dock de meia altura com auto-hide, painéis em vidro e paleta própria `macOS` (accent cinza); barra em `launcher workspaces` · `clock` · `cpu ram tray … session`; plugins **tmelik/system-monitor** e **raycursive/niri-displays**; wallpaper padrão do omyfedora |
 | Terminal | **alacritty** com o tema macOS (cores espelhadas da paleta do Noctalia) e **translúcido com blur** (niri 26.04+) + **zsh com autocomplete** (sugestões inline do histórico, syntax highlight, fzf no Ctrl+R) — `Super+T` |
 | Dev | Rust (rustup), Node.js LTS via nvm (npm/pnpm/yarn), gcc/make, GitHub CLI e **virtualização (KVM/libvirt + virt-manager)** |
 | Apps | Zed (editor), OpenCode v2 (IA no terminal, configurado com o [agents-config](https://github.com/marcos2872/agents-config)), Brave (navegador padrão), ONLYOFFICE, SSH_Orchestrator (RPM da release oficial), lazydocker (TUI para containers), LocalSend (arquivos na LAN, flatpak) |
@@ -56,7 +56,7 @@ renderização por software** (llvmpipe) — a VM precisa de virtio-gpu **com ac
 e GL no Spice, senão a sessão fica em tela preta:
 
 ```bash
-virt-install --name myos --memory 4096 --vcpus 3 --disk size=25 \
+virt-install --name omyfedora --memory 4096 --vcpus 3 --disk size=25 \
   --cdrom /caminho/Fedora-KDE-Desktop-Live-44.x86_64.iso \
   --os-variant fedora-unknown \
   --graphics spice,gl=on --video virtio,accel3d=yes
@@ -65,8 +65,8 @@ virt-install --name myos --memory 4096 --vcpus 3 --disk size=25 \
 ## Como rodar
 
 ```bash
-git clone <url-do-repo> my-os
-cd my-os
+git clone <url-do-repo> omyfedora
+cd omyfedora
 
 ./install.sh --dry-run   # simula tudo, sem alterar nada (recomendado 1º)
 ./install.sh             # instala de verdade (pergunta antes de remover o shell do Plasma)
@@ -117,8 +117,8 @@ free -h ; zramctl                # swap comprimido ativo
 ps aux --sort=-rss | head -12    # top consumidores de RAM
 ```
 
-**Wallpapers:** coloque imagens em `~/.config/myos-walls/` (usuário, tem precedência) ou
-`/usr/share/myos-walls/` (sistema). O helper `myos-wallpaper` usa a 1ª em ordem alfabética.
+**Wallpapers:** coloque imagens em `~/.config/omyfedora-walls/` (usuário, tem precedência) ou
+`/usr/share/omyfedora-walls/` (sistema). O helper `omyfedora-wallpaper` usa a 1ª em ordem alfabética.
 
 ## Estrutura do projeto
 
@@ -139,27 +139,27 @@ assets/                 # arquivos instalados (configs, wallpapers, helpers)
 - **Nada é parado durante a instalação** — a sessão atual (Plasma) continua funcionando; a
   troca para o greetd/niri vale a partir do próximo boot.
 - **A remoção do shell do Plasma é agendada para o próximo boot**
-  (`myos-remove-plasma.service`, roda antes do login): remover o desktop em uso derruba a
+  (`omyfedora-remove-plasma.service`, roda antes do login): remover o desktop em uso derruba a
   sessão (o scriptlet do plasmalogin/plasma-* mexe nos serviços systemd), então a remoção
   nunca acontece dentro da sessão. É só reiniciar após a instalação. Os **apps KDE ficam** —
   inclusive o **plasma-discover**, que segue funcionando com o PackageKit.
 - **Flatpak × controle parental**: se o `accountsservice` da sua versão do Fedora expuser a
   interface `com.endlessm.ParentalControls` (build com malcontent) e o pacote `malcontent`
   estiver ausente, todo `flatpak run` falha com `Not allowed to query parental controls data`
-  (flatpak/flatpak#6142). Nesse caso o MyOS instala e protege o `malcontent`; se o daemon não
+  (flatpak/flatpak#6142). Nesse caso o omyfedora instala e protege o `malcontent`; se o daemon não
   tem o suporte (caso do Fedora 44), ele não é necessário e nada é instalado.
-- **O tema dos apps é o do KDE**: o MyOS não instala tema próprio — os apps usam o
+- **O tema dos apps é o do KDE**: o omyfedora não instala tema próprio — os apps usam o
   **Breeze Dark** (o dark padrão do KDE; o Fedora KDE de referência roda com ele). O
   instalador só *preenche* chaves ainda vazias do `~/.config/kdeglobals`/`kcminputrc`: trocar
-  o tema pelo **System Settings** é para sempre, o MyOS não regride sua escolha.
+  o tema pelo **System Settings** é para sempre, o omyfedora não regride sua escolha.
 - **Configs pessoais são instaladas só uma vez**: `~/.config/niri/config.kdl`,
   `~/.config/noctalia/config.toml`, `~/.config/alacritty/alacritty.toml` e `~/.zshrc` **não
   são sobrescritos** em uma reexecução — sua personalização de atalhos/temas sobrevive.
-  Para voltar ao padrão do MyOS, apague o arquivo e rode `sudo bash scripts/50-configs.sh`.
-  (Arquivos que o MyOS é dono — wallpapers, fallback `/etc/xdg/niri/config.kdl`,
+  Para voltar ao padrão do omyfedora, apague o arquivo e rode `sudo bash scripts/50-configs.sh`.
+  (Arquivos que o omyfedora é dono — wallpapers, fallback `/etc/xdg/niri/config.kdl`,
   `settings.toml`/plugins do Noctalia — seguem a mesma regra: só instalam se ausentes.)
-  A **paleta do tema** segue outra: o MyOS é dono dela, então é atualizada com
-  backup `.myos-bak` — para customizar, crie outra paleta em
+  A **paleta do tema** segue outra: o omyfedora é dono dela, então é atualizada com
+  backup `.omyfedora-bak` — para customizar, crie outra paleta em
   `~/.config/noctalia/palettes/` e aponte `custom_palette` para ela.
 - **Noctalia em duas camadas**: o `~/.config/noctalia/config.toml` carrega o
   **estilo** (tema, barra, dock, painéis) e o `~/.local/state/noctalia/settings.toml`
@@ -167,11 +167,11 @@ assets/                 # arquivos instalados (configs, wallpapers, helpers)
   geometria da lock screen — e o `[dock]` que o próprio dock persiste). O
   `settings.toml` é lido por último e vence chave-a-chave, então um ajuste de
   aparência que "não pega" quase sempre é uma chave repetida nele.
-- **Registro de etapas**: cada etapa concluída é marcada em `/var/lib/myos/steps/`. Se uma
+- **Registro de etapas**: cada etapa concluída é marcada em `/var/lib/omyfedora/steps/`. Se uma
   etapa falhar, o instalador mostra o código de erro, até onde chegou e como retomar
   (`sudo ./install.sh` ou só a etapa que falhou) — as etapas são idempotentes.
 - **Se o dnf falhar com `checksum doesn't match` ou 404 de `repodata`**: é o **espelho do
-  Fedora fora de sincronia** (transitório — aconteceria com qualquer `dnf`, não é do MyOS).
+  Fedora fora de sincronia** (transitório — aconteceria com qualquer `dnf`, não é do omyfedora).
   Rode `sudo dnf clean all` e o instalador de novo; se persistir por muitos minutos, troque
   de espelho (veja <https://mirrors.fedoraproject.org>).
 - **VM com tela preta depois do login?** É GPU sem OpenGL de hardware na VM: o **niri rejeita
@@ -196,7 +196,7 @@ assets/                 # arquivos instalados (configs, wallpapers, helpers)
   `opencode.ai/v2/install`) e se auto-atualizam depois.
 - **lazydocker**: instalado do repo do Fedora quando disponível; se não estiver, o binário
   vem da release oficial do GitHub **com verificação de sha256** (nunca `curl | bash`).
-- Arquivos sobrescritos no sistema ganham backup com sufixo `.myos-bak`.
+- Arquivos sobrescritos no sistema ganham backup com sufixo `.omyfedora-bak`.
 
 ## Verificação
 

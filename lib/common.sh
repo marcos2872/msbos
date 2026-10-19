@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Funções e utilidades compartilhadas pela suíte de instalação do MyOS.
+# Funções e utilidades compartilhadas pela suíte de instalação do omyfedora.
 # Este arquivo é carregado (source) pelos scripts/NN-*.sh.
 #
 # Variáveis de ambiente reconhecidas:
@@ -27,8 +27,8 @@ ok()   { printf '%s[OK ]%s %s\n' "${C_OK}" "${C_RST}" "$1"; }
 warn() { printf '%s[AV ]%s %s\n' "${C_WARN}" "${C_RST}" "$1" >&2; }
 err()  { printf '%s[ER ]%s %s\n' "${C_ERR}" "${C_RST}" "$1" >&2; }
 
-# raiz do repositório MyOS (parente de lib/)
-MYOS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# raiz do repositório omyfedora (parente de lib/)
+OMYFEDORA_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # run_cmd — executa um comando respeitando DRY_RUN (apenas registra)
 run_cmd() {
@@ -111,20 +111,20 @@ user_home() {
 }
 
 # _backup_dst <dst> — guarda a 1ª versão de um arquivo que vamos sobrescrever
-# (sufixo .myos-bak; nunca sobrescreve um backup já existente).
+# (sufixo .omyfedora-bak; nunca sobrescreve um backup já existente).
 # Respeita DRY_RUN: em simulação não tocamos no disco.
 _backup_dst() {
   local dst="$1"
-  [[ -f ${dst} && ! -f ${dst}.myos-bak ]] || return 0
+  [[ -f ${dst} && ! -f ${dst}.omyfedora-bak ]] || return 0
   [[ ${DRY_RUN} == 1 ]] && return 0
   # cp -a aqui é correto: o backup deve ser uma cópia fiel do original
   # (dono, modo, timestamps). Quoteado para não quebrar com path com espaços.
-  run_cmd cp -a "${dst}" "${dst}.myos-bak" 2>/dev/null || true
+  run_cmd cp -a "${dst}" "${dst}.omyfedora-bak" 2>/dev/null || true
 }
 
 # install_file <asset_rel> <dst> — copia asset do repositório para o sistema
-# (faz backup .myos-bak da primeira vez que sobrescrever um arquivo existente).
-# Sempre sobrescreve: use para arquivos que o MyOS é dono (wallpapers, helpers,
+# (faz backup .omyfedora-bak da primeira vez que sobrescrever um arquivo existente).
+# Sempre sobrescreve: use para arquivos que o omyfedora é dono (wallpapers, helpers,
 # fallback de sistema). Para configs que o USUÁRIO pode personalizar, prefira
 # install_file_once.
 #
@@ -135,7 +135,7 @@ _backup_dst() {
 # /etc/systemd/system editável por usuário comum (e legível só no contexto do
 # home). O modo vem do asset (644 configs, 755 scripts).
 install_file() {
-  local src="${MYOS_ROOT}/assets/$1" dst="$2"
+  local src="${OMYFEDORA_ROOT}/assets/$1" dst="$2"
   if [[ ! -r ${src} ]]; then
     err "asset ausente no repositório: ${src}"
     return 1
@@ -152,13 +152,13 @@ install_file() {
 # ainda não existir (idempotência para configurações pessoais: uma
 # personalização do usuário nunca é sobrescrita por uma reexecução do install).
 install_file_once() {
-  local src="${MYOS_ROOT}/assets/$1" dst="$2"
+  local src="${OMYFEDORA_ROOT}/assets/$1" dst="$2"
   if [[ ! -r ${src} ]]; then
     err "asset ausente no repositório: ${src}"
     return 1
   fi
   if [[ -f ${dst} ]]; then
-    log "config: ${dst} já existe — mantido (para restaurar o padrão MyOS, apague o arquivo e rode a etapa de novo)"
+    log "config: ${dst} já existe — mantido (para restaurar o padrão omyfedora, apague o arquivo e rode a etapa de novo)"
     return 0
   fi
   install_file "$1" "$2"
@@ -170,7 +170,7 @@ install_file_once() {
 # config.toml é lido pelo usuário 'greeter'. Um cp simples herdaria o modo 600
 # do mktemp e o greeter falharia.
 render_file() {
-  local src="${MYOS_ROOT}/assets/$1" dst="$2" var="$3" val="$4"
+  local src="${OMYFEDORA_ROOT}/assets/$1" dst="$2" var="$3" val="$4"
   if [[ ! -r ${src} ]]; then
     err "asset ausente no repositório: ${src}"
     return 1

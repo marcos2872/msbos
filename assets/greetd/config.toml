@@ -1,4 +1,4 @@
-# MyOS — greetd (display manager)
+# omyfedora — greetd (display manager)
 # __GREETER_CMD__ é substituído na instalação:
 #   - com noctalia-greeter: "/usr/bin/noctalia-greeter-session -- --session niri"
 #   - sem:                  "greetd" (greeter padrão em texto)

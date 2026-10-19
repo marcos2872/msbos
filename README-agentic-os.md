@@ -1,6 +1,6 @@
 # Agentic OS — Sistema operacional com UI de chat controlada por IA
 
-> Documento de ideia e direção técnica. Não é o MyOS atual (rota C com scripts bash), mas uma
+> Documento de ideia e direção técnica. Não é o omyfedora atual (rota C com scripts bash), mas uma
 > variante/evolução: um OS onde o chat de IA é a interface central e controla o sistema com
 > guardrails, sem sacrificar o uso "normal" de um desktop.
 
@@ -50,7 +50,7 @@ guardrails que impedem que o agente ou o usuário matem o sistema.
 - operações privilegiadas via daemon com allowlist + polkit + confirmação no chat;
 - rollback no boot resolve o pior caso ("agente quebrou o sistema").
 
-O MyOS atual (scripts bash idempotentes) vira a **base da imagem bootc**: o que hoje é
+O omyfedora atual (scripts bash idempotentes) vira a **base da imagem bootc**: o que hoje é
 `10-gpu.sh`…`50-configs.sh` passa a ser construído na imagem, e o que é personalização vira
 camada de runtime.
 
@@ -59,7 +59,7 @@ camada de runtime.
 | Opção | Estável? | Widget/plugin por IA? | Observações |
 |---|---|---|---|
 | **KDE Plasma 6 (Kinoite)** | Sim | Sim (Plasmoids em QML/JS, KRunner, D-Bus) | Melhor custo-benefício para MVP; Wayland maduro; IA gera QML com facilidade |
-| **Niri + Noctalia/Quickshell** | Médio | Sim (plugins Noctalia em QML/JS) | Leve (<600 MB idle, alvo do MyOS), mas nicho: todo bug do compositor é seu |
+| **Niri + Noctalia/Quickshell** | Médio | Sim (plugins Noctalia em QML/JS) | Leve (<600 MB idle, alvo do omyfedora), mas nicho: todo bug do compositor é seu |
 | COSMIC (System76) | Alpha | Médio (applets em Rust) | Promissor, sem base Fedora oficial e toolchain mais dura para IA |
 | GNOME Shell | Sim | Não | Extensions quebram a cada versão; inviável para widgets gerados por IA |
 | Hyprland | Não | Não | Quebra com updates, config manual, portais/polkit imaturos |
@@ -112,7 +112,7 @@ Usuário ⇄ UI de chat (QML)
   ajustar as permissões e explicar o que está concedendo).
 - **Dev/CLI/stack**: Distrobox (ou Toolbx), com `.desktop` exportado.
 - **Drivers/hardware**: por perfil na imagem (Intel/AMD/NVIDIA/hybrid), como o `10-gpu.sh` do
-  MyOS já faz; mudança de driver = nova imagem + rollback.
+  omyfedora já faz; mudança de driver = nova imagem + rollback.
 
 ## 7. Onboarding no primeiro boot
 
@@ -150,7 +150,7 @@ para reinstalação/migração idêntica.
 ## 10. Desenvolvimento e testes
 
 - `bootc-image-builder` gera QCOW2 para VM (KVM/QEMU) — ciclos de teste sem máquina física.
-- Provar o protótipo em VM descartável (mesmo fluxo do `--dry-run`/`--yes` do MyOS atual).
+- Provar o protótipo em VM descartável (mesmo fluxo do `--dry-run`/`--yes` do omyfedora atual).
 - "Kanban" de confiabilidade: cada ação do agente precisa de teste de undo/rollback antes de
   virar ação "verde".
 
@@ -159,7 +159,7 @@ para reinstalação/migração idêntica.
 | Fase | Escopo | Entrega |
 |---|---|---|
 | 0 | Decisões e protótipo do daemon de políticas (D-Bus + polkit + allowlist) | Prova de ações seguras de flatpak/config |
-| 1 | Imagem Fedora Kinoite bootc com stack do MyOS + onboarding | VM instalável e usável |
+| 1 | Imagem Fedora Kinoite bootc com stack do omyfedora + onboarding | VM instalável e usável |
 | 2 | UI de chat integrada (painel sempre visível) + ações verdes/amarelas | Chat controla apps/config/rotinas |
 | 3 | Widgets plugináveis (Plasmoids) + undo no chat | Personalização por IA |
 | 4 | Porta leve: base bootc minimal + Niri + Noctalia | Alvo de RAM e shell chat-first |
@@ -169,16 +169,16 @@ para reinstalação/migração idêntica.
 | Risco | Mitigação |
 |---|---|
 | LLM gera ação inválida ou nociva | Ações estruturadas (nunca shell), dry-run, backup, undo, rollback de boot |
-| Flatpak quebra por permissions/parental controls | Manter pacotes protegidos (caso `malcontent`, já tratado no MyOS) |
+| Flatpak quebra por permissions/parental controls | Manter pacotes protegidos (caso `malcontent`, já tratado no omyfedora) |
 | Update da base quebra plugins da UI | Plugins em `$HOME`; pinagem/calendário de upgrade; testar em VM antes |
 | Custo de LLM | Provider escolhido pelo usuário; agente degrada para modo "sugerir script" |
 | Escopo grande demais | Fases: Plasma antes de Niri; daemon antes de UI; VM antes de bare metal |
 
-## 13. Relação com o MyOS atual
+## 13. Relação com o omyfedora atual
 
-- **MyOS (hoje)**: rota C — scripts bash idempotentes sobre Fedora KDE. Serve como
+- **omyfedora (hoje)**: rota C — scripts bash idempotentes sobre Fedora KDE. Serve como
   fonte dos perfis de GPU, tuning, serviços e configs.
-- **Agentic OS (ideia)**: evolução possível — empacotar o MyOS como imagem bootc, adicionar o
+- **Agentic OS (ideia)**: evolução possível — empacotar o omyfedora como imagem bootc, adicionar o
   daemon de agente e o chat. O noção de "plugáveis" e "reversível" já está no DNA dos scripts;
   a mudança principal é sair da base mutável e pôr o agente atrás de guardrails.
 

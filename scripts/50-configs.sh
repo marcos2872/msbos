@@ -4,7 +4,7 @@
 #   • Noctalia (esqueleto de config do usuário)
 #   • tema dark dos apps: Breeze Dark (o dark padrão do KDE) + GTK
 #   • greetd + PAM (greeter Noctalia se disponível)
-#   • papel de parede padrão + helper myos-wallpaper
+#   • papel de parede padrão + helper omyfedora-wallpaper
 #   • Brave como navegador padrão do usuário
 
 set -euo pipefail
@@ -19,10 +19,10 @@ log "config: configurando para o usuário: ${TU} (${TU_HOME})"
 # ─── 1. niri ────────────────────────────────────────────────────────────────
 # Config do USUÁRIO: só instala se não existir (install_file_once) — o niri
 # substitui TODOS os binds default quando o config define qualquer bind, então
-# esse arquivo é o "default set" completo do MyOS; sobrescrevê-lo depois comeria
+# esse arquivo é o "default set" completo do omyfedora; sobrescrevê-lo depois comeria
 # a personalização de quem mexeu nos atalhos.
 install_file_once "niri/config.kdl" "${TU_HOME}/.config/niri/config.kdl"
-# Fallback de sistema: o MyOS é dono dele, pode ser sempre atualizado.
+# Fallback de sistema: o omyfedora é dono dele, pode ser sempre atualizado.
 install_file "niri/config.kdl" "/etc/xdg/niri/config.kdl"
 
 # ─── 2. Noctalia (esqueleto; padrões da instalação já funcionam) ────────────
@@ -31,16 +31,16 @@ install_file_once "noctalia/config.toml" "${TU_HOME}/.config/noctalia/config.tom
 # ─── 2a. Noctalia: paleta(s) do tema ────────────────────────────────────────
 # [theme] custom_palette (config.toml) aponta para "macOS", que o Noctalia
 # procura em ~/.config/noctalia/palettes/macOS.json. A paleta é parte do tema
-# que o MyOS entrega, então usa install_file (com backup .myos-bak): para
+# que o omyfedora entrega, então usa install_file (com backup .omyfedora-bak): para
 # customizar, crie outra paleta nessa pasta e aponte custom_palette para ela.
 NOCT_CONF="${TU_HOME}/.config/noctalia"
-for paleta in "${MYOS_ROOT}"/assets/noctalia/palettes/*.json; do
+for paleta in "${OMYFEDORA_ROOT}"/assets/noctalia/palettes/*.json; do
   [[ -f ${paleta} ]] || continue
   install_file "noctalia/palettes/$(basename "${paleta}")" \
     "${NOCT_CONF}/palettes/$(basename "${paleta}")"
 done
 
-# ─── 2b. Noctalia: defaults do MyOS (settings + plugins) ────────────────────
+# ─── 2b. Noctalia: defaults do omyfedora (settings + plugins) ────────────────────
 # A config real do Noctalia v5 vive em ~/.local/state/noctalia/ (settings.toml
 # + plugins/). Instalamos os defaults do repo SOMENTE se ainda não existirem —
 # uma personalização existente nunca é sobrescrita.
@@ -56,11 +56,11 @@ if [[ ${DRY_RUN} == 1 ]]; then
 else
   # copia_plugin <dir_do_plugin_no_repo> <dir_de_destino> — copia arquivo por
   # arquivo via install_file (nunca cp direto): garante modo, dono e contexto
-  # SELinux corretos no destino, além do backup .myos-bak. Se o destino já
+  # SELinux corretos no destino, além do backup .omyfedora-bak. Se o destino já
   # existe, o plugin é mantido como está.
   copia_plugin() {
     local src_dir="$1" dst_dir="$2" rel f sub
-    rel="${src_dir#"${MYOS_ROOT}"/assets/}"
+    rel="${src_dir#"${OMYFEDORA_ROOT}"/assets/}"
     if [[ -d ${dst_dir} ]]; then
       log "noctalia: plugin '${rel}' já instalado — mantido"
       return 0
@@ -73,14 +73,14 @@ else
     log "noctalia: plugin '${rel}' instalado"
   }
 
-  for plug in "${MYOS_ROOT}"/assets/noctalia/plugins/*/*/*; do
+  for plug in "${OMYFEDORA_ROOT}"/assets/noctalia/plugins/*/*/*; do
     [[ -d ${plug} ]] || continue
-    rel="${plug#"${MYOS_ROOT}"/assets/noctalia/plugins/}"
+    rel="${plug#"${OMYFEDORA_ROOT}"/assets/noctalia/plugins/}"
     copia_plugin "${plug}" "${NOCT_STATE}/plugins/${rel}"
   done
   # plugins locais (documentado: ~/.local/share/noctalia/plugins/<plugin>/ é
   # descoberto como "local source" — funciona sem rede e sem registro)
-  for plug in "${MYOS_ROOT}"/assets/noctalia/plugins-local/*; do
+  for plug in "${OMYFEDORA_ROOT}"/assets/noctalia/plugins-local/*; do
     [[ -d ${plug} ]] || continue
     name="$(basename "${plug}")"
     copia_plugin "${plug}" "${TU_HOME}/.local/share/noctalia/plugins/${name}"
@@ -88,24 +88,24 @@ else
 fi
 
 # ─── 2c. Tema dark dos apps: Breeze Dark (o dark padrão do KDE) ─────────────
-# O MyOS não entrega tema próprio: os apps usam o "Breeze Dark" do KDE. O
+# O omyfedora não entrega tema próprio: os apps usam o "Breeze Dark" do KDE. O
 # shell (Noctalia) segue com o visual próprio dele — ele não é KDE/GTK/Qt.
 # A fonte da verdade é o KDE do próprio usuário: o 1º bloco só PREENCHE chaves
 # que o usuário ainda não definiu no ~/.config/kdeglobals/kcminputrc (o System
 # Settings mexe nos MESMOS arquivos — uma escolha feita na GUI nunca é
 # sobrescrita). O resto garante o mesmo dark nos apps GTK/Electron, que leem
 # dconf/portal + settings.ini:
-#   • /etc/dconf/db/local.d/00-myos-dark: padrão de sistema (color-scheme +
+#   • /etc/dconf/db/local.d/00-omyfedora-dark: padrão de sistema (color-scheme +
 #     gtk/icon/cursor-theme) aplicado via `dconf update` — vale para todo usuário.
 #   • ~/.config/gtk-3.0|4.0/settings.ini: fallback lido direto pelo GTK, sem
 #     precisar de sessão D-Bus (cobre diálogos no primeiro login).
-#   • /etc/profile.d/myos-theme.sh: XCURSOR_* (cursor breeze_cursors único no
+#   • /etc/profile.d/omyfedora-theme.sh: XCURSOR_* (cursor breeze_cursors único no
 #     niri e nos apps) + QT_QPA_PLATFORMTHEME=kde (platform theme do KDE,
 #     plasma-integration — sem ele os apps Qt não aplicam o Breeze).
 #   • gsettings como TU: atualiza o banco dconf EXISTENTE do usuário (o default
 #     de sistema sozinho não muda um user db já criado como claro).
-# Idempotente: arquivos de tema são dono do MyOS (install_file, com backup
-# .myos-bak); o gsettings só escreve quando o valor atual ainda não é o escuro;
+# Idempotente: arquivos de tema são dono do omyfedora (install_file, com backup
+# .omyfedora-bak); o gsettings só escreve quando o valor atual ainda não é o escuro;
 # o kwriteconfig6 só escreve no kdeglobals o que o usuário não escolheu.
 if [[ ${DRY_RUN} == 1 ]]; then
   log "dry-run: preencheria Breeze Dark (ColorScheme/widgetStyle/Icons/cursor) no kdeglobals/kcminputrc de ${TU} — só o que ainda não foi definido"
@@ -130,8 +130,8 @@ else
 fi
 install_file "gtk-3.0/settings.ini" "${TU_HOME}/.config/gtk-3.0/settings.ini"
 install_file "gtk-4.0/settings.ini" "${TU_HOME}/.config/gtk-4.0/settings.ini"
-install_file "profile.d/myos-theme.sh" "/etc/profile.d/myos-theme.sh"
-install_file "dconf/db/local.d/00-myos-dark" "/etc/dconf/db/local.d/00-myos-dark"
+install_file "profile.d/omyfedora-theme.sh" "/etc/profile.d/omyfedora-theme.sh"
+install_file "dconf/db/local.d/00-omyfedora-dark" "/etc/dconf/db/local.d/00-omyfedora-dark"
 run_cmd dconf update || warn "dconf update falhou — padrão de sistema pode não aplicar"
 if [[ ${DRY_RUN} == 1 ]]; then
   log "dry-run: definiria gtk-theme=Breeze, color-scheme=prefer-dark, icon-theme=breeze-dark e cursor=breeze_cursors para ${TU}"
@@ -159,11 +159,11 @@ else
 fi
 
 # ─── 3. Papel de parede + helper ────────────────────────────────────────────
-install_file "bin/myos-wallpaper" "/usr/local/bin/myos-wallpaper"
-run_cmd chmod 755 /usr/local/bin/myos-wallpaper
-for w in "${MYOS_ROOT}"/assets/wallpapers/*; do
+install_file "bin/omyfedora-wallpaper" "/usr/local/bin/omyfedora-wallpaper"
+run_cmd chmod 755 /usr/local/bin/omyfedora-wallpaper
+for w in "${OMYFEDORA_ROOT}"/assets/wallpapers/*; do
   [[ -f ${w} ]] || continue
-  install_file "wallpapers/$(basename "${w}")" "/usr/share/myos-walls/$(basename "${w}")"
+  install_file "wallpapers/$(basename "${w}")" "/usr/share/omyfedora-walls/$(basename "${w}")"
 done
 
 # ─── 4. greetd — escolhe o greeter disponível ───────────────────────────────
@@ -183,13 +183,13 @@ render_file "greetd/config.toml" "/etc/greetd/config.toml" "__GREETER_CMD__" "${
 # PAM do greetd: o pacote do Fedora já traz o arquivo correto (com pam_selinux —
 # sem ele o SELinux em enforcing bloqueia o systemctl --user da sessão e o niri
 # volta para a tela de login). NÃO sobrescrevemos; apenas restauramos se
-# detectarmos uma versão antiga do MyOS sem pam_selinux.
+# detectarmos uma versão antiga do omyfedora sem pam_selinux.
 if [[ -f /etc/pam.d/greetd ]] && ! grep -q 'pam_selinux' /etc/pam.d/greetd; then
-  if [[ -f /etc/pam.d/greetd.myos-bak ]]; then
+  if [[ -f /etc/pam.d/greetd.omyfedora-bak ]]; then
     warn "greetd: /etc/pam.d/greetd sem pam_selinux — restaurando backup do pacote"
-    run_cmd cp -f /etc/pam.d/greetd.myos-bak /etc/pam.d/greetd
+    run_cmd cp -f /etc/pam.d/greetd.omyfedora-bak /etc/pam.d/greetd
   else
-    warn "greetd: /etc/pam.d/greetd sem pam_selinux — instalando versão correta do MyOS"
+    warn "greetd: /etc/pam.d/greetd sem pam_selinux — instalando versão correta do omyfedora"
     install_file "pam.d/greetd" "/etc/pam.d/greetd"
   fi
 elif [[ ! -f /etc/pam.d/greetd ]]; then
@@ -279,9 +279,9 @@ if [[ -f /etc/xdg/autostart/sealertauto.desktop || ${DRY_RUN} == 1 ]]; then
   # seapplet: o applet do setroubleshoot fechava notificações órfãs tratando só
   # IOError, mas o Noctalia responde GLib.GError ("NotFound") — a exceção
   # escapava para o abrt (popup "uncaught exception" a cada AVC). Aponta para a
-  # cópia com patch em /usr/local/bin/myos-seapplet.
-  install_file "bin/myos-seapplet" "/usr/local/bin/myos-seapplet"
-  run_cmd chmod 755 /usr/local/bin/myos-seapplet
+  # cópia com patch em /usr/local/bin/omyfedora-seapplet.
+  install_file "bin/omyfedora-seapplet" "/usr/local/bin/omyfedora-seapplet"
+  run_cmd chmod 755 /usr/local/bin/omyfedora-seapplet
   install_file_once "autostart/sealertauto.desktop" "${TU_HOME}/.config/autostart/sealertauto.desktop"
   ok "autostart: seapplet com patch (notificação órfã não derruba mais o applet)"
 fi
@@ -304,7 +304,7 @@ fi
 cat <<EOF
 
 ──────────────────────────────────────────────────────────────
- MyOS instalado. O que esperar no próximo boot:
+ omyfedora instalado. O que esperar no próximo boot:
 
    • Tela de login do greetd (Noctalia Greeter, se instalado)
      com a sessão "niri" já disponível

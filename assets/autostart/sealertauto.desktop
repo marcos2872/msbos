@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=SELinux Troubleshooter
-Exec=/usr/local/bin/myos-seapplet
-Comment=View & interpret SELinux denials (MyOS: cópia com patch do fechamento de notificação)
+Exec=/usr/local/bin/omyfedora-seapplet
+Comment=View & interpret SELinux denials (omyfedora: cópia com patch do fechamento de notificação)
 Encoding=UTF-8
 Type=Application
 StartupNotify=false

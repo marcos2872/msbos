@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# MyOS — remove o shell do Plasma no boot (antes da sessão gráfica).
+# omyfedora — remove o shell do Plasma no boot (antes da sessão gráfica).
 #
-# Executado UMA vez pelo myos-remove-plasma.service, antes do greetd/graphical.
+# Executado UMA vez pelo omyfedora-remove-plasma.service, antes do greetd/graphical.
 #
 # Por que no boot? Remover o desktop em uso derruba a sessão gráfica atual: o
 # %preun do plasmalogin/plasma-* mexe nos serviços systemd (remove-system-units
@@ -11,7 +11,7 @@
 # Comportamento:
 #   - desativa temporariamente a proteção de pacotes do Fedora KDE
 #     (plasma-desktop é protegido em /etc/dnf/protected.d/) e re-protege
-#     NetworkManager/tuned/tuned-ppd + os pacotes que o MyOS mantém para os
+#     NetworkManager/tuned/tuned-ppd + os pacotes que o omyfedora mantém para os
 #     apps KDE (plasma-integration, plasma-breeze, plasma-systemsettings,
 #     polkit-kde, xdg-desktop-portal-kde) via --setopt append (o dnf5 soma,
 #     não substitui)
@@ -23,17 +23,17 @@
 
 set -u
 
-LOG_TAG="myos-remove-plasma"
+LOG_TAG="omyfedora-remove-plasma"
 
 log() { echo "[${LOG_TAG}] $*"; }
 
 # Proteção do dnf (plasma-desktop): mover para fora e restaurar no fim.
-# Mesmo padrão do antigo myos-remove-gnome (fedora-workstation.conf).
+# Mesmo padrão do antigo script de remoção do GNOME (fedora-workstation.conf).
 PROT_FILES=()
 restore_prot() {
   local f
   for f in "${PROT_FILES[@]}"; do
-    [[ -e ${f}.myos-off ]] && mv -f "${f}.myos-off" "${f}"
+    [[ -e ${f}.omyfedora-off ]] && mv -f "${f}.omyfedora-off" "${f}"
   done
   return 0
 }
@@ -41,12 +41,12 @@ trap restore_prot EXIT
 
 # limpa sobra de execução anterior interrompida (antes de mover de novo)
 for f in /etc/dnf/protected.d/plasma-desktop.conf /etc/dnf/protected.d/fedora-workstation.conf; do
-  [[ -e ${f}.myos-off ]] && mv -f "${f}.myos-off" "${f}"
+  [[ -e ${f}.omyfedora-off ]] && mv -f "${f}.omyfedora-off" "${f}"
 done
 
 for f in /etc/dnf/protected.d/plasma-desktop.conf /etc/dnf/protected.d/fedora-workstation.conf; do
   [[ -e ${f} ]] || continue
-  mv -f "${f}" "${f}.myos-off"
+  mv -f "${f}" "${f}.omyfedora-off"
   PROT_FILES+=("${f}")
 done
 
@@ -99,10 +99,10 @@ trap - EXIT
 
 if (( rc == 0 )); then
   log "concluído — desabilitando o serviço"
-  systemctl disable myos-remove-plasma.service >/dev/null 2>&1 || true
-  rm -f /usr/local/libexec/myos-remove-plasma /etc/systemd/system/myos-remove-plasma.service || true
+  systemctl disable omyfedora-remove-plasma.service >/dev/null 2>&1 || true
+  rm -f /usr/local/libexec/omyfedora-remove-plasma /etc/systemd/system/omyfedora-remove-plasma.service || true
   systemctl daemon-reload >/dev/null 2>&1 || true
 else
-  log "FALHOU — nova tentativa no próximo boot (veja: journalctl -u myos-remove-plasma)"
+  log "FALHOU — nova tentativa no próximo boot (veja: journalctl -u omyfedora-remove-plasma)"
 fi
 exit "${rc}"

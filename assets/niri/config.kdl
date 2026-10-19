@@ -1,4 +1,4 @@
-// MyOS — configuração do niri (defaults completos + integração Noctalia)
+// omyfedora — configuração do niri (defaults completos + integração Noctalia)
 // Referência: /usr/share/doc/niri/wiki e docs.noctalia.dev/noctalia/compositor-settings/niri
 
 input {
@@ -37,7 +37,7 @@ window-rule {
     clip-to-geometry true
 }
 
-// Transparência global: 94% de opacidade em todas as janelas. O MyOS não roda
+// Transparência global: 94% de opacidade em todas as janelas. O omyfedora não roda
 // o KWin, então a regra "Transparência Global" do KDE (opacityactive/inactive
 // = 94) vira esta window-rule sem match — genérica primeiro, específicas
 // depois (a ordem importa: regra posterior sobrepõe). A opacidade é
@@ -101,7 +101,7 @@ debug {
 
     // VM (QEMU/KVM + virtio-gpu-gl/virgl): contorna bugs de driver do QEMU — o
     // cursor aparece de cabeça para baixo (qemu#2315) e/ou surgem artefatos na
-    // tela. Descomente as 3 linhas ao rodar o MyOS dentro de uma VM:
+    // tela. Descomente as 3 linhas ao rodar o omyfedora dentro de uma VM:
     // disable-cursor-plane
     // disable-direct-scanout
     // wait-for-frame-completion-before-queueing
@@ -113,9 +113,9 @@ debug {
 spawn-at-startup "noctalia"
 // Agente de autenticação polkit (KDE): sem ele o udisks2 nega montar volumes
 // externos no Dolphin ("Not authorized to perform operation").
-// polkit-kde segue o tema Breeze do KDE (o MyOS não usa mais Kvantum).
+// polkit-kde segue o tema Breeze do KDE (o omyfedora não usa mais Kvantum).
 spawn-at-startup "/usr/libexec/kf6/polkit-kde-authentication-agent-1"
-// spawn-at-startup "myos-wallpaper"
+// spawn-at-startup "omyfedora-wallpaper"
 
 binds {
     // ── Noctalia ────────────────────────────────────────────────────────────
@@ -125,7 +125,7 @@ binds {
     Alt+Tab         { spawn-sh "noctalia msg window-switcher hold"; }
     Mod+P hotkey-overlay-title="Displays (Noctalia)" { spawn-sh "noctalia msg panel-toggle raycursive/niri-displays:panel"; }
 
-    // ── MyOS: apps ──────────────────────────────────────────────────────────
+    // ── omyfedora: apps ──────────────────────────────────────────────────────────
     Mod+B { spawn "brave-browser"; }
     Mod+E { spawn "zed"; }
 

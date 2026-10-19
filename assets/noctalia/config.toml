@@ -1,4 +1,4 @@
-# MyOS — camada BASE da configuração do Noctalia v5
+# omyfedora — camada BASE da configuração do Noctalia v5
 #
 # O Noctalia v5 LÊ este arquivo, sim (docs oficiais, "How configuration works"):
 # a config é montada em 3 camadas —
@@ -7,7 +7,7 @@
 #   3. ~/.local/state/noctalia/settings.toml  (override escrito pela GUI)
 # A camada 3 é carregada por último e vence chave-a-chave a camada 2.
 #
-# Divisão de responsabilidade no MyOS:
+# Divisão de responsabilidade no omyfedora:
 #   • aqui (config.toml) → ESTILO: tema, barra, dock, painéis, shell
 #   • settings.toml      → CONTEÚDO da GUI: listas de widgets, wallpaper,
 #                          plugins, geometria da lock screen. O Noctalia
@@ -102,7 +102,7 @@ session_placement         = "floating"
 [shell.window_switcher]
 style = "compact"
 
-# Dica MyOS: para trocar o papel de parede, coloque imagens em
-#   ~/.config/myos-walls/   (usuário)
-#   /usr/share/myos-walls/  (sistema)
-# e o helper myos-wallpaper (swaybg) usa a primeira delas no próximo login.
+# Dica omyfedora: para trocar o papel de parede, coloque imagens em
+#   ~/.config/omyfedora-walls/   (usuário)
+#   /usr/share/omyfedora-walls/  (sistema)
+# e o helper omyfedora-wallpaper (swaybg) usa a primeira delas no próximo login.

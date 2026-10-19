@@ -1,4 +1,4 @@
-# MyOS — defaults do Noctalia v5 (instalados em ~/.local/state/noctalia/)
+# omyfedora — defaults do Noctalia v5 (instalados em ~/.local/state/noctalia/)
 #
 # O que vai aqui:
 #   - layout da barra ([bar.default])
@@ -54,13 +54,13 @@ enabled = [ "tmelik/system-monitor", "raycursive/niri-displays" ]
 [shell]
 app_icon_color = "secondary"
 
-# Mesmo wallpaper usado como padrão do MyOS (instalado pelo 50-configs.sh
-# em /usr/share/myos-walls/). As entradas por monitor são criadas em runtime.
+# Mesmo wallpaper usado como padrão do omyfedora (instalado pelo 50-configs.sh
+# em /usr/share/omyfedora-walls/). As entradas por monitor são criadas em runtime.
 [wallpaper.default]
-path = "/usr/share/myos-walls/pexels-wearelivingart-7862142.jpg"
+path = "/usr/share/omyfedora-walls/pexels-wearelivingart-7862142.jpg"
 
 [wallpaper.last]
-path = "/usr/share/myos-walls/pexels-wearelivingart-7862142.jpg"
+path = "/usr/share/omyfedora-walls/pexels-wearelivingart-7862142.jpg"
 
 [widget.media]
 hide_when_no_media = true

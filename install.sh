@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# MyOS — bootstrap de uma base Fedora KDE para o stack niri + Noctalia (baixo uso de RAM).
+# omyfedora — bootstrap de uma base Fedora KDE para o stack niri + Noctalia (baixo uso de RAM).
 #
 # Uso:
 #   ./install.sh [opções]
@@ -21,15 +21,15 @@
 #             mínima (Everything, "Minimal Install") → https://fedoraproject.org/misc
 #
 #   Para testar numa VM:
-#     virt-install --name myos --memory 4096 --vcpus 3 --disk size=25 \
+#     virt-install --name omyfedora --memory 4096 --vcpus 3 --disk size=25 \
 #       --cdrom /caminho/Fedora-KDE-Desktop-Live-44.iso \
 #       --os-variant fedora-unknown --graphics spice
 #
-#   Depois, dentro da VM: git clone https://github.com/marcos2872/my-os && ./install.sh
+#   Depois, dentro da VM: git clone https://github.com/marcos2872/omyfedora && ./install.sh
 
 set -euo pipefail
 
-MYOS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+OMYFEDORA_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Defaults — só valem se a variável não veio do ambiente (reexecução via sudo)
 : "${DRY_RUN:=0}"
@@ -39,7 +39,7 @@ MYOS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 : "${GPU_PROFILE:=auto}"
 : "${SKIP_REMOVE:=0}"
 
-usage() { awk 'NR==1{next} !/^#/{exit} {sub(/^# ?/,""); print}' "${MYOS_ROOT}/install.sh"; }
+usage() { awk 'NR==1{next} !/^#/{exit} {sub(/^# ?/,""); print}' "${OMYFEDORA_ROOT}/install.sh"; }
 
 while (($#)); do
   case "$1" in
@@ -59,40 +59,40 @@ export DRY_RUN YES NO_GREETER TARGET_USER GPU_PROFILE SKIP_REMOVE
 
 # Reexecuta com privilégios (mantendo as variáveis acima)
 if [[ ${EUID} -ne 0 && ${DRY_RUN} -eq 0 ]]; then
-  echo "→ MyOS precisa de root; reexecutando com sudo..."
+  echo "→ omyfedora precisa de root; reexecutando com sudo..."
   exec sudo env \
     "DRY_RUN=${DRY_RUN}" "YES=${YES}" "NO_GREETER=${NO_GREETER}" \
     "TARGET_USER=${TARGET_USER}" "GPU_PROFILE=${GPU_PROFILE}" "SKIP_REMOVE=${SKIP_REMOVE}" \
-    bash "${MYOS_ROOT}/install.sh"
+    bash "${OMYFEDORA_ROOT}/install.sh"
 fi
 
-printf '\n%s\n' "╔══════════════════════════════════════════════════════════╗"
-printf '%s\n'   "║  MyOS — Fedora KDE + niri + Noctalia (baixo uso de RAM)  ║"
-printf '%s\n\n' "╚══════════════════════════════════════════════════════════╝"
+printf '\n%s\n' "╔═══════════════════════════════════════════════════════════════╗"
+printf '%s\n'   "║  omyfedora — Fedora KDE + niri + Noctalia (baixo uso de RAM)  ║"
+printf '%s\n\n' "╚═══════════════════════════════════════════════════════════════╝"
 
 if [[ ${DRY_RUN} == 1 ]]; then
   echo "  modo: DRY-RUN (nada será alterado)"
 fi
 
 STEPS=()
-while IFS= read -r s; do STEPS+=("${s}"); done < <(cd "${MYOS_ROOT}/scripts" && ls -1 [0-9][0-9]-*.sh | sort)
+while IFS= read -r s; do STEPS+=("${s}"); done < <(cd "${OMYFEDORA_ROOT}/scripts" && ls -1 [0-9][0-9]-*.sh | sort)
 
 if ((${#STEPS[@]} == 0)); then
-  echo "nenhuma etapa encontrada em ${MYOS_ROOT}/scripts" >&2
+  echo "nenhuma etapa encontrada em ${OMYFEDORA_ROOT}/scripts" >&2
   exit 1
 fi
 
 # Estado das etapas concluídas (só grava em modo real; nenhum arquivo em dry-run).
 # Serve de registro/auditoria: se uma etapa falhar, o histórico em
-# /var/lib/myos/steps mostra exatamente até onde a instalação chegou.
-STATE_DIR="/var/lib/myos/steps"
+# /var/lib/omyfedora/steps mostra exatamente até onde a instalação chegou.
+STATE_DIR="/var/lib/omyfedora/steps"
 
 for step in "${STEPS[@]}"; do
   printf '\n──── %s ────\n' "${step}"
   # Nota: "if ! cmd; then rc=$?" NÃO funciona — $? traria o status invertido
   # do pipeline negado. Por isso capturamos com "|| rc=$?".
   rc=0
-  bash "${MYOS_ROOT}/scripts/${step}" || rc=$?
+  bash "${OMYFEDORA_ROOT}/scripts/${step}" || rc=$?
   if ((rc != 0)); then
     printf '\n%s\n' "══════════════════════════════════════════════════════════"
     printf '[ER ] a etapa %s falhou (código %s).\n' "${step}" "${rc}"
@@ -115,5 +115,5 @@ MSG
 done
 
 printf '\n%s\n' "══════════════════════════════════════════════════════════"
-echo " MyOS: instalação concluída. Reinicie para entrar no niri."
+echo " omyfedora: instalação concluída. Reinicie para entrar no niri."
 printf '%s\n\n' "══════════════════════════════════════════════════════════"

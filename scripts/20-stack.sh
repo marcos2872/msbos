@@ -141,11 +141,11 @@ for p in swaybg wlsunset ddcutil pipewire-alsa; do
   run_cmd dnf -y "${DNFOPT}" install "${p}" || warn "opcional '${p}' indisponível — ignorado"
 done
 
-# ─── 2b. Curadoria: apps KDE e LibreOffice que o MyOS não usa ───────────────
-# A base KDE já traz os apps padrão; o MyOS remove só o que não se usa num
+# ─── 2b. Curadoria: apps KDE e LibreOffice que o omyfedora não usa ───────────────
+# A base KDE já traz os apps padrão; o omyfedora remove só o que não se usa num
 # desktop de dev: jogos, a suíte PIM/e-mail (substituível por webmail), o
 # pacote de ajuda/acessibilidade e o LibreOffice (a suíte de escritório do
-# MyOS é o ONLYOFFICE, instalado na seção 7). Remoção ao vivo é segura — são
+# omyfedora é o ONLYOFFICE, instalado na seção 7). Remoção ao vivo é segura — são
 # apps, sem scriptlet que derruba a sessão (o SHELL do Plasma sai de cena no
 # próximo boot, agendado na seção 8: esse sim derrubaria a sessão).
 if [[ ${SKIP_REMOVE:-0} == 1 ]]; then
@@ -166,21 +166,21 @@ else
   # as dependências exclusivas dele (ex.: java headless) pela cascata padrão do
   # dnf. Idempotente: só age se a suíte estiver instalada.
   if rpm -q libreoffice-core >/dev/null 2>&1; then
-    log "curadoria: removendo o LibreOffice (escritório do MyOS = ONLYOFFICE)"
+    log "curadoria: removendo o LibreOffice (escritório do omyfedora = ONLYOFFICE)"
     run_cmd dnf -y "${DNFOPT}" remove 'libreoffice*' || warn "libreoffice: falha na remoção"
   fi
 fi
 
 # ─── 2c. Tema dark do KDE (Breeze) + apps garantidos ────────────────────────
-# O MyOS não entrega tema próprio: os apps usam o "Breeze Dark", o dark padrão
+# O omyfedora não entrega tema próprio: os apps usam o "Breeze Dark", o dark padrão
 # do KDE (o mesmo que o Plasma usa). Nada de Kvantum/qt6ct/qt5ct — o visual vem
 # de:
 #   • ~/.config/kdeglobals (ColorScheme=BreezeDark, widgetStyle=Breeze,
 #     ícones breeze-dark, cursor breeze_cursors) — preenchido na etapa
 #     50-configs via kwriteconfig6 (o System Settings mexe no MESMO arquivo e
-#     o MyOS só preenche chaves ainda vazias);
+#     o omyfedora só preenche chaves ainda vazias);
 #   • plasma-integration: platform theme Qt6 "kde" (QT_QPA_PLATFORMTHEME em
-#     /etc/profile.d/myos-theme.sh) — sem ele os apps Qt ficam sem o Breeze;
+#     /etc/profile.d/omyfedora-theme.sh) — sem ele os apps Qt ficam sem o Breeze;
 #   • breeze-gtk-common: tema GTK Breeze/Breeze-Dark (lido pelo settings.ini);
 #   • pam-kwallet: destrava o cofre KWallet no login (o PAM do greetd no
 #     Fedora já chama o pam_kwallet5.so).
@@ -190,7 +190,7 @@ for p in plasma-integration plasma-breeze breeze-gtk-common pam-kwallet kde-cli-
   run_cmd dnf -y "${DNFOPT}" install "${p}" \
     || warn "tema: '${p}' indisponível — o visual dos apps pode divergir do KDE"
 done
-# Apps KDE que o MyOS garante presentes (a base KDE já os tem — o Dolphin, o
+# Apps KDE que o omyfedora garante presentes (a base KDE já os tem — o Dolphin, o
 # Konsole, o Kate/KWrite etc. são os apps do dia a dia; numa instalação mínima
 # eles completam o desktop). Sem haruna/strawberry/ksystemlog: os equivalentes
 # padrão do KDE são dragon/elisa/kjournald.
@@ -254,7 +254,7 @@ fi
 if [[ ${NO_GREETER} == 1 ]]; then
   log "stack: greeter Noctalia desativado (--no-greeter)"
 else
-  install_file "yum.repos.d/terra.repo" "/etc/yum.repos.d/myos-terra.repo"
+  install_file "yum.repos.d/terra.repo" "/etc/yum.repos.d/omyfedora-terra.repo"
   warn "repo comunitário Terra (fyralabs) habilitado para o pacote noctalia-greeter"
   run_cmd dnf -y "${DNFOPT}" install noctalia-greeter \
     || warn "noctalia-greeter indisponível — o greetd usará o greeter padrão"
@@ -375,7 +375,7 @@ fi
 # serviços systemd (remove-system-units para/desabilita o plasmalogin), o que
 # derruba a sessão gráfica atual — matando o instalador no meio da transação
 # dnf (o mesmo valia para o gdm). A remoção é agendada via systemd para rodar
-# no próximo boot, ANTES do login (myos-remove-plasma.service).
+# no próximo boot, ANTES do login (omyfedora-remove-plasma.service).
 # Sai só o SHELL do Plasma (desktop/workspace/login manager + wizard de
 # primeiro login). Os apps KDE ficam — inclusive o plasma-discover, que segue
 # funcionando com o PackageKit.
@@ -390,10 +390,10 @@ else
   done
   if ((${#REMOVE_PKGS[@]} > 0)); then
     if exige_ok "agendar a remoção do shell do Plasma (${REMOVE_PKGS[*]}) para o próximo boot?"; then
-      install_file "libexec/myos-remove-plasma" "/usr/local/libexec/myos-remove-plasma"
-      run_cmd chmod 755 /usr/local/libexec/myos-remove-plasma
-      install_file "myos-remove-plasma.service" "/etc/systemd/system/myos-remove-plasma.service"
-      run_cmd systemctl enable myos-remove-plasma.service >/dev/null 2>&1 || true
+      install_file "libexec/omyfedora-remove-plasma" "/usr/local/libexec/omyfedora-remove-plasma"
+      run_cmd chmod 755 /usr/local/libexec/omyfedora-remove-plasma
+      install_file "omyfedora-remove-plasma.service" "/etc/systemd/system/omyfedora-remove-plasma.service"
+      run_cmd systemctl enable omyfedora-remove-plasma.service >/dev/null 2>&1 || true
       ok "shell do Plasma será removido no PRÓXIMO BOOT (antes do login, sem sessão em uso)"
     else
       warn "shell do Plasma mantido — será apenas mascarado em 30-services.sh"

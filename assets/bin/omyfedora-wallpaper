@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# MyOS — define o papel de parede com swaybg.
+# omyfedora — define o papel de parede com swaybg.
 #
 # Ordem de busca (1ª imagem encontrada):
-#   1) ~/.config/myos-walls/
-#   2) /usr/share/myos-walls/
+#   1) ~/.config/omyfedora-walls/
+#   2) /usr/share/omyfedora-walls/
 # Sem imagens → cor sólida mSurface da paleta macOS (#0B0B0D). O dono do
 # wallpaper é o Noctalia ([wallpaper.default] no settings.toml); este helper
 # é só fallback (ex.: sessão sem Noctalia).
 
 set -u
 
-DIRS=("${HOME}/.config/myos-walls" "/usr/share/myos-walls")
+DIRS=("${HOME}/.config/omyfedora-walls" "/usr/share/omyfedora-walls")
 
 for d in "${DIRS[@]}"; do
   [[ -d ${d} ]] || continue

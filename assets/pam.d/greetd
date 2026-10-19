@@ -1,5 +1,5 @@
 #%PAM-1.0
-# MyOS — PAM do greetd (conteúdo do pacote Fedora; o pam_selinux é OBRIGATÓRIO
+# omyfedora — PAM do greetd (conteúdo do pacote Fedora; o pam_selinux é OBRIGATÓRIO
 # para a sessão rodar no contexto do usuário — sem ele, o systemctl --user
 # do niri-session é negado pelo SELinux em enforcing e a sessão volta pro login)
 auth       substack    system-auth

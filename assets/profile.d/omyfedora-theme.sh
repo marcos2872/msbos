@@ -1,6 +1,6 @@
-# MyOS — ambiente da sessão niri com os componentes de tema do KDE (Breeze).
+# omyfedora — ambiente da sessão niri com os componentes de tema do KDE (Breeze).
 #
-# O MyOS não impõe tema próprio: os apps usam o "Breeze Dark" do KDE. Este
+# O omyfedora não impõe tema próprio: os apps usam o "Breeze Dark" do KDE. Este
 # arquivo só aponta a sessão para os componentes certos:
 #   • cursor breeze_cursors 24px (o mesmo do KDE; sem isto o niri usaria o
 #     default do sistema e divergiria dos apps);

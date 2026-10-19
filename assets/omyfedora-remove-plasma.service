@@ -1,13 +1,13 @@
 [Unit]
-Description=MyOS — remove o shell do Plasma (uma vez, antes da sessão gráfica)
-Documentation=https://github.com/marcos2872/my-os
+Description=omyfedora — remove o shell do Plasma (uma vez, antes da sessão gráfica)
+Documentation=https://github.com/marcos2872/omyfedora
 Before=graphical.target
 After=local-fs.target network.target
 Wants=network.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/libexec/myos-remove-plasma
+ExecStart=/usr/local/libexec/omyfedora-remove-plasma
 StandardOutput=journal
 StandardError=journal
 

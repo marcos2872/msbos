@@ -17,11 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # ---------------------------------------------------------------------------
-# MyOS: cópia do /usr/bin/seapplet (setroubleshoot) com UM patch local em
+# omyfedora: cópia do /usr/bin/seapplet (setroubleshoot) com UM patch local em
 # _close_notifications — fechar notificação órfã tratava só IOError, mas o
 # Noctalia responde o erro do GDBus como GLib.GError ("NotFound"); a exceção
 # escapava para o abrt (popup "uncaught exception" a cada AVC). Enquanto o
-# upstream não corrigir, o MyOS usa esta cópia via o override de autostart
+# upstream não corrigir, o omyfedora usa esta cópia via o override de autostart
 # ~/.config/autostart/sealertauto.desktop.
 # ---------------------------------------------------------------------------
 

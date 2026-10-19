@@ -30,7 +30,7 @@ on() {  # habilita no boot
 
 # ─── 1. Display manager: greetd assume; o DM do desktop atual sai de cena ───
 # Fedora KDE usa o Plasma Login Manager (plasmalogin): ele é mascarado aqui e
-# removido no próximo boot pelo myos-remove-plasma.service. gdm/sddm também
+# removido no próximo boot pelo omyfedora-remove-plasma.service. gdm/sddm também
 # são mascarados (bases alternativas). Nada é PARADO agora: mascarar só vale
 # a partir do próximo boot.
 if rpm -q plasma-login-manager >/dev/null 2>&1; then

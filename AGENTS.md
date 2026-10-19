@@ -1,4 +1,4 @@
-# AGENTS.md — MyOS
+# AGENTS.md — omyfedora
 
 Distro pessoal baseada em **Fedora 44/45 KDE** que transforma um sistema já instalado (rota C, sem
 ISO própria) num desktop com **niri** (compositor Wayland) + **Noctalia v5**, focada em baixo uso de
@@ -63,23 +63,24 @@ Fluxo: `install.sh` (orquestrador) → `lib/common.sh` (helpers) → `scripts/NN
   entrar no fluxo automaticamente.
 - `lib/common.sh` — carregado (`source`) por toda etapa. Fornece: `log/ok/warn/err`,
   `run_cmd`/`run_sh` (respeitam `DRY_RUN`), `exige_ok` (portão de operações destrutivas),
-  `require_fedora`, `resolve_target_user`, `user_home`, `install_file` (com backup `.myos-bak`),
+  `require_fedora`, `resolve_target_user`, `user_home`, `install_file` (com backup `.omyfedora-bak`),
   `install_file_once` (só instala se o destino não existir — para configs pessoais) e
   `render_file` (substituição de `__VAR__` em assets, instalando com modo 0644 explícito).
 - Etapas:
   - `10-gpu.sh` — detecta GPUs (PCI: vendor `10de`/`1002`/`8086` + módulos carregados); perfis
     `auto/intel/amd/nvidia/hybrid/none`; NVIDIA (binário ou `akmod`, `nvidia-drm.modeset=1`,
-    offload GL via `/etc/profile.d/myos-nvidia.sh`).
+    offload GL via `/etc/profile.d/omyfedora-nvidia.sh`).
   - `20-stack.sh` — núcleo (niri, Noctalia, greetd, PipeWire, portais), utilitários, zsh + fonte,
     lazydocker, apps (Zed, OpenCode v2, Brave, ONLYOFFICE, SSH_Orchestrator, LocalSend), **curadoria dos
-    apps KDE e do LibreOffice** (remove jogos/PIM/ajuda e a suíte LibreOffice — o escritório do MyOS é o
+    apps KDE e do LibreOffice** (remove jogos/PIM/ajuda e a suíte LibreOffice — o escritório do omyfedora é o
     ONLYOFFICE — respeitando `--skip-remove`; garante Dolphin, Konsole, Kate/KWrite, Okular, Spectacle,
     Dragon, Elisa…, marcando os garantidos como user-installed — imunes à cascata; tema Breeze Dark
     via plasma-integration/breeze-*) e **agendamento** da remoção do shell do Plasma.
   - `25-devtools.sh` — gcc/make, Rust (rustup), Node LTS via nvm, pnpm/yarn e
     virtualização (@virtualization + libvirtd no boot + usuário no grupo libvirt) — idempotente.
   - `30-services.sh` — greetd assume o boot (plasmalogin/gdm/sddm mascarados), desativa daemons
-    dispensáveis (PackageKit/Discover ficam), habilita tuned/tuned-ppd/oomd/podman.socket;
+    dispensáveis (PackageKit/Discover ficam), habilita tuned/tuned-ppd/oomd/podman.socket e instala
+    o módulo SELinux local que silencia o falso positivo do `loadkeys` no VT da sessão;
     **nada é parado na sessão atual**.
   - `40-tuning.sh` — zram zstd, sysctl de memória (`__MINFREE__` calculado), `compress=zstd:1` no
     `/etc/fstab` (se btrfs), governor `performance` (só sem bateria), oomd, perfil tuned.
@@ -90,16 +91,16 @@ Fluxo: `install.sh` (orquestrador) → `lib/common.sh` (helpers) → `scripts/NN
     cópia com patch), wallpapers, Brave padrão e agents-config do OpenCode.
 - `assets/` espelha os caminhos de destino e é instalado via `install_file`/`render_file`:
   `niri/`, `greetd/`, `pam.d/` (não sobrescrever o pam_selinux do pacote!), `alacritty/`, `zsh/`,
-  `gtk-3.0/` + `gtk-4.0/` (settings.ini com Breeze), `dconf/db/local.d/00-myos-dark`,
+  `gtk-3.0/` + `gtk-4.0/` (settings.ini com Breeze), `dconf/db/local.d/00-omyfedora-dark`,
   `profile.d/`, `sysctl.d/`, `oomd.conf`, `zram-generator.conf`, `yum.repos.d/terra.repo`,
-  `wallpapers/` (→ `/usr/share/myos-walls/`), `plugins-local/`
+  `wallpapers/` (→ `/usr/share/omyfedora-walls/`), `plugins-local/`
   (→ `~/.local/share/noctalia/plugins/`), `autostart/` (→ `~/.config/autostart/`).
-  `assets/bin/` e `assets/libexec/` trazem helpers (`myos-wallpaper`, `myos-cpu-governor`,
-  `myos-seapplet` — cópia do applet do setroubleshoot com patch do GLib.GError — e
-  `myos-remove-plasma`) e units systemd (`myos-cpu-governor.service`,
-  `myos-remove-plasma.service`).
+  `assets/bin/` e `assets/libexec/` trazem helpers (`omyfedora-wallpaper`, `omyfedora-cpu-governor`,
+  `omyfedora-seapplet` — cópia do applet do setroubleshoot com patch do GLib.GError — e
+  `omyfedora-remove-plasma`) e units systemd (`omyfedora-cpu-governor.service`,
+  `omyfedora-remove-plasma.service`).
 - Segurança de sessão: nada é parado durante a instalação; efeitos valem no próximo boot. A
-  remoção do shell do Plasma é agendada via `myos-remove-plasma.service` (roda antes do login) —
+  remoção do shell do Plasma é agendada via `omyfedora-remove-plasma.service` (roda antes do login) —
   nunca na sessão viva (o `%preun` do plasmalogin mexe nos serviços systemd e derruba a sessão no
   meio da transação dnf). O script move `/etc/dnf/protected.d/plasma-desktop.conf` durante a
   remoção e protege da cascata o que mantém os apps KDE funcionais (`plasma-integration`,
@@ -108,7 +109,7 @@ Fluxo: `install.sh` (orquestrador) → `lib/common.sh` (helpers) → `scripts/NN
 - Malcontent (condicional): o `flatpak` consulta parental controls via AccountsService; **se** o
   `accountsservice` da versão expõe a interface `com.endlessm.ParentalControls` (build com
   malcontent) e o pacote `malcontent` for removido, todo `flatpak run` falha ("Not allowed to
-  query parental controls data for user N" — flatpak/flatpak#6142). O `myos-remove-plasma` o
+  query parental controls data for user N" — flatpak/flatpak#6142). O `omyfedora-remove-plasma` o
   protege quando presente, e a seção 9 do `20-stack.sh` só instala/repara quando o daemon tem o
   suporte (checagem compile-time via `strings`); no Fedora 44 ele não tem, então nada é instalado.
 - VM de teste: o niri **rejeita renderização por software** (`llvmpipe`) por design — a VM
@@ -127,8 +128,8 @@ Fluxo: `install.sh` (orquestrador) → `lib/common.sh` (helpers) → `scripts/NN
 - Toda ação que altera o sistema passa por `run_cmd`/`run_sh` (para o `--dry-run` funcionar);
   nunca execute comando mutante direto.
 - Escrita de arquivos via `install_file`/`install_file_once`/`render_file` (garante backup
-  `.myos-bak` e respeito ao `DRY_RUN`) — nunca `cp` direto. Use `install_file_once` para
-  configs que o usuário pode personalizar e `install_file` para o que o MyOS é dono.
+  `.omyfedora-bak` e respeito ao `DRY_RUN`) — nunca `cp` direto. Use `install_file_once` para
+  configs que o usuário pode personalizar e `install_file` para o que o omyfedora é dono.
 - Comandos: prefira `run_cmd` com argumentos em array (`run_cmd dnf -y "${DNFOPT}" install
   "${pkgs[@]}"`); `run_sh` (string) só quando houver pipe/redirect/`&&`. Nunca interpole
   variáveis dentro da string do `run_sh` — passe via `env` (ex.: `runuser -u "${TU}" -- env

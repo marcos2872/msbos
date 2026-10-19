@@ -18,11 +18,21 @@ jobs:
       # ATENÇÃO: "bash -n f1 f2 f3" só valida o PRIMEIRO arquivo (os demais
       # virariam $1, $2...). Por isso o loop.
       - name: bash -n em todos os scripts
+        shell: bash
         run: |
-          for f in install.sh lib/common.sh scripts/*.sh assets/bin/* assets/libexec/*; do
+          # assets/bin/omyfedora-seapplet é Python; validar só quem tem shebang shell.
+          scripts=()
+          for f in install.sh pessoal-pc.sh lib/common.sh scripts/*.sh assets/bin/* assets/libexec/*; do
+            first="$(head -n1 "$f")"
+            case "$first" in
+              *bash*|*'/sh'*|*dash*|*ksh*) scripts+=("$f") ;;
+              *) echo "ignorando (não é shell): $f" ;;
+            esac
+          done
+          for f in "${scripts[@]}"; do
             bash -n "$f" || exit 1
           done
-          echo "sintaxe OK em todos os arquivos"
+          echo "sintaxe OK em ${#scripts[@]} arquivo(s) shell"
 
   lint:
     name: shellcheck
@@ -33,7 +43,17 @@ jobs:
       - name: instala o shellcheck
         run: dnf -q -y install ShellCheck
       - name: shellcheck (severidade warning ou maior)
-        run: shellcheck -S warning install.sh lib/common.sh scripts/*.sh assets/bin/* assets/libexec/*
+        shell: bash
+        run: |
+          # O applet é Python; shellcheck só recebe os arquivos com shebang shell.
+          scripts=()
+          for f in install.sh pessoal-pc.sh lib/common.sh scripts/*.sh assets/bin/* assets/libexec/*; do
+            first="$(head -n1 "$f")"
+            case "$first" in
+              *bash*|*'/sh'*|*dash*|*ksh*) scripts+=("$f") ;;
+            esac
+          done
+          shellcheck -S warning "${scripts[@]}"
 
   dry-run:
     name: dry-run (instalação simulada)

@@ -53,6 +53,17 @@ window-rule {
     draw-border-with-background false
 }
 
+// Navegadores: opacidade total (100%) — página e devtools em fundo claro ficam
+// ilegíveis com o alpha global. Regra posterior sobrescreve a genérica acima;
+// app-ids são os que o niri reporta no Wayland, sempre ancorados (sem ^…$ o
+// `chrome` pegaria `google-chrome`). O Firefox aparece como `firefox` (RPM) ou
+// `org.mozilla.firefox` (flatpak/desktop file). Para incluir outro navegador
+// (Edge, Vivaldi…), acrescente o app-id à regex.
+window-rule {
+    match app-id=r#"^(brave-browser|google-chrome|chromium|firefox|org\.mozilla\.firefox)$"#
+    opacity 1.0
+}
+
 // Terminal translúcido no formato vidro (combina com opacity = 0.85 em
 // assets/alacritty/alacritty.toml; o draw-border-with-background da regra
 // global cuida do anel de foco). ATENÇÃO: `background-effect` só existe a

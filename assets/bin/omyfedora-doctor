@@ -316,6 +316,16 @@ if [[ -r ${TU_HOME}/.config/kdeglobals ]]; then
     "${TU_HOME}/.config/kdeglobals")"
   if [[ ${esquema} == BreezeDark ]]; then
     ok 'kdeglobals: ColorScheme=BreezeDark'
+    fundo="$(awk -F= '/^\[Colors:Window\]/{f=1; next} /^\[/{f=0} f && /^BackgroundNormal=/{print $2; exit}' \
+      "${TU_HOME}/.config/kdeglobals" 2>/dev/null)"
+    if [[ -n ${fundo} ]]; then
+      IFS=, read -r r g b <<< "${fundo}"
+      if ((r + g + b < 300)); then
+        ok 'kdeglobals: cores do Breeze Dark aplicadas (fundo escuro)'
+      else
+        av "kdeglobals: fundo claro (${fundo}) apesar do ColorScheme=BreezeDark — reexecute 50-configs.sh"
+      fi
+    fi
   elif [[ -z ${esquema} ]]; then
     av 'kdeglobals sem ColorScheme — reexecute 50-configs.sh'
   else

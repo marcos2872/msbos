@@ -151,10 +151,63 @@ elif command -v kwriteconfig6 >/dev/null 2>&1; then
       kwriteconfig6 --file "${file}" --group "${group}" --key "${key}" "${val}" \
       || warn "tema: falha ao definir ${key}=${val} em ${file}"
   }
-  kcfg kdeglobals General ColorScheme BreezeDark
   kcfg kdeglobals KDE widgetStyle Breeze
   kcfg kdeglobals Icons Theme breeze-dark
   kcfg kcminputrc Mouse cursorTheme breeze_cursors
+
+  # ColorScheme sozinho não basta: o Plasma grava as cores já resolvidas em
+  # [Colors:*], e essas seções vencem o esquema em apps KDE/Qt. Numa instalação
+  # em que o usuário nunca escolheu tema, o kdeglobals pode ter as seções claras
+  # do Breeze Light; escrever só a chave deixaria os apps claros (o doctor via
+  # ColorScheme=BreezeDark e dava OK). Aplicamos o .colors inteiro quando não há
+  # escolha do usuário (chave ausente) ou quando ela já é BreezeDark mas as
+  # cores não acompanham (instalações antigas).
+  ler_kde() {
+    runuser -u "${TU}" -- env "HOME=${TU_HOME}" \
+      kreadconfig6 --file kdeglobals --group "$1" --key "$2" 2>/dev/null || true
+  }
+  aplicar_breeze_dark() {
+    local colors="/usr/share/color-schemes/BreezeDark.colors"
+    local grupo='' linha chave valor
+    if [[ ! -r ${colors} ]]; then
+      warn "tema: ${colors} ausente — Breeze Dark não aplicado"
+      return 1
+    fi
+    while IFS= read -r linha || [[ -n ${linha} ]]; do
+      case "${linha}" in
+        ''|\#*) continue ;;
+        \[*\])
+          grupo="${linha#[}"
+          grupo="${grupo%]}"
+          ;;
+        *=*)
+          [[ -n ${grupo} ]] || continue
+          chave="${linha%%=*}"
+          valor="${linha#*=}"
+          run_cmd runuser -u "${TU}" -- env "HOME=${TU_HOME}" \
+            kwriteconfig6 --file kdeglobals --group "${grupo}" --key "${chave}" "${valor}" \
+            || return 1
+          ;;
+      esac
+    done < "${colors}"
+  }
+
+  esquema="$(ler_kde General ColorScheme)"
+  if [[ -z ${esquema} ]]; then
+    log "tema: nenhum esquema escolhido — aplicando Breeze Dark"
+    aplicar_breeze_dark || warn "tema: falha ao aplicar o Breeze Dark"
+  elif [[ ${esquema} != BreezeDark ]]; then
+    log "tema: esquema '${esquema}' escolhido pelo usuário — mantido"
+  else
+    fundo="$(ler_kde 'Colors:Window' BackgroundNormal)"
+    if [[ ${fundo} =~ ^([0-9]+),([0-9]+),([0-9]+)$ ]] &&
+      ((BASH_REMATCH[1] + BASH_REMATCH[2] + BASH_REMATCH[3] < 300)); then
+      log "tema: Breeze Dark já aplicado (fundo escuro)"
+    else
+      log "tema: ColorScheme=BreezeDark com fundo '${fundo:-?}' — reaplicando o esquema"
+      aplicar_breeze_dark || warn "tema: falha ao aplicar o Breeze Dark"
+    fi
+  fi
 else
   warn "tema: kwriteconfig6 ausente (kde-cli-tools) — apps KDE/Qt usam o padrão do sistema"
 fi

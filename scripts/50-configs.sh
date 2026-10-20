@@ -5,6 +5,7 @@
 #   • tema dark dos apps: Breeze Dark (o dark padrão do KDE) + GTK
 #   • greetd + PAM (greeter Noctalia se disponível)
 #   • papel de parede padrão + helpers omyfedora-wallpaper e omyfedora-doctor
+#   • autostart do primeiro login que sincroniza a aparência com o greeter
 #   • Brave como navegador padrão do usuário
 
 set -euo pipefail
@@ -571,6 +572,15 @@ if [[ -f /etc/xdg/autostart/org.kde.xwaylandvideobridge.desktop || ${DRY_RUN} ==
   install_file_once "autostart/org.kde.xwaylandvideobridge.desktop" "${TU_HOME}/.config/autostart/org.kde.xwaylandvideobridge.desktop"
   ok "autostart: XwaylandVideoBridge desligado (janela fantasma no niri)"
 fi
+if [[ ${GREETER_SYNC_READY} == 1 ]]; then
+  # Instalação limpa: o Noctalia só sobe no primeiro login, então o Sync Now
+  # do fim desta etapa não tem sessão para rodar. O helper espera o IPC do
+  # Noctalia e faz o sync uma vez; o marcador evita repetir a cada login.
+  install_file "bin/omyfedora-greeter-sync" "/usr/local/bin/omyfedora-greeter-sync"
+  run_cmd chmod 755 /usr/local/bin/omyfedora-greeter-sync
+  install_file_once "autostart/omyfedora-greeter-sync.desktop" "${TU_HOME}/.config/autostart/omyfedora-greeter-sync.desktop"
+  ok "autostart: sync da aparência com o greeter no primeiro login"
+fi
 
 # ─── 9. Permissões dos arquivos do usuário ──────────────────────────────────
 run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.config/niri" "${TU_HOME}/.config/noctalia" "${TU_HOME}/.config/alacritty" "${TU_HOME}/.config/autostart" "${TU_HOME}/.config/gtk-3.0" "${TU_HOME}/.config/gtk-4.0" "${TU_HOME}/.local/state/noctalia" "${TU_HOME}/.local/share/noctalia"
@@ -599,6 +609,8 @@ fi
 # Só dispara quando o passwordless-sync foi habilitado nesta execução: sem a
 # regra Polkit, o pkexec abriria um diálogo de autenticação e o script ficaria
 # preso esperando alguém clicar (o timeout evita, mas não há por que arriscar).
+# Numa instalação limpa não há sessão Noctalia: o autostart instalado na
+# seção 8 (omyfedora-greeter-sync) faz esse primeiro sync após o login.
 if [[ ${DRY_RUN} == 1 ]]; then
   log "dry-run: dispararia 'noctalia msg greeter-sync' para ${TU} (se a sessão estiver aberta)"
 elif [[ ${GREETER_SYNC_READY} == 1 ]] && pgrep -u "${TU}" -x noctalia >/dev/null 2>&1; then
@@ -635,8 +647,9 @@ cat <<EOF
  omyfedora instalado. O que esperar no próximo boot:
 
    • Tela de login do greetd (Noctalia Greeter, se instalado)
-     com a sessão "niri" já disponível; o wallpaper é sincronizado
-     pelo Noctalia (se não aparecer: noctalia msg greeter-sync)
+     com a sessão "niri" já disponível; no primeiro login o omyfedora
+     sincroniza a aparência automaticamente (se não aparecer:
+     noctalia msg greeter-sync)
    • O shell do Plasma é removido no PRÓXIMO boot; os apps KDE ficam
      (Dolphin, Konsole, Kate/KWrite, Okular, Gwenview, Spectacle...)
    • Shell: Noctalia v5 (barra, launcher, notificações, lock, OSD)

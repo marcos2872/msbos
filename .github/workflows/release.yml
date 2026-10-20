@@ -1,0 +1,151 @@
+name: release
+
+# Publica uma GitHub Release quando uma tag vX.Y.Z é enviada.
+# Também pode ser disparado manualmente para republicar uma tag existente
+# (ex.: depois de corrigir o workflow sem recriar a tag).
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag existente para republicar (ex.: v0.1.0)'
+        required: true
+        type: string
+
+concurrency:
+  group: release-${{ github.event.inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  validar:
+    name: validar (bash -n, shellcheck, dry-run)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    container: fedora:44
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+      - name: instala o shellcheck
+        run: dnf -q -y install ShellCheck
+      - name: sintaxe e lint
+        shell: bash
+        run: |
+          # assets/bin/omyfedora-seapplet é Python: validar só quem tem shebang shell.
+          scripts=()
+          for f in install.sh bootstrap.sh pessoal-pc.sh lib/common.sh scripts/*.sh assets/bin/* assets/libexec/*; do
+            first="$(head -n1 "$f")"
+            case "$first" in
+              *bash*|*'/sh'*|*dash*|*ksh*) scripts+=("$f") ;;
+            esac
+          done
+          for f in "${scripts[@]}"; do bash -n "$f" || exit 1; done
+          shellcheck -S warning "${scripts[@]}"
+      - name: cria usuário de teste
+        run: |
+          command -v useradd >/dev/null || dnf -y -q install shadow-utils
+          useradd -m -u 1000 ci
+      - name: ./install.sh --dry-run --user ci
+        run: ./install.sh --dry-run --user ci
+
+  publicar:
+    name: empacotar e publicar
+    runs-on: ubuntu-latest
+    needs: validar
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+          fetch-depth: 0
+
+      - name: valida a tag
+        id: validar_tag
+        env:
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          TAG="${INPUT_TAG:-$REF_NAME}"
+          if [[ ! "${TAG}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "tag inválida: ${TAG}" >&2
+            exit 1
+          fi
+          git fetch --tags --force origin
+          if ! git rev-parse --verify "refs/tags/${TAG}" >/dev/null 2>&1; then
+            echo "tag ${TAG} não existe no repositório" >&2
+            exit 1
+          fi
+          if [[ "$(git rev-parse "refs/tags/${TAG}^{commit}")" != "$(git rev-parse HEAD)" ]]; then
+            echo "HEAD não corresponde à tag ${TAG}" >&2
+            exit 1
+          fi
+          echo "tag=${TAG}" >> "${GITHUB_OUTPUT}"
+
+      - name: empacota o código da tag
+        env:
+          TAG: ${{ steps.validar_tag.outputs.tag }}
+        run: |
+          mkdir -p dist
+          git archive --format=tar.gz --prefix="omyfedora-${TAG}/" \
+            -o "dist/omyfedora-${TAG}.tar.gz" HEAD
+          (cd dist && sha256sum "omyfedora-${TAG}.tar.gz" > SHA256SUMS)
+          tar -tzf "dist/omyfedora-${TAG}.tar.gz" | grep -qx "omyfedora-${TAG}/install.sh"
+          tar -tzf "dist/omyfedora-${TAG}.tar.gz" | grep -qx "omyfedora-${TAG}/bootstrap.sh"
+          ls -lh dist
+
+      - name: monta as notas da release
+        env:
+          TAG: ${{ steps.validar_tag.outputs.tag }}
+        run: |
+          NOTES_FILE=".github/release-notes/${TAG}.md"
+          if [[ -f "${NOTES_FILE}" ]]; then
+            cp "${NOTES_FILE}" release-notes.md
+          else
+            printf 'Release **%s** do omyfedora.\n' "${TAG}" > release-notes.md
+          fi
+          cat >> release-notes.md <<'NOTES'
+
+          ## Instalação
+
+          ```bash
+          curl -fsSL https://raw.githubusercontent.com/marcos2872/omyfedora/main/bootstrap.sh -o /tmp/omyfedora.sh
+          sudo bash /tmp/omyfedora.sh --dry-run   # simula tudo
+          sudo bash /tmp/omyfedora.sh             # instala
+          ```
+
+          Para instalar exatamente esta versão:
+
+          ```bash
+          sudo env OMYFEDORA_REF=__TAG__ bash /tmp/omyfedora.sh
+          ```
+
+          ## Verificação
+
+          - `omyfedora-doctor` após o primeiro boot (somente leitura).
+          - `sha256sum -c SHA256SUMS` para conferir o tarball anexado.
+          - Documentação: https://github.com/marcos2872/omyfedora/tree/__TAG__/docs
+          NOTES
+          sed -i "s|__TAG__|${TAG}|g" release-notes.md
+
+      - name: cria ou atualiza a GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.validar_tag.outputs.tag }}
+        run: |
+          if gh release view "${TAG}" >/dev/null 2>&1; then
+            gh release upload "${TAG}" dist/* --clobber
+            echo "release ${TAG} já existia — assets atualizados"
+          else
+            gh release create "${TAG}" dist/* \
+              --verify-tag \
+              --title "omyfedora ${TAG}" \
+              --notes-file release-notes.md \
+              --generate-notes \
+              --latest
+          fi
+          gh release view "${TAG}" --json url,tagName,assets \
+            --jq '"release: \(.url)\ntag: \(.tagName)\nassets: \(.assets[].name)"'

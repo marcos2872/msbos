@@ -4,7 +4,7 @@
 #   • Noctalia (esqueleto de config do usuário)
 #   • tema dark dos apps: Breeze Dark (o dark padrão do KDE) + GTK
 #   • greetd + PAM (greeter Noctalia se disponível)
-#   • papel de parede padrão + helper omyfedora-wallpaper
+#   • papel de parede padrão + helpers omyfedora-wallpaper e omyfedora-doctor
 #   • Brave como navegador padrão do usuário
 
 set -euo pipefail
@@ -244,9 +244,45 @@ if command -v gtk-update-icon-cache >/dev/null 2>&1; then
     || warn "ícones: falha ao atualizar o cache do hicolor"
 fi
 
-# ─── 3. Papel de parede + helper ────────────────────────────────────────────
+# ─── 2e. Secret Service (KWallet) no niri ───────────────────────────────────
+# Apps Electron/Tauri (Delta, VS Code etc.) leem credenciais via libsecret,
+# que procura o nome org.freedesktop.secrets no barramento de sessão. O KWallet
+# não publica esse nome: o ksecretd iniciado pelo pam_kwallet no greetd fica
+# vivo sem registrar nome no bus, e o Plasma (que normalmente sobe o serviço)
+# não existe na sessão niri. Sem um .service de D-Bus o nome não é ativável e
+# o app falha com "Couldn't read your saved credentials from the keychain".
+# A correção é o service de D-Bus do USUÁRIO: qualquer app ativa o ksecretd
+# sob demanda, sem unit systemd e sem corrida com um spawn-at-startup
+# existente (o ksecretd do PAM continua residente, mas não dono do nome).
+# Vale no próximo login; recarregamos o bus abaixo para valer também na
+# sessão atual, quando ela já está aberta.
+if command -v ksecretd >/dev/null 2>&1 || [[ ${DRY_RUN} == 1 ]]; then
+  install_file "dbus-1/services/org.freedesktop.secrets.service" \
+    "${TU_HOME}/.local/share/dbus-1/services/org.freedesktop.secrets.service"
+  if [[ ${DRY_RUN} == 1 ]]; then
+    log "dry-run: recarregaria o barramento de ${TU} para ativar o Secret Service sem novo login"
+  elif [[ -S /run/user/${TU_UID}/bus ]] && command -v dbus-send >/dev/null 2>&1; then
+    if run_cmd runuser -u "${TU}" -- env "HOME=${TU_HOME}" "XDG_RUNTIME_DIR=/run/user/${TU_UID}" \
+      "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/${TU_UID}/bus" \
+      dbus-send --session --type=method_call --dest=org.freedesktop.DBus \
+      / org.freedesktop.DBus.ReloadConfig >/dev/null 2>&1; then
+      ok "secret service: org.freedesktop.secrets ativável sob demanda (ksecretd)"
+    else
+      warn "secret service: falha ao recarregar o barramento — vale no próximo login"
+    fi
+  else
+    log "secret service: ativação sob demanda configurada (vale no próximo login)"
+  fi
+else
+  warn "secret service: ksecretd ausente — instale pam-kwallet (kf6-kwallet)"
+fi
+
+# ─── 3. Papel de parede + helpers ───────────────────────────────────────────
 install_file "bin/omyfedora-wallpaper" "/usr/local/bin/omyfedora-wallpaper"
 run_cmd chmod 755 /usr/local/bin/omyfedora-wallpaper
+# Diagnóstico somente-leitura do sistema instalado (não altera nada).
+install_file "bin/omyfedora-doctor" "/usr/local/bin/omyfedora-doctor"
+run_cmd chmod 755 /usr/local/bin/omyfedora-doctor
 for w in "${OMYFEDORA_ROOT}"/assets/wallpapers/*; do
   [[ -f ${w} ]] || continue
   install_file "wallpapers/$(basename "${w}")" "/usr/share/omyfedora-walls/$(basename "${w}")"
@@ -487,6 +523,9 @@ fi
 run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.config/niri" "${TU_HOME}/.config/noctalia" "${TU_HOME}/.config/alacritty" "${TU_HOME}/.config/autostart" "${TU_HOME}/.config/gtk-3.0" "${TU_HOME}/.config/gtk-4.0" "${TU_HOME}/.local/state/noctalia" "${TU_HOME}/.local/share/noctalia"
 run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.config/zed" "${TU_HOME}/.local/share/jupyter"
 run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.local/share/omyfedora"
+if [[ -d ${TU_HOME}/.local/share/dbus-1 || ${DRY_RUN} == 1 ]]; then
+  run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.local/share/dbus-1"
+fi
 run_cmd chown "${TU}:${TU}" "${TU_HOME}/.zshrc"
 # o avatar padrão (~/.face) é instalado root:root pelo install_file_once
 if [[ -f ${TU_HOME}/.face ]]; then
@@ -556,10 +595,10 @@ cat <<EOF
      Arquivos na LAN: LocalSend · VMs: virt-manager (libvirt no próximo login)
 
  Verificações pós-reboot:
+   omyfedora-doctor                  # diagnóstico completo (somente leitura)
    systemctl status greetd
    journalctl -u greetd -n 30
    free -h ; zramctl                 # swap comprimido ativo
-   ps aux --sort=-rss | head -12     # top consumidores de RAM
 
  Dica: apps pesados (Brave/ONLYOFFICE/Zed) só consomem RAM quando abertos.
 ──────────────────────────────────────────────────────────────

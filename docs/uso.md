@@ -136,8 +136,10 @@ KDE, e o Noctalia mantém o visual dele (não é Qt/GTK).
   `/etc/dconf/db/local.d/00-omyfedora-dark` e o `gsettings` do usuário deixam
   `gtk-theme=Breeze`, `color-scheme=prefer-dark`, `icon-theme=breeze-dark` e cursor
   `breeze_cursors`.
-- **Compatibilidade**: o `pam-kwallet` destrava o cofre KWallet no login; o
-  `xdg-desktop-portal-kde` e o `polkit-kde` continuam instalados para os apps KDE.
+- **Compatibilidade**: o `pam-kwallet` destrava o cofre KWallet no login e o
+  `org.freedesktop.secrets` é ativado sob demanda no D-Bus (apps Electron/Tauri também leem
+  credenciais); o `xdg-desktop-portal-kde` e o `polkit-kde` continuam instalados para os apps
+  KDE.
 
 O instalador só **preenche chaves ainda vazias**. Se você trocar o tema pelo **System
 Settings**, essa escolha é sua para sempre: o omyfedora não regride. Os arquivos de tema que

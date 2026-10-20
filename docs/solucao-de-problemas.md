@@ -8,6 +8,9 @@ depois vá para a seção correspondente.
 ## Diagnóstico rápido
 
 ```bash
+# Diagnóstico do projeto (somente leitura): erros, avisos e o que reparar
+omyfedora-doctor
+
 # Versão da base e estado geral
 cat /etc/fedora-release
 systemctl --failed
@@ -251,6 +254,38 @@ preservadas. Já os arquivos `90-greeter-sync.toml`, `91-widget-control-center.t
 
 Se o `kwriteconfig6` não existir, instale `kde-cli-tools` e rode
 `sudo bash scripts/50-configs.sh`.
+
+## App Electron/Tauri não lê o keychain (Secret Service)
+
+Sintoma: **“Couldn't read your saved credentials from the keychain”** ao abrir o Delta, VS Code
+ou outro app Electron/Tauri. A causa é a ausência de um provedor de `org.freedesktop.secrets`
+na sessão: no niri não há Plasma para publicar o serviço, e o `ksecretd` iniciado pelo
+`pam_kwallet` no greetd fica vivo sem dono do nome no D-Bus.
+
+Confira:
+
+```bash
+busctl --user list | grep org.freedesktop.secrets
+```
+
+O nome deve aparecer com dono (`ksecretd`) ou como `(activatable)`. Se não aparecer:
+
+```bash
+ls ~/.local/share/dbus-1/services/org.freedesktop.secrets.service
+sudo bash scripts/50-configs.sh   # instala o service de D-Bus
+```
+
+O `50-configs.sh` instala `~/.local/share/dbus-1/services/org.freedesktop.secrets.service` e
+recarrega o barramento. O próximo app que pedir credenciais ativa o `ksecretd` sob demanda; não
+é preciso criar uma unit systemd (o `ksecretd` iniciado pelo PAM continua residente, mas sem
+dono do nome). Se o arquivo já existe mas o nome não aparece, recarregue o bus manualmente:
+
+```bash
+dbus-send --session --type=method_call --dest=org.freedesktop.DBus / org.freedesktop.DBus.ReloadConfig
+```
+
+Reabra o app e, se tiver o `secret-tool`, teste com `secret-tool store`/`secret-tool lookup`.
+O `omyfedora-doctor` também aponta quando o serviço está ausente.
 
 ## Terminal sem transparência ou blur
 

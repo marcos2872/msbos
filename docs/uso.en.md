@@ -134,8 +134,9 @@ theme, while Noctalia keeps its own look (it is not Qt/GTK).
 - **GTK**: `~/.config/gtk-3.0/settings.ini` and `gtk-4.0/settings.ini`, the system default in
   `/etc/dconf/db/local.d/00-omyfedora-dark` and the user's `gsettings` set `gtk-theme=Breeze`,
   `color-scheme=prefer-dark`, `icon-theme=breeze-dark` and the `breeze_cursors` cursor.
-- **Compatibility**: `pam-kwallet` unlocks the KWallet vault at login; `xdg-desktop-portal-kde`
-  and `polkit-kde` remain installed for KDE apps.
+- **Compatibility**: `pam-kwallet` unlocks the KWallet vault at login and
+  `org.freedesktop.secrets` is activated on demand over D-Bus (Electron/Tauri apps also read
+  credentials); `xdg-desktop-portal-kde` and `polkit-kde` remain installed for KDE apps.
 
 The installer only **fills keys that are still empty**. If you change the theme through
 **System Settings**, that choice is yours forever: omyfedora does not override it. Theme files

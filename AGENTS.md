@@ -1,16 +1,18 @@
 # AGENTS.md — omyfedora
 
-Distro pessoal baseada em **Fedora 44/45 KDE** que transforma um sistema já instalado (rota C, sem
-ISO própria) num desktop com **niri** (compositor Wayland) + **Noctalia v5**, focada em baixo uso de
-RAM (alvo: < ~600 MB em idle) — mantendo os **apps do KDE** e o tema dark padrão do KDE (**Breeze
-Dark**) nos aplicativos. O repositório é uma suíte de **scripts bash idempotentes** — não há código
-compilado, pacote ou build.
+Personalização pessoal do **Fedora 44/45 KDE** que transforma um sistema já instalado (rota C,
+sem ISO própria) num desktop com **niri** (compositor Wayland) + **Noctalia v5**, focada em baixo
+uso de RAM (alvo: < ~600 MB em idle) — mantendo os **apps do KDE** e o tema dark padrão do KDE
+(**Breeze Dark**) nos aplicativos. O repositório é uma suíte de **scripts bash idempotentes** —
+não há código compilado, pacote ou build. A documentação do usuário fica no `README.md` (enxuto)
+e em `docs/` (PT), com versões em inglês `*.en.md`.
 
 ## Comandos
 
-Não existe `package.json`, `Makefile` nem CI neste repo — o único ponto de entrada é `install.sh`,
-que descobre e roda `scripts/NN-*.sh` em ordem. Não há testes/lint automatizados; a verificação
-disponível é o modo `--dry-run` e a checagem de sintaxe.
+Não existe `package.json` nem `Makefile`. O ponto de entrada é o `install.sh`, que descobre e roda
+`scripts/NN-*.sh` em ordem; o CI em `.github/workflows/ci.yml` roda três jobs em `fedora:44`
+(bash -n, shellcheck e dry-run). Não há suíte de testes unitários — a verificação disponível é
+sintaxe, lint, `--dry-run` e os checks pós-instalação.
 
 ```bash
 ./install.sh --help        # ajuda (extraída do cabeçalho do próprio install.sh)
@@ -35,7 +37,7 @@ DRY_RUN=1 bash scripts/40-tuning.sh   # simula uma etapa (não muta; roda sem ro
 sudo bash scripts/40-tuning.sh        # aplica de verdade (precisa de root)
 ```
 
-Verificação (local, igual ao CI em `.github/workflows/ci.yml`):
+Verificação local (os jobs de sintaxe/lint da CI rodam os mesmos comandos):
 
 ```bash
 # assets/bin/omyfedora-seapplet é Python: filtre só arquivos com shebang shell.
@@ -52,14 +54,16 @@ shellcheck -S warning "${scripts[@]}"
 ./install.sh --dry-run           # simula tudo, sem alterar nada
 ```
 
-Depende de `shellcheck` (`dnf install ShellCheck`); o `bash -n` e o `--dry-run` não
-dependem de nada além do próprio Fedora.
+Na CI, o job dry-run cria um usuário `ci` e roda `./install.sh --dry-run --user ci`; localmente,
+use `./install.sh --dry-run` (ou `--user NOME`). Depende de `shellcheck`
+(`dnf install ShellCheck`); o `bash -n` e o `--dry-run` não dependem de nada além do próprio
+Fedora.
 
 Variáveis de ambiente — contrato entre `install.sh` e as etapas: `DRY_RUN`, `YES`, `NO_GREETER`,
 `TARGET_USER`, `GPU_PROFILE`, `SKIP_REMOVE` (todas exportadas pelo orquestrador).
 
-Checks pós-instalação (no sistema instalado): `systemctl status greetd`, `free -h ; zramctl`,
-`journalctl -u greetd -n 30`.
+Checks pós-instalação (no sistema instalado): `omyfedora-doctor`, `systemctl status greetd`,
+`free -h ; zramctl`, `journalctl -u greetd -n 30`.
 
 ## Arquitetura
 
@@ -69,6 +73,9 @@ Fluxo: `install.sh` (orquestrador) → `lib/common.sh` (helpers) → `scripts/NN
 - `install.sh` — parseia flags, exporta as variáveis, reexecuta via `sudo` (exceto em `--dry-run`)
   e executa `scripts/[0-9][0-9]-*.sh` em ordem lexicográfica. Basta criar `scripts/60-foo.sh` para
   entrar no fluxo automaticamente.
+- `bootstrap.sh` — baixa o repositório como `.tar.gz`, extrai em diretório temporário e chama o
+  `install.sh` (sem `git`); aceita as mesmas flags e `OMYFEDORA_REF`/`REPO`/`URL`/`KEEP`.
+- `pessoal-pc.sh` — script pessoal de layout de monitores + Chrome; **não** entra no `install.sh`.
 - `lib/common.sh` — carregado (`source`) por toda etapa. Fornece: `log/ok/warn/err`,
   `run_cmd`/`run_sh` (respeitam `DRY_RUN`), `exige_ok` (portão de operações destrutivas),
   `require_fedora`, `resolve_target_user`, `user_home`, `install_file` (com backup `.omyfedora-bak`),
@@ -84,27 +91,35 @@ Fluxo: `install.sh` (orquestrador) → `lib/common.sh` (helpers) → `scripts/NN
     ONLYOFFICE — respeitando `--skip-remove`; garante Dolphin, Konsole, Kate/KWrite, Okular, Spectacle,
     Dragon, Elisa…, marcando os garantidos como user-installed — imunes à cascata; tema Breeze Dark
     via plasma-integration/breeze-*) e **agendamento** da remoção do shell do Plasma.
-  - `25-devtools.sh` — gcc/make, Rust (rustup), Node LTS via nvm, pnpm/yarn e
-    virtualização (@virtualization + libvirtd no boot + usuário no grupo libvirt) — idempotente.
+  - `25-devtools.sh` — gcc/make, gh, ipykernel/matplotlib, Rust (rustup), Node LTS via nvm,
+    pnpm/yarn e virtualização (@virtualization + libvirtd no boot + usuário no grupo libvirt) —
+    idempotente.
   - `30-services.sh` — greetd assume o boot (plasmalogin/gdm/sddm mascarados), desativa daemons
     dispensáveis (PackageKit/Discover ficam), habilita tuned/tuned-ppd/oomd/podman.socket e instala
     o módulo SELinux local que silencia o falso positivo do `loadkeys` no VT da sessão;
     **nada é parado na sessão atual**.
   - `40-tuning.sh` — zram zstd, sysctl de memória (`__MINFREE__` calculado), `compress=zstd:1` no
     `/etc/fstab` (se btrfs), governor `performance` (só sem bateria), oomd, perfil tuned.
-  - `50-configs.sh` — configurações finais: niri, Noctalia (`settings.toml` + plugins, só se
-    ausentes), greetd/PAM, tema Breeze Dark (kdeglobals/kcminputrc — só chaves vazias — + GTK via
-    dconf/gsettings), apps padrão (Dolphin/KWrite/Gwenview/Okular/Dragon/Elisa), alacritty, zsh,
-    **autostart do usuário** (desliga o XwaylandVideoBridge no niri e aponta o seapplet para a
-    cópia com patch), wallpapers, Brave padrão e agents-config do OpenCode.
+  - `50-configs.sh` — configurações finais: niri (config uma vez + fallback de sistema), Noctalia
+    (`config.toml` uma vez; `settings.toml`/plugins só se ausentes; `90`/`91` e paleta atualizados),
+    Breeze Dark (kdeglobals/kcminputrc só com chaves vazias + GTK/dconf/gsettings), greetd/PAM e
+    sync do greeter, Plymouth/branding, wallpapers, apps padrão
+    (Dolphin/KWrite/Gwenview/Okular/Dragon/Elisa), alacritty/zsh, **autostart do usuário**
+    (XwaylandVideoBridge desligado e seapplet com patch), Secret Service do KWallet no D-Bus,
+    Zed e agents-config do OpenCode.
+- Documentação do usuário: `README.md`/`README.en.md` e `docs/*.md`/`*.en.md`; não participa da
+  instalação. O README é enxuto (o que é + instalação básica + créditos); os detalhes ficam em
+  `docs/`.
 - `assets/` espelha os caminhos de destino e é instalado via `install_file`/`render_file`:
   `niri/`, `greetd/`, `pam.d/` (não sobrescrever o pam_selinux do pacote!), `alacritty/`, `zsh/`,
   `gtk-3.0/` + `gtk-4.0/` (settings.ini com Breeze), `dconf/db/local.d/00-omyfedora-dark`,
-  `profile.d/`, `sysctl.d/`, `oomd.conf`, `zram-generator.conf`, `yum.repos.d/terra.repo`,
+  `dbus-1/services/` (→ `~/.local/share/dbus-1/services/`), `profile.d/`, `sysctl.d/`,
+  `oomd.conf`, `zram-generator.conf`, `yum.repos.d/terra.repo`,
   `wallpapers/` (→ `/usr/share/omyfedora-walls/`), `plugins-local/`
   (→ `~/.local/share/noctalia/plugins/`), `autostart/` (→ `~/.config/autostart/`).
   `assets/bin/` e `assets/libexec/` trazem helpers (`omyfedora-wallpaper`, `omyfedora-cpu-governor`,
-  `omyfedora-seapplet` — cópia do applet do setroubleshoot com patch do GLib.GError — e
+  `omyfedora-seapplet` — cópia do applet do setroubleshoot com patch do GLib.GError —,
+  `omyfedora-doctor` — diagnóstico somente-leitura do sistema instalado — e
   `omyfedora-remove-plasma`) e units systemd (`omyfedora-cpu-governor.service`,
   `omyfedora-remove-plasma.service`).
   `assets/selinux/` não é copiado: contém módulos CIL instalados via `semodule` (ex.:

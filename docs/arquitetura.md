@@ -198,6 +198,10 @@ Tudo é idempotente: detecta o que já existe e pula.
 - **Breeze Dark**: preenche `kdeglobals`/`kcminputrc` só com chaves vazias; instala
   `gtk-3.0`/`gtk-4.0/settings.ini`, o padrão dconf, o `profile.d/omyfedora-theme.sh` e aplica
   `gsettings` como o usuário.
+- **Secret Service (KWallet)**: instala o service de D-Bus
+  `~/.local/share/dbus-1/services/org.freedesktop.secrets.service` e recarrega o barramento —
+  apps Electron/Tauri ativam o `ksecretd` sob demanda (sem unit systemd; o processo do PAM
+  continua residente).
 - **Plymouth e marca**: cria o tema de boot `omyfedora` a partir do spinner, troca o watermark,
   instala logo e avatar (`~/.face`).
 - **Wallpapers**: instala o helper e as imagens em `/usr/share/omyfedora-walls/`.

@@ -163,6 +163,7 @@ Noctalia Greeter estiver instalado, ele usa o wallpaper sincronizado pelo Noctal
 Verificações úteis no sistema instalado:
 
 ```bash
+omyfedora-doctor                 # diagnóstico completo (somente leitura)
 systemctl status greetd          # display manager
 journalctl -u greetd -n 30       # log do login
 free -h ; zramctl                # swap comprimido ativo

@@ -165,6 +165,7 @@ Noctalia Greeter is installed, it uses the wallpaper synced by Noctalia.
 Useful checks on the installed system:
 
 ```bash
+omyfedora-doctor                 # full diagnosis (read-only)
 systemctl status greetd          # display manager
 journalctl -u greetd -n 30       # login log
 free -h ; zramctl                # compressed swap active

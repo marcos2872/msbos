@@ -199,14 +199,26 @@ if have noctalia-greeter; then
   else
     av '90-greeter-sync.toml ausente — reexecute 50-configs.sh'
   fi
-  if [[ -r /var/lib/noctalia-greeter/sync.toml ]]; then
-    if grep -qE '^[[:space:]]*\[appearance\.wallpaper\]' /var/lib/noctalia-greeter/sync.toml; then
-      ok 'wallpaper presente na tela de login (sync.toml)'
-    else
-      av "sem wallpaper no sync.toml — rode 'noctalia msg greeter-sync' na sessão"
-    fi
+  if [[ ! -d /var/lib/noctalia-greeter ]]; then
+    av '/var/lib/noctalia-greeter ausente — reexecute 30-services.sh (o sync não tem onde gravar)'
+  elif [[ ! -x /var/lib/noctalia-greeter ]]; then
+    # o home do greeter é 750 greeter:greeter; sem root não dá para distinguir
+    # "sync.toml ausente" de "sem permissão de leitura" — não acuse sem saber.
+    skip 'sync.toml do greeter não verificável sem root — confira com sudo'
   else
-    av "sync.toml do greeter ausente — rode 'noctalia msg greeter-sync' na sessão"
+    dono_estado="$(stat -c '%U' /var/lib/noctalia-greeter 2>/dev/null || true)"
+    if [[ ${dono_estado} != greeter ]]; then
+      av "/var/lib/noctalia-greeter pertence a '${dono_estado:-?}' (esperado greeter)"
+    fi
+    if [[ -r /var/lib/noctalia-greeter/sync.toml ]]; then
+      if grep -qE '^[[:space:]]*\[appearance\.wallpaper\]' /var/lib/noctalia-greeter/sync.toml; then
+        ok 'wallpaper presente na tela de login (sync.toml)'
+      else
+        av "sem wallpaper no sync.toml — rode 'noctalia msg greeter-sync' na sessão"
+      fi
+    else
+      av "sync.toml do greeter ausente — rode 'noctalia msg greeter-sync' na sessão"
+    fi
   fi
   if compgen -G '/etc/polkit-1/rules.d/*.rules' >/dev/null; then
     if grep -qs 'sync-appearance' /etc/polkit-1/rules.d/*.rules; then

@@ -57,9 +57,12 @@ if command -v noctalia-greeter-session >/dev/null 2>&1 || [[ ${DRY_RUN} == 1 ]];
   if ! id greeter >/dev/null 2>&1; then
     run_cmd useradd -r -d /var/lib/noctalia-greeter -s /usr/sbin/nologin \
       -c 'Noctalia Greeter' greeter
-    run_cmd mkdir -p /var/lib/noctalia-greeter
-    run_cmd chown greeter:greeter /var/lib/noctalia-greeter
   fi
+  # O diretório de estado tem de existir e pertencer ao greeter mesmo quando o
+  # usuário já existia (reinstalação, pacote anterior): o apply-appearance grava
+  # o sync.toml ali e falha silenciosamente se o diretório não existir.
+  run_cmd mkdir -p /var/lib/noctalia-greeter
+  run_cmd chown greeter:greeter /var/lib/noctalia-greeter
 
   # SELinux: sem uma regra de contexto, os arquivos criados no home do greeter
   # herdam var_lib_t — e o domínio xdm_t (sessão do greeter) não pode gravar

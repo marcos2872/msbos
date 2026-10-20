@@ -81,7 +81,9 @@ O instalador avisa antes de agendar a remoção do shell do Plasma; nada é para
 atual. A troca para o greetd/niri vale no **próximo boot**. **Não** rode o `install.sh` no
 `%post` do Anaconda — veja [instalação](docs/instalacao.md).
 
-Depois de reiniciar, a sessão **niri** aparece na tela do greetd. Atalhos básicos:
+Depois de reiniciar, a sessão **niri** aparece na tela do greetd. No primeiro login, o
+omyfedora sincroniza a aparência com a tela de login automaticamente; o wallpaper aparece no
+próximo logout/reboot (para repetir: `noctalia msg greeter-sync`). Atalhos básicos:
 `Super+T` terminal · `Super+Space` launcher · `Super+S` control center · `Super+P` monitores.
 
 ## Documentação

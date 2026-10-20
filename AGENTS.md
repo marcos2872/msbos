@@ -105,7 +105,8 @@ Fluxo: `install.sh` (orquestrador) → `lib/common.sh` (helpers) → `scripts/NN
     Breeze Dark (kdeglobals/kcminputrc só com chaves vazias + GTK/dconf/gsettings), greetd/PAM e
     sync do greeter, Plymouth/branding, wallpapers, apps padrão
     (Dolphin/KWrite/Gwenview/Okular/Dragon/Elisa), alacritty/zsh, **autostart do usuário**
-    (XwaylandVideoBridge desligado e seapplet com patch), Secret Service do KWallet no D-Bus,
+    (XwaylandVideoBridge desligado, seapplet com patch e sync do greeter no primeiro login),
+    Secret Service do KWallet no D-Bus,
     Zed e agents-config do OpenCode.
 - Documentação do usuário: `README.md`/`README.en.md` e `docs/*.md`/`*.en.md`; não participa da
   instalação. O README é enxuto (o que é + instalação básica + créditos); os detalhes ficam em
@@ -119,7 +120,8 @@ Fluxo: `install.sh` (orquestrador) → `lib/common.sh` (helpers) → `scripts/NN
   (→ `~/.local/share/noctalia/plugins/`), `autostart/` (→ `~/.config/autostart/`).
   `assets/bin/` e `assets/libexec/` trazem helpers (`omyfedora-wallpaper`, `omyfedora-cpu-governor`,
   `omyfedora-seapplet` — cópia do applet do setroubleshoot com patch do GLib.GError —,
-  `omyfedora-doctor` — diagnóstico somente-leitura do sistema instalado — e
+  `omyfedora-doctor` — diagnóstico somente-leitura do sistema instalado —,
+  `omyfedora-greeter-sync` — sync da aparência com o greeter no primeiro login — e
   `omyfedora-remove-plasma`) e units systemd (`omyfedora-cpu-governor.service`,
   `omyfedora-remove-plasma.service`).
   `assets/selinux/` não é copiado: contém módulos CIL instalados via `semodule` (ex.:

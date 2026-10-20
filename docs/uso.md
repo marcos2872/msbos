@@ -196,8 +196,11 @@ Noctalia continua sendo o shell da sessão.
 
 O `90-greeter-sync.toml` liga o **Auto-Sync**: mudanças de wallpaper, paleta, tema e fonte são
 copiadas para a tela de login. O instalador habilita o sync sem prompt com uma regra Polkit
-restrita à ação do greeter e dispara um **Sync Now** no fim da instalação. Depois de entrar,
-você pode repetir manualmente:
+restrita à ação do greeter. Numa **reinstalação** (com o Noctalia já rodando), ele dispara um
+**Sync Now** no fim; numa **instalação limpa**, o autostart `omyfedora-greeter-sync` faz o
+primeiro sync no login e grava o marcador `~/.local/state/omyfedora/greeter-sync.done`.
+
+Para repetir manualmente:
 
 ```bash
 noctalia msg greeter-sync

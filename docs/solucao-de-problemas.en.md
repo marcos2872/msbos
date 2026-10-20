@@ -173,10 +173,18 @@ installed, but login already uses greetd/niri.
 
 ## Wallpaper does not appear on the login screen
 
-The login wallpaper is synced by **Noctalia Greeter** (Auto-Sync). First, inside the session:
+The login wallpaper is synced by **Noctalia Greeter** (Auto-Sync). On a clean install, the
+`omyfedora-greeter-sync` autostart does the first sync at login. If the wallpaper does not
+appear, run it manually inside the session:
 
 ```bash
 noctalia msg greeter-sync
+```
+
+To force a new sync on the next login, remove the marker:
+
+```bash
+rm -f ~/.local/state/omyfedora/greeter-sync.done
 ```
 
 Then check:

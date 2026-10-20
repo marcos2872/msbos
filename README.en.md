@@ -81,7 +81,9 @@ The installer asks before scheduling the Plasma shell removal; nothing is stoppe
 current session. The switch to greetd/niri takes effect on the **next boot**. Do **not**
 run `install.sh` from Anaconda's `%post` — see [installation](docs/instalacao.en.md).
 
-After rebooting, the **niri** session appears on the greetd screen. Basic shortcuts:
+After rebooting, the **niri** session appears on the greetd screen. On the first login,
+omyfedora automatically syncs the appearance with the login screen; the wallpaper shows up on
+the next logout/reboot (to repeat: `noctalia msg greeter-sync`). Basic shortcuts:
 `Super+T` terminal · `Super+Space` launcher · `Super+S` control center · `Super+P` displays.
 
 ## Documentation

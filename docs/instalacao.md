@@ -157,8 +157,9 @@ Reinicie:
 sudo reboot
 ```
 
-No próximo boot, a tela do **greetd** deve aparecer com a sessão **niri** disponível. Se o
-Noctalia Greeter estiver instalado, ele usa o wallpaper sincronizado pelo Noctalia.
+No próximo boot, a tela do **greetd** deve aparecer com a sessão **niri** disponível. No
+primeiro login, o autostart `omyfedora-greeter-sync` sincroniza a aparência com a tela de
+login; o wallpaper aparece no próximo logout/reboot.
 
 Verificações úteis no sistema instalado:
 
@@ -170,8 +171,8 @@ free -h ; zramctl                # swap comprimido ativo
 ps aux --sort=-rss | head -12    # maiores consumidores de RAM
 ```
 
-O shell padrão passa a ser o **zsh**; o grupo `libvirt` só vale no próximo login. Para
-sincronizar a aparência com a tela de login depois de entrar:
+O shell padrão passa a ser o **zsh**; o grupo `libvirt` só vale no próximo login. Se precisar
+repetir o sync da aparência com a tela de login depois de entrar:
 
 ```bash
 noctalia msg greeter-sync

@@ -210,16 +210,20 @@ Everything is idempotent: it detects what already exists and skips it.
 - **Wallpapers**: installs the helper and images in `/usr/share/omyfedora-walls/`.
 - **greetd**: chooses Noctalia Greeter (with the mascot bundle) or the default greeter;
   preserves the package's `/etc/pam.d/greetd` when it already has `pam_selinux`; enables
-  passwordless sync through Polkit and triggers Sync Now.
+  passwordless sync through Polkit and triggers Sync Now (when a Noctalia session already
+  exists; on a clean install, the `omyfedora-greeter-sync` autostart does the first sync at
+  login).
 - **Zed**: installs `assets/zed/` once and the `zed-python` REPL kernelspec.
 - **OpenCode**: clones/updates `agents-config` and runs `sync.sh`.
 - **Defaults**: Brave as browser; Dolphin, KWrite, Gwenview, Okular, Dragon and Elisa through
   `xdg-mime`.
 - **Terminal**: alacritty and `.zshrc` once; sets zsh as the shell and ensures the path is in
   `/etc/shells` (required by the greeter sync's `pkexec`).
-- **Autostart**: installs the patched seapplet and disables XwaylandVideoBridge
-  (`Hidden=true`).
-- **Permissions**: adjusts ownership of the user's files and triggers the final greeter sync.
+- **Autostart**: installs the patched seapplet, disables XwaylandVideoBridge (`Hidden=true`)
+  and installs `omyfedora-greeter-sync`, which syncs the appearance with the greeter on the
+  first login (marker in `~/.local/state/omyfedora/greeter-sync.done`).
+- **Permissions**: adjusts ownership of the user's files and, when a Noctalia session exists,
+  triggers the final greeter sync.
 
 ## Assets and file ownership
 

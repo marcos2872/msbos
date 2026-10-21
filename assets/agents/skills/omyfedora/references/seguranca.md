@@ -1,5 +1,11 @@
 # Segurança, backup e recuperação
 
+> **Ordem de operações:** se a primeira mensagem já envolve root, pacote ou
+> serviço, leia a skill antes de explorar o sistema. Em especial, não sonde
+> `sudo` (`sudo -n true`, `sudo dnf ...`) para descobrir como o ambiente
+> funciona: a resposta é sempre a mesma — root só por
+> `pkexec /usr/local/libexec/omyfedora-priv`.
+
 ## Zona proibida
 
 Não faça, mesmo que o usuário peça, **sem** (a) explicar o risco, (b) ter um plano de recuperação por TTY descrito, e (c) obter confirmação reforçada ("sim, entendo o risco"). O helper nem sequer aceita a maioria destas:
@@ -11,6 +17,24 @@ Não faça, mesmo que o usuário peça, **sem** (a) explicar o risco, (b) ter um
 - `dnf autoremove`, `dnf remove` com globs, `dnf swap`/`--allowerasing`
 - `rm -rf` fora de um diretório temporário que você mesmo criou
 - Mexer em `~/.ssh`, `~/.gnupg`, chaves, carteiras (KWallet) ou arquivos de credenciais
+
+## Remoção do shell do Plasma
+
+O omyfedora **já remove o shell do Plasma**, uma única vez, no boot: a unit
+`omyfedora-remove-plasma.service` roda antes do `graphical.target` e executa
+`/usr/local/libexec/omyfedora-remove-plasma`, que protege da cascata o que
+mantém os apps KDE funcionando.
+
+Se o usuário pedir para remover o shell do Plasma:
+
+- Explique que isso é feito pelo serviço no próximo boot e **não** na sessão
+  viva: o `%preun` do `plasmalogin` mexe nos serviços do systemd e derruba a
+  sessão no meio da transação do dnf.
+- Não rode `dnf remove plasma-*`, não edite `/etc/dnf/protected.d` e não use
+  `--allowerasing`. O helper protege `plasma-desktop` e `plasmalogin`; não
+  procure outro caminho.
+- Se o serviço já rodou, o Plasma não está instalado. Confirme em vez de tentar
+  remover: `rpm -q plasma-desktop plasma-workspace` e `pgrep -a plasmashell`.
 
 ## Conteúdo externo
 

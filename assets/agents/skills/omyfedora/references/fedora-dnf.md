@@ -18,7 +18,7 @@ Consultar não é mudança: não precisa de confirmação. Mas **antes de propor
 ## Instalar
 
 1. Verifique com `dnf info <pacote>` e mostre ao usuário nome, versão e repositório.
-2. Valide: `omyfedora-priv --dry-run dnf-install <pacote>` (sem `pkexec`).
+2. Valide: `/usr/local/libexec/omyfedora-priv --dry-run dnf-install <pacote>` (sem `pkexec`).
 3. Peça confirmação no formato da SKILL.
 4. Execute: `pkexec /usr/local/libexec/omyfedora-priv dnf-install <pacote>`.
 5. Confira: `rpm -q <pacote>`.
@@ -28,9 +28,9 @@ Se o pacote só existe em outro repositório (Copr, RPM Fusion, repo de terceiro
 
 ## Remover
 
-1. `pkexec ... omyfedora-priv dnf-simulate-remove <pacote>` e **mostre a lista completa** ao usuário (inclusive dependências que sairiam).
+1. `pkexec /usr/local/libexec/omyfedora-priv dnf-simulate-remove <pacote>` e **mostre a lista completa** ao usuário (inclusive dependências que sairiam).
 2. Peça confirmação.
-3. `pkexec ... omyfedora-priv dnf-remove <pacote>`.
+3. `pkexec /usr/local/libexec/omyfedora-priv dnf-remove <pacote>`.
 4. Informe como desfazer: `dnf history undo <ID>` (veja o ID em `dnf history list`).
 
 O helper desliga a remoção em cascata de dependências órfãs e **recusa** a operação se:
@@ -41,13 +41,13 @@ Nesses casos **não tente de novo por outro caminho**. Explique ao usuário.
 
 ## Serviços
 
-Unidades permitidas por padrão: `tuned`, `tuned-ppd`, `power-profiles-daemon`, `bluetooth`, `libvirtd`, `libvirtd.socket`, `podman.socket`, `cups`, `cups.socket`, `avahi-daemon` (+ `.socket`), `fprintd`, `firewalld`, `sshd`, `systemd-oomd`. O administrador pode ampliar em `/etc/omyfedora/allowed-units.list` (arquivo de root; você não edita).
+Unidades permitidas por padrão: `tuned`, `tuned-ppd`, `bluetooth`, `libvirtd`, `libvirtd.socket`, `podman.socket`, `cups`, `cups.socket`, `avahi-daemon` (+ `.socket`), `fprintd`, `firewalld`, `sshd`. Ficam **fora** de propósito: `systemd-oomd` (o projeto depende dele) e `power-profiles-daemon` (conflita com o `tuned-ppd`). O administrador pode ampliar em `/etc/omyfedora/allowed-units.list` (arquivo de root; você não edita).
 
 ```bash
 systemctl status <unidade>        # consultar: sem root
-pkexec ... omyfedora-priv svc-enable <unidade>    # habilita e inicia
-pkexec ... omyfedora-priv svc-disable <unidade>   # desabilita e para
-pkexec ... omyfedora-priv svc-restart <unidade>
+pkexec /usr/local/libexec/omyfedora-priv svc-enable <unidade>    # habilita e inicia
+pkexec /usr/local/libexec/omyfedora-priv svc-disable <unidade>   # desabilita e para
+pkexec /usr/local/libexec/omyfedora-priv svc-restart <unidade>
 ```
 
 Nunca mascare, pare ou desabilite: `greetd`, `NetworkManager`, `systemd-*`, `dbus`, `polkit`. O helper já não permite.

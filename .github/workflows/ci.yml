@@ -22,7 +22,7 @@ jobs:
         run: |
           # assets/bin/omyfedora-seapplet é Python; validar só quem tem shebang shell.
           scripts=()
-          for f in install.sh bootstrap.sh pessoal-pc.sh lib/common.sh scripts/*.sh assets/bin/* assets/libexec/*; do
+          for f in install.sh bootstrap.sh pessoal-pc.sh lib/common.sh scripts/*.sh assets/bin/* assets/libexec/* tests/agent-skill/*.sh; do
             first="$(head -n1 "$f")"
             case "$first" in
               *bash*|*'/sh'*|*dash*|*ksh*) scripts+=("$f") ;;
@@ -47,7 +47,7 @@ jobs:
         run: |
           # O applet é Python; shellcheck só recebe os arquivos com shebang shell.
           scripts=()
-          for f in install.sh bootstrap.sh pessoal-pc.sh lib/common.sh scripts/*.sh assets/bin/* assets/libexec/*; do
+          for f in install.sh bootstrap.sh pessoal-pc.sh lib/common.sh scripts/*.sh assets/bin/* assets/libexec/* tests/agent-skill/*.sh; do
             first="$(head -n1 "$f")"
             case "$first" in
               *bash*|*'/sh'*|*dash*|*ksh*) scripts+=("$f") ;;
@@ -71,3 +71,28 @@ jobs:
           useradd -m -u 1000 ci
       - name: ./install.sh --dry-run --user ci
         run: ./install.sh --dry-run --user ci
+
+  agent-skill:
+    name: agent-skill (dry-run)
+    runs-on: ubuntu-latest
+    container: fedora:44
+    steps:
+      - uses: actions/checkout@v4
+      # A fase 1 não precisa de root/polkit: ela valida os assets e a matriz
+      # de argumentos do helper. As falhas já documentadas no README do teste
+      # contam como KNOWN (--known-issues); o alvo real roda sem a flag.
+      - name: cria usuário de teste
+        run: |
+          command -v useradd >/dev/null || dnf -y -q install shadow-utils
+          # runuser (util-linux) não vem na imagem base do fedora:44
+          command -v runuser >/dev/null || dnf -y -q install util-linux
+          useradd -m -u 1000 ci
+      - name: fase 1 (estática + dry-run)
+        shell: bash
+        run: |
+          runuser -u ci -- bash tests/agent-skill/run.sh \
+            --phase 1 --known-issues \
+            --helper "$PWD/assets/libexec/omyfedora-priv" \
+            --skill-dir "$PWD/assets/agents/skills/omyfedora" \
+            --policy "$PWD/assets/polkit/org.omyfedora.priv.policy" \
+            --report /tmp/agent-skill-ci.log

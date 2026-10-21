@@ -1,0 +1,5 @@
+# Padrões (regex, ancorados com ^...$) de pacotes EXTRAS que o omyfedora-priv nunca remove.
+# Somam-se à lista embutida no helper. Arquivo de ROOT. Uma regex por linha.
+#
+# Exemplo (protege qualquer pacote que comece com "meu-"):
+# meu-.*

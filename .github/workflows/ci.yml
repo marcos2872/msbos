@@ -84,6 +84,8 @@ jobs:
       - name: cria usuário de teste
         run: |
           command -v useradd >/dev/null || dnf -y -q install shadow-utils
+          # runuser (util-linux) não vem na imagem base do fedora:44
+          command -v runuser >/dev/null || dnf -y -q install util-linux
           useradd -m -u 1000 ci
       - name: fase 1 (estática + dry-run)
         shell: bash

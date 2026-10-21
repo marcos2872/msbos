@@ -16,8 +16,8 @@
 #                  2 = erro de uso (opção inválida, usuário/home não encontrado).
 #
 # Verificações: base Fedora, etapas concluídas, greetd/PAM/greeter, niri/Noctalia,
-# apps KDE, remoção do shell do Plasma, tema Breeze Dark, zram/sysctl/governor,
-# RAM em idle, SELinux, Podman rootless e GPU NVIDIA.
+# apps KDE, menu XDG (redhat-menus), remoção do shell do Plasma, tema Breeze Dark,
+# zram/sysctl/governor, RAM em idle, SELinux, Podman rootless e GPU NVIDIA.
 
 set -euo pipefail
 
@@ -284,6 +284,14 @@ if ((${#kde_faltando[@]} == 0)); then
   ok 'apps KDE garantidos presentes (Dolphin, Kate/KWrite, Okular...)'
 else
   av "apps KDE ausentes: ${kde_faltando[*]}"
+fi
+
+# Sem applications.menu o kbuildsycoca6 gera um cache sem nenhum .desktop:
+# o KIO não resolve handler padrão e o Dolphin abre "Abrir com" vazio.
+if [[ -f /etc/xdg/menus/applications.menu ]]; then
+  ok 'menu XDG presente (redhat-menus)'
+else
+  er 'applications.menu ausente (instale redhat-menus) — Dolphin abre "Abrir com" vazio'
 fi
 
 plasma_presente=()

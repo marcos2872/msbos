@@ -185,13 +185,21 @@ fi
 #     /etc/profile.d/omyfedora-theme.sh) — sem ele os apps Qt ficam sem o Breeze;
 #   • breeze-gtk-common: tema GTK Breeze/Breeze-Dark (lido pelo settings.ini);
 #   • pam-kwallet: destrava o cofre KWallet no login (o PAM do greetd no
-#     Fedora já chama o pam_kwallet5.so).
+#     Fedora já chama o pam_kwallet5.so);
+#   • redhat-menus: fornece /etc/xdg/menus/applications.menu. Sem ele o
+#     kbuildsycoca6 gera um cache KSycoca sem NENHUM .desktop, o KIO não
+#     resolve handler padrão e o Dolphin abre "Abrir com" vazio (o kde-open
+#     trava). A base mínima do Fedora KDE nem sempre o traz.
 # Todos são exigidos pelo Plasma: após a remoção do shell (seção 8) eles são
 # marcados como user-installed para a cascata do dnf não levá-los embora.
 for p in plasma-integration plasma-breeze breeze-gtk-common pam-kwallet kde-cli-tools dconf; do
   run_cmd dnf -y "${DNFOPT}" install "${p}" \
     || warn "tema: '${p}' indisponível — o visual dos apps pode divergir do KDE"
 done
+# Menu XDG: sem applications.menu o kbuildsycoca6 não indexa nenhum .desktop e
+# o KIO fica sem handler padrão (Dolphin com "Abrir com" vazio).
+run_cmd dnf -y "${DNFOPT}" install redhat-menus \
+  || warn "kde: 'redhat-menus' indisponível — o Dolphin pode abrir \"Abrir com\" vazio"
 # Apps KDE que o omyfedora garante presentes (a base KDE já os tem — o Dolphin, o
 # Konsole, o Kate/KWrite etc. são os apps do dia a dia; numa instalação mínima
 # eles completam o desktop). Sem haruna/strawberry/ksystemlog: os equivalentes
@@ -203,13 +211,14 @@ KDE_APPS=(dolphin dolphin-plugins konsole kwrite okular gwenview ark kcalc
 for p in "${KDE_APPS[@]}"; do
   run_cmd dnf -y "${DNFOPT}" install "${p}" || warn "kde: '${p}' indisponível — ignorado"
 done
-# Marca os apps garantidos como user-installed (uma única chamada do dnf).
-# Sem isso, um app que já veio como dependência do Plasma (ex.: o Konsole)
-# poderia ser levado na cascata da remoção do shell no próximo boot
-# (clean_requirements_on_remove). Marcar como user-installed protege da
-# cascata, mas o pacote continua removível se o usuário quiser.
+# Marca os apps garantidos (e o redhat-menus, exigido pelo KSycoca) como
+# user-installed (uma única chamada do dnf). Sem isso, um app que já veio como
+# dependência do Plasma (ex.: o Konsole) poderia ser levado na cascata da
+# remoção do shell no próximo boot (clean_requirements_on_remove). Marcar como
+# user-installed protege da cascata, mas o pacote continua removível se o
+# usuário quiser.
 KDE_INSTALADOS=()
-for p in "${KDE_APPS[@]}"; do
+for p in "${KDE_APPS[@]}" redhat-menus; do
   rpm -q "${p}" >/dev/null 2>&1 && KDE_INSTALADOS+=("${p}")
 done
 if ((${#KDE_INSTALADOS[@]} > 0)); then
@@ -428,6 +437,16 @@ if command -v flatpak >/dev/null 2>&1; then
   fi
 else
   log "stack: flatpak ausente — malcontent não é necessário"
+fi
+
+# Reconstrói o cache KSycoca do usuário (já com os .desktop de todos os apps
+# desta etapa). Numa instalação existente o cache gerado antes, sem
+# applications.menu, continuaria vazio: o Dolphin seguiria com o "Abrir com"
+# vazio e o kde-open travado até algo reindexar. Sem sessão gráfica o
+# kbuildsycoca6 roda normalmente (só precisa do HOME do usuário).
+if command -v kbuildsycoca6 >/dev/null 2>&1; then
+  run_cmd runuser -u "${TU}" -- env "HOME=${TU_HOME}" kbuildsycoca6 --noincremental \
+    || warn "kde: falha ao reconstruir o cache KSycoca (o Dolphin pode não abrir arquivos)"
 fi
 
 run_cmd dnf clean all || true

@@ -60,11 +60,13 @@ done
 # Pacotes que a transação NUNCA pode levar na cascata (clean_requirements_on_remove):
 # NetworkManager/tuned/tuned-ppd são essenciais ao sistema; o Konsole é o
 # terminal do dia a dia (não pode ser removido, pedido explícito); o resto é o
-# que mantém os apps KDE funcionando (estilo Breeze, portal e agente polkit).
+# que mantém os apps KDE funcionando (estilo Breeze, portal, agente polkit) e o
+# menu XDG (redhat-menus: sem applications.menu o KSycoca fica sem apps e o
+# Dolphin abre "Abrir com" vazio).
 KEEP_PKGS=(NetworkManager tuned tuned-ppd konsole
   plasma-integration plasma-breeze plasma-systemsettings polkit-kde
-  xdg-desktop-portal-kde pam-kwallet kde-gtk-config)
-PROT_PKGS='NetworkManager,tuned,tuned-ppd,konsole,plasma-integration,plasma-breeze,plasma-systemsettings,polkit-kde,xdg-desktop-portal-kde,pam-kwallet,kde-gtk-config'
+  xdg-desktop-portal-kde pam-kwallet kde-gtk-config redhat-menus)
+PROT_PKGS='NetworkManager,tuned,tuned-ppd,konsole,plasma-integration,plasma-breeze,plasma-systemsettings,polkit-kde,xdg-desktop-portal-kde,pam-kwallet,kde-gtk-config,redhat-menus'
 
 for p in "${KEEP_PKGS[@]}"; do
   if rpm -q "$p" >/dev/null 2>&1; then

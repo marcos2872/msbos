@@ -3,7 +3,7 @@
 [Português](instalacao.md) · [English](instalacao.en.md)
 
 omyfedora is installed **on top of an existing Fedora** (route C): there is no custom ISO.
-`install.sh` runs six idempotent steps, installs packages, configures services and applies
+`install.sh` runs seven idempotent steps, installs packages, configures services and applies
 the tuning. Replacing the Plasma shell with niri/Noctalia only takes effect after a reboot.
 
 ## Before you start
@@ -133,6 +133,7 @@ The same options work with the bootstrap, for example
 | `30-services.sh` | Puts greetd on boot, masks other display managers and disables unnecessary daemons |
 | `40-tuning.sh` | zram, memory sysctls, btrfs compression, CPU governor and oomd |
 | `50-configs.sh` | Configures niri, Noctalia, Breeze Dark, greetd/PAM, wallpapers, Zed, zsh and default apps |
+| `60-agent-skill.sh` | Installs the privileged helper (polkit), the root lists and the `omyfedora` skill for AI agents |
 
 Details for each step: [Architecture and steps](arquitetura.en.md).
 

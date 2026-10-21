@@ -3,7 +3,7 @@
 [Português](instalacao.md) · [English](instalacao.en.md)
 
 O omyfedora é instalado **sobre um Fedora já existente** (rota C): não há ISO própria. O
-`install.sh` roda seis etapas idempotentes, instala os pacotes, configura os serviços e
+`install.sh` roda sete etapas idempotentes, instala os pacotes, configura os serviços e
 aplica os ajustes. A troca do shell do Plasma pelo niri/Noctalia só vale depois do reboot.
 
 ## Antes de começar
@@ -131,6 +131,7 @@ O `install.sh` descobre `scripts/[0-9][0-9]-*.sh` em ordem e executa:
 | `30-services.sh` | Coloca o greetd no boot, mascara outros DMs e desativa daemons dispensáveis |
 | `40-tuning.sh` | zram, sysctl de memória, compressão btrfs, governor e oomd |
 | `50-configs.sh` | Configura niri, Noctalia, Breeze Dark, greetd/PAM, wallpapers, Zed, zsh e apps padrão |
+| `60-agent-skill.sh` | Instala o helper privilegiado (polkit), as listas de root e a skill `omyfedora` para agentes de IA |
 
 Detalhes de cada etapa: [Arquitetura e etapas](arquitetura.md).
 

@@ -23,7 +23,7 @@ daily use, how the steps work, troubleshooting and credits.
 |---|---|
 | [Installation](instalacao.en.md) | Recommended base, downloads, VM with 3D, bootstrap, `install.sh` options, Anaconda and first steps |
 | [Daily use](uso.en.md) | niri/Noctalia shortcuts, wallpapers, default apps, Breeze Dark, personal configs, greeter and updates |
-| [Architecture and steps](arquitetura.en.md) | Execution flow, `lib/common.sh`, the 6 steps, assets, state, verification and development |
+| [Architecture and steps](arquitetura.en.md) | Execution flow, `lib/common.sh`, the 7 steps, assets, state, verification and development |
 | [Troubleshooting](solucao-de-problemas.en.md) | dnf failures, VM/GPU, flatpak, Noctalia, greeter, Plasma and recovery |
 | [Credits](creditos.en.md) | Fedora, KDE, niri, Noctalia, greetd and other upstream projects |
 

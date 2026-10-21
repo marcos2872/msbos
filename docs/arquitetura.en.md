@@ -22,7 +22,7 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-    G[10-gpu] --> S[20-stack] --> D[25-devtools] --> SV[30-services] --> T[40-tuning] --> C[50-configs]
+    G[10-gpu] --> S[20-stack] --> D[25-devtools] --> SV[30-services] --> T[40-tuning] --> C[50-configs] --> A[60-agent-skill]
 ```
 
 ## Repository structure
@@ -37,6 +37,7 @@ scripts/25-devtools.sh  # gcc, Rust, Node/nvm, pnpm/yarn, virtualization
 scripts/30-services.sh  # greetd, daemons, tuned/oomd, rootless podman, SELinux
 scripts/40-tuning.sh    # zram, sysctls, btrfs, governor, oomd
 scripts/50-configs.sh   # niri, Noctalia, Breeze, greetd, wallpapers, Zed, zsh
+scripts/60-agent-skill.sh # privileged helper (polkit), root lists and agent skill
 assets/                 # installed files (configs, helpers, units, wallpapers)
 .github/workflows/ci.yml# bash -n, shellcheck and dry-run on Fedora 44
 pessoal-pc.sh           # personal script (monitor layout + Chrome), outside install
@@ -102,7 +103,7 @@ Contract between `install.sh`, `bootstrap.sh` and the steps:
 The bootstrap adds `OMYFEDORA_REF`, `OMYFEDORA_REPO`, `OMYFEDORA_URL` and `OMYFEDORA_KEEP`.
 Steps also read `FEDORA_VERSION`, exported by `require_fedora`.
 
-## The six steps
+## The seven steps
 
 ### `10-gpu.sh` — detection and drivers
 
@@ -230,6 +231,23 @@ Everything is idempotent: it detects what already exists and skips it.
 - **Permissions**: adjusts ownership of the user's files and, when a Noctalia session exists,
   triggers the final greeter sync.
 
+### `60-agent-skill.sh` — privileged helper and agent skill
+
+- **Helper** `/usr/local/libexec/omyfedora-priv` (root, not writable by group/others, SELinux
+  label `bin_t`): it is the only root path for an AI agent. It accepts only `dnf-install`,
+  `dnf-simulate-remove`, `dnf-remove` and `svc-enable|disable|restart`, with names validated by
+  regex (no glob, path, URL or option) and a protected-package list. `--dry-run` validates
+  arguments and checks the protected list without privileges.
+- **Polkit**: installs `org.omyfedora.priv.policy` (auth_admin) and warns when the polkit-kde
+  agent is not running in the session — without it `pkexec` cannot open the password window.
+- **Root lists**: `/etc/omyfedora/{allowed-units,protected}.list`, installed once; the agent
+  does not edit them.
+- **Audit trail**: `/var/log/omyfedora/actions.log` (0750 root) records `EXEC`,
+  `SIMULATE-REMOVE`, `DENY` and `RESULT rc=` for every call.
+- **Skill**: copies `assets/agents/skills/omyfedora/` to `~/.agents/skills/omyfedora/` (project
+  files always updated, with backup; `references/local.md` once) and creates
+  `~/.local/state/omyfedora/agent-backups/`.
+
 ## Assets and file ownership
 
 `assets/` mirrors the destination paths and is installed through `install_file`,
@@ -243,6 +261,7 @@ CIL modules installed through `semodule`, not copied files.
 | GUI state | `~/.local/state/noctalia/settings.toml`, plugins | Only installs when absent |
 | Theme palette | `~/.config/noctalia/palettes/macOS.json` | `install_file` with backup; to customize, create another palette |
 | SELinux modules | `assets/selinux/*.cil` | Installed through `semodule` |
+| Agent helper and skill | `assets/libexec/omyfedora-priv`, `assets/polkit/*.policy`, `assets/agents/skills/omyfedora/*` | `install_file` (helper 755 root with `bin_t`, policy 644); `references/local.md` once |
 
 ## Idempotency, backups and state
 

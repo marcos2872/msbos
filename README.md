@@ -92,7 +92,7 @@ próximo logout/reboot (para repetir: `noctalia msg greeter-sync`). Atalhos bás
 |---|---|
 | [Instalação](docs/instalacao.md) | Base, ISOs, VM, bootstrap, opções, Anaconda e primeiros passos |
 | [Uso diário](docs/uso.md) | Atalhos do niri/Noctalia, wallpapers, apps padrão, tema e configs pessoais |
-| [Arquitetura e etapas](docs/arquitetura.md) | Fluxo dos scripts, as 6 etapas, `lib/common.sh`, assets e verificação |
+| [Arquitetura e etapas](docs/arquitetura.md) | Fluxo dos scripts, as 7 etapas, `lib/common.sh`, assets e verificação |
 | [Solução de problemas](docs/solucao-de-problemas.md) | dnf, VM/GPU, flatpak, Noctalia, greeter e recuperação |
 | [Créditos](docs/creditos.md) | Projetos e pessoas que tornam o omyfedora possível |
 | [Índice](docs/index.md) | Ponto de entrada de toda a documentação |

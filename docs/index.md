@@ -23,7 +23,7 @@ etapas, solução de problemas e créditos.
 |---|---|
 | [Instalação](instalacao.md) | Base recomendada, downloads, VM com 3D, bootstrap, opções do `install.sh`, Anaconda e primeiros passos |
 | [Uso diário](uso.md) | Atalhos do niri/Noctalia, wallpapers, apps padrão, Breeze Dark, configs pessoais, greeter e atualizações |
-| [Arquitetura e etapas](arquitetura.md) | Fluxo de execução, `lib/common.sh`, as 6 etapas, assets, estado, verificação e desenvolvimento |
+| [Arquitetura e etapas](arquitetura.md) | Fluxo de execução, `lib/common.sh`, as 7 etapas, assets, estado, verificação e desenvolvimento |
 | [Solução de problemas](solucao-de-problemas.md) | Falhas de dnf, VM/GPU, flatpak, Noctalia, greeter, Plasma e recuperação |
 | [Créditos](creditos.md) | Fedora, KDE, niri, Noctalia, greetd e demais projetos upstream |
 

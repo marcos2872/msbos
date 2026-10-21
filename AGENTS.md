@@ -16,7 +16,7 @@ sintaxe, lint, `--dry-run` e os checks pós-instalação.
 
 ```bash
 ./install.sh --help        # ajuda (extraída do cabeçalho do próprio install.sh)
-./install.sh --dry-run     # simula tudo, sem alterar nada (roda as 6 etapas; 1ª verificação recomendada)
+./install.sh --dry-run     # simula tudo, sem alterar nada (roda as 7 etapas; 1ª verificação recomendada)
 ./install.sh               # instala de verdade (reexecuta com sudo; pergunta antes de remover o shell do Plasma)
 ./install.sh --yes         # sem perguntas (VMs descartáveis / CI)
 ```
@@ -108,6 +108,10 @@ Fluxo: `install.sh` (orquestrador) → `lib/common.sh` (helpers) → `scripts/NN
     (XwaylandVideoBridge desligado, seapplet com patch e sync do greeter no primeiro login),
     Secret Service do KWallet no D-Bus,
     Zed e agents-config do OpenCode.
+  - `60-agent-skill.sh` — helper privilegiado `/usr/local/libexec/omyfedora-priv`
+    (root, `bin_t`), política polkit `org.omyfedora.priv.policy`, listas de root em
+    `/etc/omyfedora/`, trilha em `/var/log/omyfedora/actions.log` e a skill `omyfedora`
+    em `~/.agents/skills/omyfedora` (`references/local.md` só uma vez).
 - Documentação do usuário: `README.md`/`README.en.md` e `docs/*.md`/`*.en.md`; não participa da
   instalação. O README é enxuto (o que é + instalação básica + créditos); os detalhes ficam em
   `docs/`.

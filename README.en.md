@@ -92,7 +92,7 @@ the next logout/reboot (to repeat: `noctalia msg greeter-sync`). Basic shortcuts
 |---|---|
 | [Installation](docs/instalacao.en.md) | Base images, VM, bootstrap, options, Anaconda and first steps |
 | [Daily use](docs/uso.en.md) | niri/Noctalia shortcuts, wallpapers, default apps, theme and personal configs |
-| [Architecture and steps](docs/arquitetura.en.md) | Script flow, the 6 steps, `lib/common.sh`, assets and verification |
+| [Architecture and steps](docs/arquitetura.en.md) | Script flow, the 7 steps, `lib/common.sh`, assets and verification |
 | [Troubleshooting](docs/solucao-de-problemas.en.md) | dnf, VM/GPU, flatpak, Noctalia, greeter and recovery |
 | [Credits](docs/creditos.en.md) | Projects and people that make omyfedora possible |
 | [Index](docs/index.en.md) | Entry point for all documentation |

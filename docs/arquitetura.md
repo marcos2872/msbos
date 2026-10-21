@@ -108,9 +108,10 @@ As etapas também leem `FEDORA_VERSION`, exportada por `require_fedora`.
 - Lê `/sys/bus/pci/devices/*` (classe `03xx`) e os módulos já carregados (`nvidia`, `amdgpu`,
   `i915`/`xe`).
 - Perfis: `auto` (detecta), `intel`, `amd`, `nvidia`, `hybrid`, `none`.
-- **NVIDIA**: tenta o pacote binário `nvidia`; se indisponível, usa `akmod-nvidia`. Adiciona
-  `nvidia-drm.modeset=1` ao kernel via `grubby` e instala o `profile.d/omyfedora-nvidia.sh`
-  com offload GLX. Em híbrido, mantém a iGPU com Mesa e microcódigo.
+- **NVIDIA**: habilita o RPM Fusion (free + nonfree, pré-requisito), instala o `akmod-nvidia`
+  e compila o módulo antes do reboot. Adiciona `nvidia-drm.modeset=1` ao kernel via `grubby`
+  e instala o `profile.d/omyfedora-nvidia.sh` com offload GLX. Em híbrido, mantém a iGPU com
+  Mesa e microcódigo. Com Secure Boot ativo, avisa que a chave do akmod precisa ser enrolada.
 - **Intel/AMD**: instala `mesa-dri-drivers` e o microcódigo (`microcode_ctl` ou
   `amd-ucode-firmware`).
 - **none**: avisa que a renderização será por software (llvmpipe) — o niri não funciona nesse
@@ -131,9 +132,11 @@ O driver efetivo só vale depois do reboot.
   `khelpcenter` e o LibreOffice (o escritório do projeto é o ONLYOFFICE). Respeita
   `--skip-remove`.
 - **Tema e apps garantidos**: instala `plasma-integration`, `plasma-breeze`,
-  `breeze-gtk-common`, `pam-kwallet`, `kde-cli-tools` e `dconf`, além da lista de apps KDE
-  (Dolphin, Konsole, KWrite, Okular, Gwenview, Ark, Spectacle, Dragon, Elisa, etc.). Marca os
-  apps como `user-installed` para proteger da cascata do dnf e desliga o Baloo.
+  `breeze-gtk-common`, `pam-kwallet`, `kde-cli-tools`, `dconf`, `kio-extras`, `kio-admin`,
+  `kdegraphics-thumbnailers`, `ffmpegthumbs` e `kglobalacceld`, além da lista de apps KDE
+  (Dolphin, Konsole, KWrite, Okular, Gwenview, Ark, Spectacle, Dragon, Elisa, etc.). Marca
+  `CORE`, o suporte de tema/KIO e os apps como `user-installed` **antes** da curadoria, para a
+  cascata do dnf não levar nenhum deles; desliga o Baloo.
 - **Terminal**: zsh, autosuggestions, syntax highlighting, fzf, bash-completion e fonte
   JetBrains Mono.
 - **Contêineres**: `lazydocker` (repo do Fedora ou binário da release com sha256 verificado) e
@@ -144,9 +147,10 @@ O driver efetivo só vale depois do reboot.
 - **Apps do usuário**: Zed e OpenCode v2 pelos scripts oficiais (com symlink em
   `/usr/local/bin`), Brave e ONLYOFFICE pelos repos oficiais, SSH_Orchestrator pelo RPM da
   release no GitHub e LocalSend pelo flatpak oficial do Flathub.
-- **Shell do Plasma**: se não houver `--skip-remove`, pergunta via `exige_ok` e **agenda** a
-  remoção para o próximo boot com `omyfedora-remove-plasma.service`. Nunca remove na sessão
-  viva.
+- **Shell do Plasma**: se não houver `--skip-remove`, simula a transação com
+  `dnf remove --assumeno` e aborta se algum app/suporte mantido aparecer no plano; só então
+  pergunta via `exige_ok` e **agenda** a remoção para o próximo boot com
+  `omyfedora-remove-plasma.service`. Nunca remove na sessão viva.
 - **Malcontent**: se o `accounts-daemon` expõe `com.endlessm.ParentalControls`, garante o
   pacote `malcontent` (sem ele todo `flatpak run` falha). Caso contrário, não instala.
 
@@ -178,9 +182,10 @@ Tudo é idempotente: detecta o que já existe e pula.
 
 ### `40-tuning.sh` — memória e desempenho
 
-- **zram**: `/etc/systemd/zram-generator.conf` com `max(ram * 0.75, 16384)` e compactação
-  `zstd` (75% da RAM, com piso de 16 GiB). O próprio generator é executado como sanidade; uma
-  config inválida aborta a instalação.
+- **zram**: `/etc/systemd/zram-generator.conf` com `min(ram * 0.75, 16384)` e compactação
+  `zstd` (75% da RAM, com teto de 16 GiB — máquinas pequenas não recebem zram maior que a
+  própria RAM). O próprio generator é executado como sanidade; uma config inválida aborta a
+  instalação.
 - **sysctl**: `vm.swappiness=60`, `vm.vfs_cache_pressure=50` e `vm.min_free_kbytes` calculado
   como 1/64 da RAM (limitado entre 8 MiB e 8 GiB).
 - **btrfs**: adiciona `compress=zstd:1` ao `/etc/fstab` quando o root é btrfs (com backup).
@@ -256,8 +261,8 @@ CIL instalados via `semodule`, não arquivos copiados.
 - **Remoção do Plasma no boot**: o `%preun` do plasmalogin/plasma-* mexe nos serviços systemd e
   derrubaria a sessão no meio da transação dnf. Por isso a remoção é feita pelo
   `omyfedora-remove-plasma.service`, antes do login. O script move temporariamente a proteção
-  do dnf, protege os pacotes que mantêm os apps KDE funcionais e, se falhar, tenta de novo no
-  boot seguinte.
+  do dnf, simula a transação e aborta se um pacote mantido for sair junto, protege os pacotes
+  que mantêm os apps KDE funcionais e, se falhar, tenta de novo no boot seguinte.
 - **PAM**: o `/etc/pam.d/greetd` precisa de `pam_selinux`; sem ele o `systemctl --user` da
   sessão é negado e o niri volta para o login. O instalador preserva o arquivo do pacote e só
   restaura a versão do projeto se detectar uma versão antiga sem `pam_selinux`.

@@ -34,7 +34,7 @@ if [[ ${DRY_RUN} == 0 && -x /usr/lib/systemd/system-generators/zram-generator ]]
   fi
   rm -rf "${gen_dir}"
 fi
-ok "zram configurado (~75% da RAM, piso de 16 GiB, como swap zstd; aplica no próximo boot)"
+ok "zram configurado (~75% da RAM, teto de 16 GiB, como swap zstd; aplica no próximo boot)"
 
 # ─── 2. sysctl de memória ───────────────────────────────────────────────────
 mem_kb="$(awk '/^MemTotal:/{print $2}' /proc/meminfo)"

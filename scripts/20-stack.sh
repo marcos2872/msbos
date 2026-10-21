@@ -143,13 +143,80 @@ for p in swaybg wlsunset ddcutil pipewire-alsa; do
   run_cmd dnf -y "${DNFOPT}" install "${p}" || warn "opcional '${p}' indisponível — ignorado"
 done
 
-# ─── 2b. Curadoria: apps KDE e LibreOffice que o omyfedora não usa ───────────────
+# ─── 2b. Tema dark do KDE (Breeze) + apps garantidos ────────────────────────
+# O omyfedora não entrega tema próprio: os apps usam o "Breeze Dark", o dark padrão
+# do KDE (o mesmo que o Plasma usa). Nada de Kvantum/qt6ct/qt5ct — o visual vem
+# de:
+#   • ~/.config/kdeglobals (ColorScheme=BreezeDark, widgetStyle=Breeze,
+#     ícones breeze-dark, cursor breeze_cursors) — preenchido na etapa
+#     50-configs via kwriteconfig6 (o System Settings mexe no MESMO arquivo e
+#     o omyfedora só preenche chaves ainda vazias);
+#   • plasma-integration: platform theme Qt6 "kde" (QT_QPA_PLATFORMTHEME em
+#     /etc/profile.d/omyfedora-theme.sh) — sem ele os apps Qt ficam sem o Breeze;
+#   • breeze-gtk-common: tema GTK Breeze/Breeze-Dark (lido pelo settings.ini);
+#   • pam-kwallet: destrava o cofre KWallet no login (o PAM do greetd no
+#     Fedora já chama o pam_kwallet5.so);
+#   • redhat-menus: fornece /etc/xdg/menus/applications.menu. Sem ele o
+#     kbuildsycoca6 gera um cache KSycoca sem NENHUM .desktop, o KIO não
+#     resolve handler padrão e o Dolphin abre "Abrir com" vazio (o kde-open
+#     trava). A base mínima do Fedora KDE nem sempre o traz;
+#   • kio-extras/kio-admin/thumbnailers: protocolos (SFTP, MTP), "abrir como
+#     administrador" e miniaturas do Dolphin. Sem eles o dnf os leva na
+#     limpeza de órfãos da remoção do shell.
+# Todos são exigidos (ou levados) pelo Plasma: por isso são marcados como
+# user-installed ANTES da curadoria (2c), para a cascata do dnf não levá-los.
+SUPORTE=(
+  plasma-integration plasma-breeze breeze-gtk-common pam-kwallet
+  kde-cli-tools dconf polkit-kde breeze-icon-theme breeze-cursor-theme
+  redhat-menus kio-extras kio-admin kdegraphics-thumbnailers ffmpegthumbs
+  kglobalacceld kf6-kwallet
+)
+# Apps KDE que o omyfedora garante presentes (a base KDE já os tem — o Dolphin, o
+# Konsole, o Kate/KWrite etc. são os apps do dia a dia; numa instalação mínima
+# eles completam o desktop). Sem haruna/strawberry/ksystemlog: os equivalentes
+# padrão do KDE são dragon/elisa/kjournald.
+KDE_APPS=(dolphin dolphin-plugins konsole kwrite okular gwenview ark kcalc
+  kamoso spectacle skanpage krdc krfb kolourpaint kde-connect kfind
+  keditbookmarks kwalletmanager5 kjournald dragon elisa-player filelight
+  kde-partitionmanager plasma-systemmonitor plasma-systemsettings kinfocenter)
+# Instala tudo numa lista só e guarda o que não existir no repo para um resumo
+# no fim (o warn individual sumiria no meio de dezenas de pacotes).
+FALHAS_KDE=()
+for p in "${SUPORTE[@]}" "${KDE_APPS[@]}"; do
+  run_cmd dnf -y "${DNFOPT}" install "${p}" \
+    || { warn "kde: '${p}' indisponível — ignorado"; FALHAS_KDE+=("${p}"); }
+done
+if ((${#FALHAS_KDE[@]} > 0)); then
+  warn "kde: ${#FALHAS_KDE[@]} pacote(s) não instalado(s): ${FALHAS_KDE[*]}"
+fi
+# Marca como user-installed (uma única chamada do dnf) os apps garantidos, o
+# suporte de tema/KIO e o CORE. Sem isso, um pacote que veio como dependência
+# do Plasma (ex.: o Konsole ou o plasma-integration) poderia ser levado na
+# cascata da remoção do shell no próximo boot (clean_requirements_on_remove).
+# Marcar como user-installed protege da cascata, mas o pacote continua removível
+# se o usuário quiser.
+KDE_INSTALADOS=()
+for p in "${CORE[@]}" "${SUPORTE[@]}" "${KDE_APPS[@]}"; do
+  rpm -q "${p}" >/dev/null 2>&1 && KDE_INSTALADOS+=("${p}")
+done
+if ((${#KDE_INSTALADOS[@]} > 0)); then
+  run_cmd dnf -y mark user "${KDE_INSTALADOS[@]}" \
+    || warn "kde: falha ao marcar os apps garantidos como user-installed"
+fi
+# Baloo (indexador do Dolphin): come RAM/CPU — desligado de propósito.
+if command -v balooctl6 >/dev/null 2>&1; then
+  run_cmd runuser -u "${TU}" -- env "HOME=${TU_HOME}" balooctl6 disable \
+    || warn "baloo: falha ao desligar o indexador"
+fi
+
+# ─── 2c. Curadoria: apps KDE e LibreOffice que o omyfedora não usa ───────────────
 # A base KDE já traz os apps padrão; o omyfedora remove só o que não se usa num
 # desktop de dev: jogos, a suíte PIM/e-mail (substituível por webmail), o
 # pacote de ajuda/acessibilidade e o LibreOffice (a suíte de escritório do
 # omyfedora é o ONLYOFFICE, instalado na seção 7). Remoção ao vivo é segura — são
 # apps, sem scriptlet que derruba a sessão (o SHELL do Plasma sai de cena no
-# próximo boot, agendado na seção 8: esse sim derrubaria a sessão).
+# próximo boot, agendado na seção 8: esse sim derrubaria a sessão). A marcação
+# user-installed da 2b roda antes para a cascata não levar tema/KIO/apps.
 if [[ ${SKIP_REMOVE:-0} == 1 ]]; then
   log "stack: curadoria: remoções desativadas (--skip-remove)"
 else
@@ -171,64 +238,6 @@ else
     log "curadoria: removendo o LibreOffice (escritório do omyfedora = ONLYOFFICE)"
     run_cmd dnf -y "${DNFOPT}" remove 'libreoffice*' || warn "libreoffice: falha na remoção"
   fi
-fi
-
-# ─── 2c. Tema dark do KDE (Breeze) + apps garantidos ────────────────────────
-# O omyfedora não entrega tema próprio: os apps usam o "Breeze Dark", o dark padrão
-# do KDE (o mesmo que o Plasma usa). Nada de Kvantum/qt6ct/qt5ct — o visual vem
-# de:
-#   • ~/.config/kdeglobals (ColorScheme=BreezeDark, widgetStyle=Breeze,
-#     ícones breeze-dark, cursor breeze_cursors) — preenchido na etapa
-#     50-configs via kwriteconfig6 (o System Settings mexe no MESMO arquivo e
-#     o omyfedora só preenche chaves ainda vazias);
-#   • plasma-integration: platform theme Qt6 "kde" (QT_QPA_PLATFORMTHEME em
-#     /etc/profile.d/omyfedora-theme.sh) — sem ele os apps Qt ficam sem o Breeze;
-#   • breeze-gtk-common: tema GTK Breeze/Breeze-Dark (lido pelo settings.ini);
-#   • pam-kwallet: destrava o cofre KWallet no login (o PAM do greetd no
-#     Fedora já chama o pam_kwallet5.so);
-#   • redhat-menus: fornece /etc/xdg/menus/applications.menu. Sem ele o
-#     kbuildsycoca6 gera um cache KSycoca sem NENHUM .desktop, o KIO não
-#     resolve handler padrão e o Dolphin abre "Abrir com" vazio (o kde-open
-#     trava). A base mínima do Fedora KDE nem sempre o traz.
-# Todos são exigidos pelo Plasma: após a remoção do shell (seção 8) eles são
-# marcados como user-installed para a cascata do dnf não levá-los embora.
-for p in plasma-integration plasma-breeze breeze-gtk-common pam-kwallet kde-cli-tools dconf; do
-  run_cmd dnf -y "${DNFOPT}" install "${p}" \
-    || warn "tema: '${p}' indisponível — o visual dos apps pode divergir do KDE"
-done
-# Menu XDG: sem applications.menu o kbuildsycoca6 não indexa nenhum .desktop e
-# o KIO fica sem handler padrão (Dolphin com "Abrir com" vazio).
-run_cmd dnf -y "${DNFOPT}" install redhat-menus \
-  || warn "kde: 'redhat-menus' indisponível — o Dolphin pode abrir \"Abrir com\" vazio"
-# Apps KDE que o omyfedora garante presentes (a base KDE já os tem — o Dolphin, o
-# Konsole, o Kate/KWrite etc. são os apps do dia a dia; numa instalação mínima
-# eles completam o desktop). Sem haruna/strawberry/ksystemlog: os equivalentes
-# padrão do KDE são dragon/elisa/kjournald.
-KDE_APPS=(dolphin dolphin-plugins konsole kwrite okular gwenview ark kcalc
-  kamoso spectacle skanpage krdc krfb kolourpaint kde-connect kfind
-  keditbookmarks kwalletmanager5 kjournald dragon elisa-player filelight
-  kde-partitionmanager plasma-systemmonitor plasma-systemsettings kinfocenter)
-for p in "${KDE_APPS[@]}"; do
-  run_cmd dnf -y "${DNFOPT}" install "${p}" || warn "kde: '${p}' indisponível — ignorado"
-done
-# Marca os apps garantidos (e o redhat-menus, exigido pelo KSycoca) como
-# user-installed (uma única chamada do dnf). Sem isso, um app que já veio como
-# dependência do Plasma (ex.: o Konsole) poderia ser levado na cascata da
-# remoção do shell no próximo boot (clean_requirements_on_remove). Marcar como
-# user-installed protege da cascata, mas o pacote continua removível se o
-# usuário quiser.
-KDE_INSTALADOS=()
-for p in "${KDE_APPS[@]}" redhat-menus; do
-  rpm -q "${p}" >/dev/null 2>&1 && KDE_INSTALADOS+=("${p}")
-done
-if ((${#KDE_INSTALADOS[@]} > 0)); then
-  run_cmd dnf -y mark user "${KDE_INSTALADOS[@]}" \
-    || warn "kde: falha ao marcar os apps garantidos como user-installed"
-fi
-# Baloo (indexador do Dolphin): come RAM/CPU — desligado de propósito.
-if command -v balooctl6 >/dev/null 2>&1; then
-  run_cmd runuser -u "${TU}" -- env "HOME=${TU_HOME}" balooctl6 disable \
-    || warn "baloo: falha ao desligar o indexador"
 fi
 
 # ─── 3. Terminal: zsh com autocomplete + fonte ──────────────────────────────
@@ -281,9 +290,18 @@ run_cmd runuser -u "${TU}" -- env "HOME=${TU_HOME}" "SHELL=${TU_SHELL}" \
   bash -c 'curl -fsSL https://zed.dev/install.sh | sh' \
   || warn "Zed: falha na instalação pelo script oficial"
 # o instalador oficial instala em ~/.local/bin, fora do PATH de sessões
-# gráficas (niri); o symlink garante o comando no Super+E e em qualquer shell
-run_cmd ln -sf "${TU_HOME}/.local/bin/zed" /usr/local/bin/zed \
-  || warn "Zed: falha ao criar symlink em /usr/local/bin"
+# gráficas (niri); o symlink garante o comando no Super+E e em qualquer shell.
+# Só cria o symlink se o binário existir de fato: um link pendente em
+# /usr/local/bin esconde a falha do instalador e confunde o diagnóstico.
+ZED_BIN="${TU_HOME}/.local/bin/zed"
+if [[ ${DRY_RUN} == 1 ]]; then
+  log "dry-run: criaria o symlink /usr/local/bin/zed → ${ZED_BIN} (se o binário existir)"
+elif [[ -x ${ZED_BIN} ]]; then
+  run_cmd ln -sf "${ZED_BIN}" /usr/local/bin/zed \
+    || warn "Zed: falha ao criar symlink em /usr/local/bin"
+else
+  warn "Zed: binário ausente em ${ZED_BIN} — symlink /usr/local/bin/zed não criado"
+fi
 
 # OpenCode v2 CLI — script oficial (instala em ~/.opencode/bin).
 # Se já houver versão >= a mais recente instalada, pula a instalação e vai
@@ -310,9 +328,20 @@ else
     || warn "OpenCode: falha na instalação pelo script oficial"
 fi
 # o instalador v2 instala em ~/.opencode/bin e mexe no PATH dos shells;
-# o symlink abaixo garante o comando em qualquer sessão (gráfica inclusive)
-run_cmd ln -sf "${TU_HOME}/.opencode/bin/opencode" /usr/local/bin/opencode \
-  || warn "OpenCode: falha ao criar symlink em /usr/local/bin"
+# o symlink abaixo garante o comando em qualquer sessão (gráfica inclusive).
+# Só cria o symlink se o binário existir; se o opencode já está no PATH do
+# sistema, não há o que linkar.
+OC_BIN_LOCAL="${TU_HOME}/.opencode/bin/opencode"
+if [[ ${DRY_RUN} == 1 ]]; then
+  log "dry-run: criaria o symlink /usr/local/bin/opencode → ${OC_BIN_LOCAL} (se o binário existir)"
+elif [[ -x ${OC_BIN_LOCAL} ]]; then
+  run_cmd ln -sf "${OC_BIN_LOCAL}" /usr/local/bin/opencode \
+    || warn "OpenCode: falha ao criar symlink em /usr/local/bin"
+elif command -v opencode >/dev/null 2>&1; then
+  log "OpenCode: já está no PATH — symlink /usr/local/bin/opencode não é necessário"
+else
+  warn "OpenCode: binário não encontrado — symlink /usr/local/bin/opencode não criado"
+fi
 
 # Brave — repo oficial da Brave Software (dnf5 em F41+; fallback dnf4)
 if ! rpm -q brave-browser >/dev/null 2>&1; then
@@ -399,8 +428,74 @@ else
       REMOVE_PKGS+=("${heavy}")
     fi
   done
+  # Pacotes que a remoção NUNCA pode levar na cascata
+  # (clean_requirements_on_remove). Manter em sincronia com KEEP_PKGS + APP_PKGS
+  # de assets/libexec/omyfedora-remove-plasma.
+  KDE_KEEP=(
+    NetworkManager tuned tuned-ppd
+    dolphin konsole kwrite okular gwenview ark kcalc spectacle
+    kde-connect kfind dragon elisa-player plasma-systemmonitor kinfocenter
+    plasma-integration plasma-breeze plasma-systemsettings polkit-kde
+    xdg-desktop-portal-kde pam-kwallet kde-gtk-config kde-cli-tools dconf
+    breeze-icon-theme breeze-cursor-theme redhat-menus
+    kio-extras kio-admin kdegraphics-thumbnailers ffmpegthumbs kglobalacceld
+    kf6-kwallet
+  )
+  # preflight_remocao — simula a transação e aborta se um pacote mantido
+  # aparecer no plano de remoção. O formato da tabela do dnf não é uma API:
+  # o grep exige o nome seguido de espaço (a coluna do nome), o que evita
+  # casar 'dolphin' com 'dolphin-plugins'. Erra para o lado seguro (abortar).
+  # O plasma-desktop é protegido por /etc/dnf/protected.d/*.conf na base KDE:
+  # sem afastar o arquivo, o dnf aborta a simulação com "protected packages" e
+  # nunca imprime o plano (falso negativo). O subshell restaura sempre, mesmo
+  # em erro ou Ctrl+C.
+  preflight_remocao() {
+    local sim='' p conflitos=() pf_rc=0
+    sim="$(
+      moved=()
+      cleanup_prot() {
+        local f
+        for f in "${moved[@]}"; do
+          [[ -e ${f}.omyfedora-off ]] && mv -f "${f}.omyfedora-off" "${f}"
+        done
+      }
+      trap 'exit 130' INT TERM
+      trap cleanup_prot EXIT
+      # limpa sobra de uma execução interrompida (SIGKILL) antes de mover de novo
+      for f in /etc/dnf/protected.d/plasma-desktop.conf /etc/dnf/protected.d/fedora-workstation.conf; do
+        [[ -e ${f}.omyfedora-off ]] && mv -f "${f}.omyfedora-off" "${f}"
+      done
+      for f in /etc/dnf/protected.d/plasma-desktop.conf /etc/dnf/protected.d/fedora-workstation.conf; do
+        [[ -e ${f} ]] || continue
+        mv -f "${f}" "${f}.omyfedora-off" && moved+=("${f}") \
+          || warn "preflight: não consegui afastar ${f} — a simulação pode falhar"
+      done
+      LC_ALL=C dnf remove --assumeno "${REMOVE_PKGS[@]}" 2>&1
+    )" || pf_rc=$?
+    if ((pf_rc == 130)); then
+      err "preflight interrompido (Ctrl+C) — instalação abortada"
+      exit 130
+    fi
+    if ! grep -q '^Removing' <<<"${sim}"; then
+      warn "preflight: não consegui simular a remoção — remoção NÃO agendada"
+      return 1
+    fi
+    for p in "${KDE_KEEP[@]}"; do
+      rpm -q "${p}" >/dev/null 2>&1 || continue
+      grep -Eq "(^|[[:space:]])${p}[[:space:]]" <<<"${sim}" && conflitos+=("${p}")
+    done
+    if ((${#conflitos[@]} > 0)); then
+      warn "a remoção do Plasma levaria junto: ${conflitos[*]}"
+      return 1
+    fi
+    return 0
+  }
   if ((${#REMOVE_PKGS[@]} > 0)); then
-    if exige_ok "agendar a remoção do shell do Plasma (${REMOVE_PKGS[*]}) para o próximo boot?"; then
+    if [[ ${DRY_RUN} == 1 ]]; then
+      log "dry-run: simularia a remoção (${REMOVE_PKGS[*]}) e verificaria se algum app KDE sairia junto"
+    elif ! preflight_remocao; then
+      warn "remoção do shell do Plasma NÃO agendada — corrija os conflitos e rode a etapa de novo"
+    elif exige_ok "agendar a remoção do shell do Plasma (${REMOVE_PKGS[*]}) para o próximo boot?"; then
       install_file "libexec/omyfedora-remove-plasma" "/usr/local/libexec/omyfedora-remove-plasma"
       run_cmd chmod 755 /usr/local/libexec/omyfedora-remove-plasma
       install_file "omyfedora-remove-plasma.service" "/etc/systemd/system/omyfedora-remove-plasma.service"

@@ -6,6 +6,8 @@
 #
 # Híbrido (iGPU + dGPU NVIDIA): instala o driver NVIDIA, habilita modeset e
 # configura offload GL via __GLX_VENDOR_LIBRARY_NAME=nvidia (por app).
+# NVIDIA: habilita o RPM Fusion (free + nonfree) e usa akmod-nvidia; verifica
+# Secure Boot e compila o módulo antes de pedir o reboot.
 
 set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/lib/common.sh"
@@ -57,15 +59,54 @@ profile_from_detection() {
   fi
 }
 
+# enable_rpmfusion — habilita o RPM Fusion free + nonfree (pré-requisito do
+# akmod-nvidia). Idempotente: só instala os pacotes de release se faltarem.
+enable_rpmfusion() {
+  local rel="${FEDORA_VERSION:-}"
+  if [[ ! ${rel} =~ ^[0-9]+$ ]]; then
+    warn "gpu: versão do Fedora desconhecida ('${rel:-?}') — não sei qual RPM Fusion usar"
+    return 1
+  fi
+  if rpm -q rpmfusion-free-release >/dev/null 2>&1 &&
+     rpm -q rpmfusion-nonfree-release >/dev/null 2>&1; then
+    ok "gpu: RPM Fusion já habilitado"
+    return 0
+  fi
+  log "gpu: habilitando o RPM Fusion (free + nonfree) para o driver NVIDIA"
+  run_cmd dnf -y install \
+    "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-${rel}.noarch.rpm" \
+    "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-${rel}.noarch.rpm" \
+    || { warn "gpu: falha ao habilitar o RPM Fusion"; return 1; }
+}
+
 install_nvidia_driver() {
   log "gpu: NVIDIA detectada — instalando driver proprietário (Wayland exige KMS)"
-  # 1) driver binário pronto (mais leve; não exige toolchain); fallback: akmod
-  if ! run_cmd dnf -y "${DNFOPT}" install nvidia; then
-    warn "pacote binário 'nvidia' indisponível; tentando 'akmod-nvidia' (compila localmente)"
-    if ! run_cmd dnf -y install akmod-nvidia; then
-      err "falha ao instalar o driver NVIDIA"
-      return 1
-    fi
+  # O pacote 'nvidia' não existe no Fedora nem no RPM Fusion: o driver vem do
+  # akmod-nvidia (compila o módulo para o kernel em uso e para os próximos).
+  # O RPM Fusion nonfree é pré-requisito e não vem habilitado numa base limpa.
+  if ! enable_rpmfusion; then
+    err "driver NVIDIA: RPM Fusion indisponível — instale o akmod-nvidia manualmente"
+    return 1
+  fi
+  if ! run_cmd dnf -y "${DNFOPT}" install akmod-nvidia; then
+    err "falha ao instalar o akmod-nvidia"
+    return 1
+  fi
+  # Compila o módulo AGORA: o próximo boot não pode depender de uma compilação
+  # que ainda não aconteceu. O serviço akmods recompila em kernels novos.
+  if command -v akmods >/dev/null 2>&1; then
+    run_cmd akmods --force \
+      || warn "gpu: 'akmods --force' falhou — o módulo pode não estar pronto no próximo boot"
+  fi
+  if [[ ${DRY_RUN} == 0 ]] && ! modinfo nvidia >/dev/null 2>&1; then
+    warn "gpu: módulo nvidia ainda não disponível — confira 'akmods --force' e o journal do akmods"
+  fi
+  # Secure Boot: o akmod assina o módulo com uma chave local que precisa ser
+  # enrolada no firmware; sem isso o kernel recusa o módulo e o niri não sobe.
+  if command -v mokutil >/dev/null 2>&1 && mokutil --sb-state 2>/dev/null | grep -qi 'enabled'; then
+    warn "gpu: Secure Boot ativo — o módulo NVIDIA precisa de uma chave enrolada"
+    warn "     rode: sudo kmodgenca -a && sudo mokutil --import /etc/pki/akmods/certs/public_key.der"
+    warn "     (defina uma senha, reinicie e conclua o enrolamento no menu do firmware)"
   fi
   # 2) nvidia-drm.modeset=1 é obrigatório para Wayland
   if command -v grubby >/dev/null 2>&1; then

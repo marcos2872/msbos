@@ -393,8 +393,14 @@ lsmod | grep nvidia
 grep -o 'nvidia-drm.modeset=1' /proc/cmdline
 ```
 
+- O driver vem do `akmod-nvidia` (não existe pacote `nvidia` no Fedora nem no RPM Fusion). O
+  `10-gpu.sh` habilita o RPM Fusion free + nonfree, compila o módulo com `akmods --force` e
+  confere com `modinfo nvidia`. Se a compilação falhar, o módulo não existe no próximo boot.
 - Wayland exige KMS; o `10-gpu.sh` adiciona `nvidia-drm.modeset=1` via `grubby`. O efeito vale
   após o reboot.
+- Com **Secure Boot** ativo, o módulo precisa de uma chave enrolada. Se o instalador avisou:
+  `sudo kmodgenca -a`, `sudo mokutil --import /etc/pki/akmods/certs/public_key.der`, reinicie e
+  conclua o enrolamento no menu do firmware.
 - Em híbrido, o `profile.d/omyfedora-nvidia.sh` faz offload GLX para a dGPU. Para forçar a iGPU
   em um app específico:
 

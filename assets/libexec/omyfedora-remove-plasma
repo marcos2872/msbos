@@ -60,15 +60,22 @@ done
 # Pacotes que a transação NUNCA pode levar na cascata (clean_requirements_on_remove):
 # NetworkManager/tuned/tuned-ppd são essenciais ao sistema; o Konsole é o
 # terminal do dia a dia (não pode ser removido, pedido explícito); o resto é o
-# que mantém os apps KDE funcionando (estilo Breeze, portal, agente polkit) e o
-# menu XDG (redhat-menus: sem applications.menu o KSycoca fica sem apps e o
-# Dolphin abre "Abrir com" vazio).
+# que mantém os apps KDE funcionando (estilo Breeze, portal, agente polkit,
+# KIO, miniaturas) e o menu XDG (redhat-menus: sem applications.menu o KSycoca
+# fica sem apps e o Dolphin abre "Abrir com" vazio).
 KEEP_PKGS=(NetworkManager tuned tuned-ppd konsole
   plasma-integration plasma-breeze plasma-systemsettings polkit-kde
-  xdg-desktop-portal-kde pam-kwallet kde-gtk-config redhat-menus)
-PROT_PKGS='NetworkManager,tuned,tuned-ppd,konsole,plasma-integration,plasma-breeze,plasma-systemsettings,polkit-kde,xdg-desktop-portal-kde,pam-kwallet,kde-gtk-config,redhat-menus'
+  xdg-desktop-portal-kde pam-kwallet kde-gtk-config kde-cli-tools dconf
+  breeze-icon-theme breeze-cursor-theme redhat-menus
+  kio-extras kio-admin kdegraphics-thumbnailers ffmpegthumbs
+  kglobalacceld kf6-kwallet)
+# Apps que o 20-stack marca como user-installed; o preflight também os vigia.
+APP_PKGS=(dolphin kwrite okular gwenview ark kcalc spectacle kde-connect
+  kfind dragon elisa-player plasma-systemmonitor kinfocenter)
+# protected_packages do dnf: lista derivada de KEEP_PKGS (uma fonte só).
+PROT_PKGS="$(IFS=,; printf '%s' "${KEEP_PKGS[*]}")"
 
-for p in "${KEEP_PKGS[@]}"; do
+for p in "${KEEP_PKGS[@]}" "${APP_PKGS[@]}"; do
   if rpm -q "$p" >/dev/null 2>&1; then
     dnf -y mark user "$p" >/dev/null 2>&1 \
       || log "aviso: falha ao marcar ${p} como user-installed"
@@ -82,6 +89,45 @@ if rpm -q malcontent >/dev/null 2>&1; then
   dnf -y mark user malcontent >/dev/null 2>&1 \
     || log "aviso: falha ao marcar o malcontent como user-installed"
   PROT_PKGS+=",malcontent"
+fi
+
+# preflight_remocao — simula a transação com as mesmas proteções da remoção
+# real e aborta se algum pacote mantido aparecer no plano. Protege contra uma
+# cascata inesperada (ex.: um app novo que passe a exigir o plasma-workspace).
+# LC_ALL=C deixa o cabeçalho da transação estável ("Removing:") seja qual for
+# o idioma do sistema.
+preflight_remocao() {
+  local sim='' p conflitos=()
+  sim="$(LC_ALL=C dnf -C remove --assumeno --setopt=protected_packages="${PROT_PKGS}" "${PKGS[@]}" 2>&1 || true)"
+  # cache vazio/indisponível: tenta com os repositórios (mesmo fallback da
+  # remoção real); se ainda assim não houver plano, segue sem bloquear.
+  if ! grep -q '^Removing' <<<"${sim}"; then
+    sim="$(LC_ALL=C dnf remove --assumeno --setopt=protected_packages="${PROT_PKGS}" "${PKGS[@]}" 2>&1 || true)"
+  fi
+  if ! grep -q '^Removing' <<<"${sim}"; then
+    if grep -qi 'protected' <<<"${sim}"; then
+      log "preflight: a transação removeria um pacote protegido — NÃO removendo"
+      return 1
+    fi
+    log "preflight: sem plano de transação (cache/rede?) — NÃO removendo"
+    return 1
+  fi
+  for p in "${KEEP_PKGS[@]}" "${APP_PKGS[@]}"; do
+    rpm -q "$p" >/dev/null 2>&1 || continue
+    grep -Eq "(^|[[:space:]])${p}[[:space:]]" <<<"${sim}" && conflitos+=("$p")
+  done
+  if ((${#conflitos[@]})); then
+    log "preflight: a remoção levaria junto: ${conflitos[*]}"
+    return 1
+  fi
+  return 0
+}
+
+if ((${#PKGS[@]} > 0)) && ! preflight_remocao; then
+  log "remoção NÃO executada — o serviço tentará de novo no próximo boot"
+  restore_prot
+  trap - EXIT
+  exit 1
 fi
 
 rc=0

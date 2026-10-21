@@ -180,9 +180,9 @@ Everything is idempotent: it detects what already exists and skips it.
 
 ### `40-tuning.sh` — memory and performance
 
-- **zram**: `/etc/systemd/zram-generator.conf` with `min(ram / 2, 8192)` and `zstd`
-  compression. The generator itself runs as a sanity check; an invalid config aborts the
-  installation.
+- **zram**: `/etc/systemd/zram-generator.conf` with `max(ram * 0.75, 16384)` and `zstd`
+  compression (75% of RAM, with a 16 GiB floor). The generator itself runs as a sanity check;
+  an invalid config aborts the installation.
 - **sysctl**: `vm.swappiness=60`, `vm.vfs_cache_pressure=50` and `vm.min_free_kbytes` computed
   as 1/64 of RAM (clamped between 8 MiB and 8 GiB).
 - **btrfs**: adds `compress=zstd:1` to `/etc/fstab` when root is btrfs (with backup).

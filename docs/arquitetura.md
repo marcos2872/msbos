@@ -178,8 +178,9 @@ Tudo é idempotente: detecta o que já existe e pula.
 
 ### `40-tuning.sh` — memória e desempenho
 
-- **zram**: `/etc/systemd/zram-generator.conf` com `min(ram / 2, 8192)` e compactação `zstd`.
-  O próprio generator é executado como sanidade; uma config inválida aborta a instalação.
+- **zram**: `/etc/systemd/zram-generator.conf` com `max(ram * 0.75, 16384)` e compactação
+  `zstd` (75% da RAM, com piso de 16 GiB). O próprio generator é executado como sanidade; uma
+  config inválida aborta a instalação.
 - **sysctl**: `vm.swappiness=60`, `vm.vfs_cache_pressure=50` e `vm.min_free_kbytes` calculado
   como 1/64 da RAM (limitado entre 8 MiB e 8 GiB).
 - **btrfs**: adiciona `compress=zstd:1` ao `/etc/fstab` quando o root é btrfs (com backup).

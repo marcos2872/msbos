@@ -64,9 +64,10 @@ path = "/usr/share/omyfedora-walls/wp11280214-rx7-4k-wallpapers.jpg"
 path = "/usr/share/omyfedora-walls/wp11280214-rx7-4k-wallpapers.jpg"
 
 [widget.cpu]
-# Dentro do grupo cápsula g1: gráfico, sem o valor numérico ao lado.
-show_value = false
-visualization = "graph"
+# Dentro do grupo cápsula g1: medidor (gauge) com o valor numérico ao lado —
+# os defaults do sysmon no Noctalia 5.3, deixados explícitos aqui.
+show_value = true
+visualization = "gauge"
 
 [widget.launcher]
 # O launcher não ocupa a barra; continua no atalho Super+Space.
@@ -81,6 +82,6 @@ rotate_album_art = true
 show_label = false
 
 [widget.ram]
-# Dentro do grupo cápsula g1: gráfico, sem o valor numérico ao lado.
-show_value = false
-visualization = "graph"
+# Dentro do grupo cápsula g1: medidor (gauge) com o valor numérico ao lado.
+show_value = true
+visualization = "gauge"

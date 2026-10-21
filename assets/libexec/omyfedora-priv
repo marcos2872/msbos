@@ -105,12 +105,25 @@ PROTEGIDOS_BASE=(
   # stack do omyfedora
   'NetworkManager(-.*)?' 'greetd(-.*)?' 'niri(-.*)?' 'noctalia(-.*)?'
   'xdg-desktop-portal(-.*)?' 'pipewire(-.*)?' 'wireplumber(-.*)?' 'tuned(-.*)?'
-  'zram-generator(-.*)?' 'jemalloc' 'udisks2(-.*)?'
-  # apps KDE e suporte que precisam continuar funcionando
-  'dolphin(-.*)?' 'konsole' 'kwrite' 'okular' 'gwenview' 'ark' 'spectacle' 'kcalc'
-  'plasma-integration' 'plasma-breeze(-.*)?' 'breeze-(icon-theme|cursor-theme|gtk(-.*)?)'
+  'tuned-ppd' 'zram-generator(-.*)?' 'jemalloc' 'udisks2(-.*)?'
+  # shell e ferramentas que o projeto garante (zsh do usuário, python3 do REPL)
+  'zsh' 'python3'
+  # apps KDE do dia a dia (KEEP_PKGS/APP_PKGS do omyfedora-remove-plasma).
+  # 'dolphin' é exato de propósito: 'dolphin-emu' é outro pacote (emulador) e
+  # não faz parte do conjunto garantido pelo projeto.
+  'dolphin' 'dolphin-plugins' 'konsole' 'kwrite' 'kate' 'okular' 'gwenview' 'ark'
+  'spectacle' 'kcalc' 'kde-connect' 'kfind' 'dragon' 'elisa-player'
+  'plasma-systemmonitor' 'kinfocenter'
+  # suporte que mantém os apps KDE funcionando (estilo, portal, KIO, miniaturas,
+  # menu XDG, agente polkit)
+  'plasma-integration' 'plasma-breeze(-.*)?' 'plasma-systemsettings' 'polkit-kde'
+  'breeze-(icon-theme|cursor-theme|gtk(-.*)?)'
   'kde-cli-tools' 'redhat-menus' 'kio-extras' 'kio-admin' 'kdegraphics-thumbnailers'
-  'ffmpegthumbs' 'kwallet(-.*)?' 'kf6-kwallet(-.*)?' 'dconf'
+  'ffmpegthumbs' 'kwallet(-.*)?' 'pam-kwallet' 'kf6-kwallet(-.*)?' 'kglobalacceld'
+  'kde-gtk-config' 'dconf'
+  # shell do Plasma: quem o remove é o omyfedora-remove-plasma no boot, nunca o
+  # agente na sessão viva (o %preun derruba a sessão no meio da transação)
+  'plasma-desktop' 'plasmalogin'
 )
 
 eh_protegido() {
@@ -125,16 +138,30 @@ eh_protegido() {
   return 1
 }
 
-readonly DNF_REMOVE_OPTS=(--setopt=clean_requirements_on_remove=False)
+# checa_alvos PKG... — recusa alvos protegidos ANTES de qualquer caminho, inclusive
+# o --dry-run: o dry-run tem de dizer a mesma verdade que a execução real. (A cascata
+# só o dnf sabe simular; essa parte continua em simula_remocao.)
+checa_alvos() {
+  local p
+  for p in "$@"; do
+    if eh_protegido "${p}"; then die "pacote protegido: '${p}' — não removo (explique ao usuário)"; fi
+  done
+}
+
+# --color=never é opção global (antes do subcomando) e mantém a saída estável — o
+# parsing da simulação depende dela. --no-autoremove é opção do subcomando remove
+# (o dnf5 recusa se vier antes) e é o nome documentado de
+# clean_requirements_on_remove=False.
+readonly DNF_COLOR=(--color=never)
+readonly DNF_INSTALL_OPTS=(--setopt=install_weak_deps=0)
+readonly DNF_REMOVE_OPTS=(--no-autoremove)
 SAI=()
 
 # simula_remocao PKG... — preenche SAI com o que seria removido; falha fechada.
 simula_remocao() {
-  local p sim x
-  for p in "$@"; do
-    if eh_protegido "${p}"; then die "pacote protegido: '${p}' — não removo (explique ao usuário)"; fi
-  done
-  sim="$(dnf remove --assumeno "${DNF_REMOVE_OPTS[@]}" "$@" 2>&1)" || true
+  local sim x
+  checa_alvos "$@"
+  sim="$(dnf "${DNF_COLOR[@]}" remove --assumeno "${DNF_REMOVE_OPTS[@]}" "$@" 2>&1)" || true
   mapfile -t SAI < <(awk '$2 ~ /^(x86_64|noarch|i686|aarch64|src)$/ {print $1}' <<<"${sim}" | sort -u)
   if ((${#SAI[@]} == 0)); then
     printf '%s\n' "${sim}" >&2
@@ -161,11 +188,12 @@ executa() {
 
 cmd_dnf_install() {
   valida_pkgs "$@"
-  executa dnf -y --setopt=install_weak_deps=0 install "$@"
+  executa dnf "${DNF_COLOR[@]}" -y "${DNF_INSTALL_OPTS[@]}" install "$@"
 }
 
 cmd_dnf_simulate_remove() {
   valida_pkgs "$@"
+  checa_alvos "$@"
   if [[ ${DRY_RUN} == 1 ]]; then
     printf 'dry-run: simularia a remoção de: %s (só valido os nomes sem privilégio)\n' "$*"
     return 0
@@ -177,22 +205,29 @@ cmd_dnf_simulate_remove() {
 
 cmd_dnf_remove() {
   valida_pkgs "$@"
+  # o check de protegidos vem antes do retorno de dry-run: um "removeria dolphin"
+  # no dry-run seria uma mentira sobre a segurança do comando
+  checa_alvos "$@"
   if [[ ${DRY_RUN} == 1 ]]; then
     printf 'dry-run: removeria (após simulação e checagem de protegidos): %s\n' "$*"
     return 0
   fi
   simula_remocao "$@"
   printf 'Removendo (%d): %s\n' "${#SAI[@]}" "${SAI[*]}"
-  executa dnf -y "${DNF_REMOVE_OPTS[@]}" remove "$@"
+  executa dnf "${DNF_COLOR[@]}" remove -y "${DNF_REMOVE_OPTS[@]}" "$@"
   printf 'Para desfazer: veja o ID em "dnf history list" e rode "dnf history undo <ID>".\n'
 }
 
 # ─── serviços ───────────────────────────────────────────────────────────────
+# Unidades que o agente pode mexer. Fora de propósito:
+#   • systemd-oomd  — o projeto depende dele (40-tuning.sh + oomd.conf);
+#   • power-profiles-daemon — conflita com o tuned-ppd, que é o perfil do projeto;
+#   • greetd/NetworkManager/systemd-*/dbus/polkit — derrubam a sessão ou o login.
 readonly UNITS_BASE=(
-  tuned.service tuned-ppd.service power-profiles-daemon.service bluetooth.service
+  tuned.service tuned-ppd.service bluetooth.service
   libvirtd.service libvirtd.socket podman.socket cups.service cups.socket
   avahi-daemon.service avahi-daemon.socket fprintd.service firewalld.service
-  sshd.service systemd-oomd.service
+  sshd.service
 )
 readonly UNIT_RE='^[A-Za-z0-9][A-Za-z0-9@._-]{0,99}\.(service|socket|timer)$'
 readonly SUFIXO_RE='\.(service|socket|timer)$'

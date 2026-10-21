@@ -52,6 +52,29 @@ if command -v restorecon >/dev/null 2>&1; then
     || warn "agent-skill: restorecon falhou (verifique os contextos SELinux)"
 fi
 
+# /usr/local/libexec não tem regra de fcontext: o helper novo nasce usr_t e o
+# restorecon sozinho NÃO muda. Registra bin_t de forma persistente e reaplica.
+if command -v getenforce >/dev/null 2>&1 && [[ "$(getenforce 2>/dev/null || true)" == Enforcing ]]; then
+  if command -v semanage >/dev/null 2>&1; then
+    run_sh "semanage fcontext -a -t bin_t '/usr/local/libexec/omyfedora-priv' 2>/dev/null || semanage fcontext -m -t bin_t '/usr/local/libexec/omyfedora-priv'" \
+      || warn "agent-skill: falha ao registrar bin_t no semanage (o helper fica usr_t)"
+    run_cmd restorecon -v /usr/local/libexec/omyfedora-priv \
+      || warn "agent-skill: falha ao aplicar bin_t no helper"
+  else
+    warn "agent-skill: sem semanage (policycoreutils-python-utils); usando chcon — o rótulo bin_t pode voltar a usr_t depois de um restorecon"
+    run_cmd chcon -t bin_t /usr/local/libexec/omyfedora-priv \
+      || warn "agent-skill: falha ao aplicar chcon bin_t no helper"
+  fi
+fi
+
+# sem agente polkit na sessão o pkexec não abre a janela de senha
+if command -v pgrep >/dev/null 2>&1 \
+   && ! pgrep -u "${TU}" -f 'polkit-kde-authentication-agent' >/dev/null 2>&1; then
+  warn "agent-skill: agente polkit-kde não está rodando na sessão de ${TU}"
+  warn "  adicione ao ${TU_HOME}/.config/niri/config.kdl (fora do bloco binds):"
+  warn "  spawn-at-startup \"/usr/libexec/kf6/polkit-kde-authentication-agent-1\""
+fi
+
 # a política foi carregada? (só em modo real)
 if [[ ${DRY_RUN} == 0 ]]; then
   pkaction --action-id org.omyfedora.priv.dnf-install --verbose >/dev/null 2>&1 \

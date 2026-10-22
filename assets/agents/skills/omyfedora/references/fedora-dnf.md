@@ -15,6 +15,8 @@ dnf history list                # transações anteriores
 
 Consultar não é mudança: não precisa de confirmação. Mas **antes de propor instalar**, confirme que o pacote existe (`dnf info`) e diga de qual repositório vem.
 
+> Em ambiente com `NoNewPrivs=1` (OpenCode Desktop), não rode `pkexec` direto. Use `niri msg action spawn -- alacritty -e /usr/bin/pkexec ...` e confira/foca a janela do polkit; veja `references/seguranca.md`.
+
 ## Instalar
 
 1. Verifique com `dnf info <pacote>` e mostre ao usuário nome, versão e repositório.

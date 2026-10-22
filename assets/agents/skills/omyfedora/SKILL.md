@@ -13,6 +13,7 @@ Você pode ajudar o usuário a alterar a configuração e o sistema, mas **toda 
 1. **Pergunte antes de qualquer mudança**: editar configuração, instalar, remover, habilitar/desabilitar serviço. Sem "sim" explícito, não execute.
 2. **Descreva antes de perguntar** usando o formato da seção "Como pedir confirmação".
 3. **Root só por `pkexec /usr/local/libexec/omyfedora-priv <subcomando>`**. O polkit abre a janela de senha para o usuário. Nunca use `sudo` — **nem para consultar** (`sudo dnf history`, `sudo systemctl status`) e **nem para sondar** o ambiente (`sudo -n true`): leitura se faz sem privilégio (`dnf history list`, `rpm -q`, `systemctl status`). Nunca peça, leia ou guarde a senha, nunca tente contornar uma recusa do helper.
+   Em ambientes com `NoNewPrivs=1` (OpenCode Desktop), execute o helper pelo niri com Alacritty; veja “Ambiente com NoNewPrivs” abaixo.
    Se a primeira mensagem já envolve root, pacote ou serviço, leia esta skill inteira **antes** de explorar o sistema.
 4. **Antes de remover pacote, simule** (`dnf-simulate-remove`) e mostre ao usuário o que sairia junto.
 5. **Nunca**: `dnf autoremove`, `rm -rf` fora de diretório temporário seu, editar PAM, greetd, SELinux, fstab, grub/kernel, nem remover o shell do Plasma. Veja `references/seguranca.md`.
@@ -50,6 +51,19 @@ Uma mudança por confirmação. Se forem várias coisas relacionadas, liste toda
 | **Root** | `dnf`, `systemctl`, qualquer coisa em `/etc` ou `/usr` | Pergunte, depois `pkexec /usr/local/libexec/omyfedora-priv ...` |
 
 O usuário pode afrouxar a confirmação de edições de configuração pessoal em `references/local.md`. Leia esse arquivo no início. **Instalar, remover e mexer em serviços sempre pedem confirmação**, sem exceção.
+
+## Ambiente com NoNewPrivs (OpenCode Desktop)
+
+No OpenCode Desktop, o servidor pode rodar com `NoNewPrivs=1`; nesse estado, `pkexec` direto falha com `pkexec must be setuid root` ou o processo morre antes de pedir autorização. Para executar o helper:
+
+```bash
+niri msg action spawn -- alacritty -e /usr/bin/pkexec /usr/local/libexec/omyfedora-priv <subcomando> [argumentos...]
+```
+
+- O Alacritty fornece um TTY e o polkit abre de forma confiável; o terminal pode fechar quando o helper terminar.
+- Depois do spawn, localize a janela `org.kde.polkit-kde-authentication-agent-1` em `niri msg --json windows` e foque com `niri msg action focus-window --id <id>`. Ela pode abrir em outro workspace/monitor.
+- Se a janela não existir, **pare** e reporte; não espere 90 s nem conclua que a ação rodou.
+- Valide o resultado com leitura (`rpm -q`, `systemctl status`, `dnf history list`). Não use `sudo` como alternativa.
 
 ## Ritual de toda mudança
 

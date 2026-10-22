@@ -74,10 +74,21 @@ Este registro é seu e o usuário pode editá-lo: **não é trilha de auditoria*
 |---|---|
 | `niri validate` falhou | Restaurar o backup na hora, validar de novo, avisar o usuário |
 | Tela sem imagem depois de mudar monitor | Avisar o usuário: pode restaurar com o terminal (`Ctrl+Alt+F3` entra em um TTY) copiando o backup de volta |
-| `pkexec` não abre a janela / falha em silêncio | Provável falta de agente polkit na sessão. Diga isso ao usuário; **não** tente `sudo` |
+| `pkexec` não abre a janela / falha em silêncio | Verifique se o shell roda com `NoNewPrivs=1` (`grep NoNewPrivs /proc/self/status`). Se sim, use o caminho com Alacritty descrito abaixo e confira/foca a janela do polkit. Se não houver agente polkit na sessão, diga isso ao usuário; **não** tente `sudo` |
+| `pkexec` falha com `must be setuid root` | Ambiente com `NoNewPrivs=1`; use `niri msg action spawn -- alacritty -e /usr/bin/pkexec ...` e foque a janela do polkit |
 | Helper recusou | Explique o motivo; não procure outro caminho |
 | `dnf` falhou no meio | Mostre o erro; `dnf history list` para ver o estado; não repita às cegas |
 | Não sabe o estado do sistema | Pare e pergunte |
+
+### `pkexec` em ambiente com `NoNewPrivs`
+
+Se o shell do agente estiver dentro do OpenCode Desktop, ele pode herdar `NoNewPrivs=1`; o bit setuid do `pkexec` é ignorado. O caminho que funciona é abrir o helper em um terminal (Alacritty), pelo niri:
+
+```bash
+niri msg action spawn -- alacritty -e /usr/bin/pkexec /usr/local/libexec/omyfedora-priv <subcomando> [argumentos...]
+```
+
+Depois do spawn, procure a janela `org.kde.polkit-kde-authentication-agent-1` em `niri msg --json windows` e foque com `niri msg action focus-window --id <id>`. Se a janela não existir, pare; não use `sudo` e não presuma que o comando rodou. O terminal pode fechar ao final; valide com `rpm -q`, `systemctl status` ou `dnf history list`.
 
 ## Se o usuário perder o login gráfico
 

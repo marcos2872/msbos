@@ -1,0 +1,6 @@
+{
+  "settings.interval.label": "Refresh interval",
+  "settings.interval.description": "Seconds between niri snapshots.",
+  "settings.glyph.label": "Bar glyph",
+  "settings.glyph.description": "Tabler glyph used by the bar widget."
+}

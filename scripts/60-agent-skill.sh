@@ -8,6 +8,7 @@
 #   • /etc/omyfedora/{allowed-units,protected}.list  listas extras (só de root; uma vez)
 #   • /var/log/omyfedora/                         trilha das ações privilegiadas
 #   • ~/.agents/skills/omyfedora/                 skill (references/local.md: uma vez)
+#   • ~/.agents/skills/noctalia-plugin/           skill de plugins do Noctalia (sempre atualizada)
 #
 # Pré-requisito em runtime: um agente polkit rodando na sessão do niri (o polkit-kde
 # do CORE precisa estar no autostart), senão o pkexec não consegue abrir a janela.
@@ -20,6 +21,8 @@ TU_HOME="$(user_home "${TU}")"
 TU_GROUP="$(id -gn "${TU}")"
 SKILL_SRC="agents/skills/omyfedora"
 SKILL_DST="${TU_HOME}/.agents/skills/omyfedora"
+SKILL_NP_SRC="agents/skills/noctalia-plugin"
+SKILL_NP_DST="${TU_HOME}/.agents/skills/noctalia-plugin"
 log "agent-skill: usuário-alvo: ${TU} (${TU_HOME})"
 
 command -v pkexec >/dev/null 2>&1 \
@@ -91,10 +94,22 @@ for f in SKILL.md \
 done
 install_file_once "${SKILL_SRC}/references/local.md" "${SKILL_DST}/references/local.md"
 
+# ─── 3. Skill noctalia-plugin (plugins do Noctalia v5 em Luau) ──────────────
+# Skill de referência: não tem arquivo pessoal, então todo o conteúdo é
+# atualizado (com backup) a cada execução. As referências e os exemplos são
+# instalados pela árvore real do repositório, sem lista fixa de arquivos.
+[[ -d "${OMYFEDORA_ROOT}/assets/${SKILL_NP_SRC}" ]] \
+  || { err "asset ausente no repositório: ${OMYFEDORA_ROOT}/assets/${SKILL_NP_SRC}"; exit 1; }
+while IFS= read -r -d '' _f; do
+  _rel="${_f#"${OMYFEDORA_ROOT}/assets/${SKILL_NP_SRC}/"}"
+  install_file "${SKILL_NP_SRC}/${_rel}" "${SKILL_NP_DST}/${_rel}"
+done < <(find "${OMYFEDORA_ROOT}/assets/${SKILL_NP_SRC}" -type f -print0 | sort -z)
+unset _f _rel
+
 # o install -D cria diretórios como root: devolve ao usuário-alvo
 run_cmd chown "${TU}:${TU_GROUP}" "${TU_HOME}/.agents" "${TU_HOME}/.agents/skills" 2>/dev/null || true
-run_cmd chown -R "${TU}:${TU_GROUP}" "${SKILL_DST}"
+run_cmd chown -R "${TU}:${TU_GROUP}" "${SKILL_DST}" "${SKILL_NP_DST}"
 run_cmd runuser -u "${TU}" -- mkdir -p "${TU_HOME}/.local/state/omyfedora/agent-backups"
 
-ok "agent-skill: helper + polkit + skill instalados"
+ok "agent-skill: helper + polkit + skills (omyfedora, noctalia-plugin) instalados"
 log "agent-skill: teste rápido (como ${TU}): /usr/local/libexec/omyfedora-priv --dry-run dnf-install htop"

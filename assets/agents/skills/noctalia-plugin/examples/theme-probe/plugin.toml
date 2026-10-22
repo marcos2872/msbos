@@ -1,0 +1,36 @@
+# Theme probe — exemplo de padrão visual
+# Mostra as roles da paleta e os valores efetivos do sistema.
+# Copie para ~/.local/share/noctalia/plugins/me-theme-probe e ajuste id/author.
+
+id = "me/theme-probe"
+name = "Theme Probe"
+version = "1.0.0"
+plugin_api = 31
+author = "me"
+license = "MIT"
+description = "Lists the active palette roles and the effective bar/shell values."
+icon = "palette"
+tags = ["theme", "palette", "debug"]
+
+[[setting]]
+key = "show_hex"
+type = "bool"
+label_key = "settings.show_hex.label"
+description_key = "settings.show_hex.description"
+default = true
+
+[[service]]
+id = "probe"
+entry = "service.luau"
+
+[[widget]]
+id = "bar"
+entry = "bar.luau"
+
+[[panel]]
+id = "panel"
+entry = "panel.luau"
+width = 460
+height = 560
+placement = "floating"
+position = "center"

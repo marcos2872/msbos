@@ -1,0 +1,4 @@
+{
+  "settings.show_hex.label": "Show hex values",
+  "settings.show_hex.description": "Print the resolved #RRGGBB next to each palette role."
+}

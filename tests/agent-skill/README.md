@@ -124,7 +124,8 @@ O agente que for rodar isto deve:
 - O helper instala/remove um pacote mínimo real, simula a remoção e reinicia
   um serviço permitido.
 - A skill está em `~/.agents/skills/omyfedora` com `SKILL.md`, referências e
-  `local.md`.
+  `local.md`; a skill `noctalia-plugin` (plugins do Noctalia) é instalada no
+  mesmo diretório pai e conferida na fase 1 a partir de `assets/`.
 - A trilha de auditoria registra `EXEC`/`DENY`/`RESULT`.
 
 ## O que o teste NÃO cobre

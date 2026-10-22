@@ -1,0 +1,6 @@
+{
+  "settings.interval.label": "Intervalo",
+  "settings.interval.description": "Segundos entre consultas ao niri.",
+  "settings.glyph.label": "Ícone da barra",
+  "settings.glyph.description": "Glifo Tabler usado no widget da barra."
+}

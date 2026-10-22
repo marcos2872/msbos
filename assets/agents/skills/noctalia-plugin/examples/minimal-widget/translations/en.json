@@ -1,0 +1,6 @@
+{
+  "settings.label.label": "Label",
+  "settings.label.description": "Text shown in the bar widget.",
+  "settings.glyph.label": "Glyph",
+  "settings.glyph.description": "Tabler glyph shown before the label."
+}

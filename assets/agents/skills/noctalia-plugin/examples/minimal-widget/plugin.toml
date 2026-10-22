@@ -1,0 +1,31 @@
+# Minimal Noctalia widget.
+# Copy this directory to ~/.local/share/noctalia/plugins/meu-plugin
+# and change id/name/author before enabling.
+
+id = "me/minimal-widget"
+name = "Minimal Widget"
+version = "1.0.0"
+plugin_api = 9
+author = "me"
+license = "MIT"
+description = "A minimal declarative bar widget with settings and IPC."
+icon = "puzzle"
+tags = ["demo"]
+
+[[widget]]
+id = "hello"
+entry = "widget.luau"
+
+  [[widget.setting]]
+  key = "label"
+  type = "string"
+  label_key = "settings.label.label"
+  description_key = "settings.label.description"
+  default = "Hello, niri!"
+
+  [[widget.setting]]
+  key = "glyph"
+  type = "glyph"
+  label_key = "settings.glyph.label"
+  description_key = "settings.glyph.description"
+  default = "puzzle"

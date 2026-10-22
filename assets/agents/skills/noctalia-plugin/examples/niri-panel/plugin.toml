@@ -1,0 +1,48 @@
+# Noctalia + niri example: service, bar widget and action panel.
+# Copy to ~/.local/share/noctalia/plugins/meu-niri-panel and edit id/name/author.
+
+id = "me/niri-panel"
+name = "Niri Panel"
+version = "1.0.0"
+plugin_api = 24
+author = "me"
+license = "MIT"
+description = "Shows the focused niri output/workspace and lets you focus workspaces."
+icon = "layout-dashboard"
+tags = ["niri", "workspace", "panel", "service"]
+dependencies = ["niri"]
+
+[[setting]]
+key = "interval"
+type = "int"
+label_key = "settings.interval.label"
+description_key = "settings.interval.description"
+default = 2
+min = 1
+max = 60
+
+[[service]]
+id = "niri"
+entry = "service.luau"
+
+[[widget]]
+id = "bar"
+entry = "bar.luau"
+
+  [[widget.setting]]
+  key = "glyph"
+  type = "glyph"
+  label_key = "settings.glyph.label"
+  description_key = "settings.glyph.description"
+  default = "layout-dashboard"
+
+[[panel]]
+id = "panel"
+entry = "panel.luau"
+width = 420
+height = 360
+placement = "floating"
+position = "center"
+open_near_click = false
+dismiss_on_outside_click = true
+keyboard_focus = "on_demand"

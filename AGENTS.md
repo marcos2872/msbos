@@ -111,7 +111,8 @@ Fluxo: `install.sh` (orquestrador) → `lib/common.sh` (helpers) → `scripts/NN
   - `60-agent-skill.sh` — helper privilegiado `/usr/local/libexec/omyfedora-priv`
     (root, `bin_t`), política polkit `org.omyfedora.priv.policy`, listas de root em
     `/etc/omyfedora/`, trilha em `/var/log/omyfedora/actions.log` e a skill `omyfedora`
-    em `~/.agents/skills/omyfedora` (`references/local.md` só uma vez).
+    em `~/.agents/skills/omyfedora` (`references/local.md` só uma vez) e a skill
+    `noctalia-plugin` em `~/.agents/skills/noctalia-plugin` (sempre atualizada).
 - Documentação do usuário: `README.md`/`README.en.md` e `docs/*.md`/`*.en.md`; não participa da
   instalação. O README é enxuto (o que é + instalação básica + créditos); os detalhes ficam em
   `docs/`.

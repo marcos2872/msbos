@@ -244,9 +244,10 @@ Everything is idempotent: it detects what already exists and skips it.
   does not edit them.
 - **Audit trail**: `/var/log/omyfedora/actions.log` (0750 root) records `EXEC`,
   `SIMULATE-REMOVE`, `DENY` and `RESULT rc=` for every call.
-- **Skill**: copies `assets/agents/skills/omyfedora/` to `~/.agents/skills/omyfedora/` (project
-  files always updated, with backup; `references/local.md` once) and creates
-  `~/.local/state/omyfedora/agent-backups/`.
+- **Skills**: copies `assets/agents/skills/omyfedora/` to `~/.agents/skills/omyfedora/`
+  (project files always updated, with backup; `references/local.md` once), copies
+  `assets/agents/skills/noctalia-plugin/` to `~/.agents/skills/noctalia-plugin/` (always
+  updated) and creates `~/.local/state/omyfedora/agent-backups/`.
 
 ## Assets and file ownership
 
@@ -261,7 +262,7 @@ CIL modules installed through `semodule`, not copied files.
 | GUI state | `~/.local/state/noctalia/settings.toml`, plugins | Only installs when absent |
 | Theme palette | `~/.config/noctalia/palettes/macOS.json` | `install_file` with backup; to customize, create another palette |
 | SELinux modules | `assets/selinux/*.cil` | Installed through `semodule` |
-| Agent helper and skill | `assets/libexec/omyfedora-priv`, `assets/polkit/*.policy`, `assets/agents/skills/omyfedora/*` | `install_file` (helper 755 root with `bin_t`, policy 644); `references/local.md` once |
+| Agent helper and skills | `assets/libexec/omyfedora-priv`, `assets/polkit/*.policy`, `assets/agents/skills/{omyfedora,noctalia-plugin}/*` | `install_file` (helper 755 root with `bin_t`, policy 644); `references/local.md` once |
 
 ## Idempotency, backups and state
 

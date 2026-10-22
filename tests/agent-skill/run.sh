@@ -442,14 +442,30 @@ phase1() {
     local bad_stage=()
     grep -q -- 'polkit-kde-authentication-agent' "$STAGE" 2>/dev/null || bad_stage+=("check do agente polkit")
     grep -qE -- 'semanage|chcon' "$STAGE" 2>/dev/null || bad_stage+=("contexto SELinux bin_t")
+    grep -q -- 'skills/noctalia-plugin' "$STAGE" 2>/dev/null || bad_stage+=("skill noctalia-plugin")
     if ((${#bad_stage[@]} == 0)); then
-      pass "STATIC-INTEGRATION" "etapa checa agente polkit e rótulo SELinux"
+      pass "STATIC-INTEGRATION" "etapa checa agente polkit, rótulo SELinux e instala as duas skills"
     else
       fail_or_known "STATIC-INTEGRATION" "etapa sem: ${bad_stage[*]}"
     fi
   else
     skip "STATIC-INTEGRATION" "etapa 60 não encontrada em $STAGE"
   fi
+
+  # Skill noctalia-plugin: fonte no repositório (o CI não tem Noctalia instalado,
+  # então aqui validamos estrutura/frontmatter; o lint de plugin exige o binário).
+  local NP_SKILL="$REPO_ROOT/assets/agents/skills/noctalia-plugin"
+  assert_file "STATIC-NP-SKILL" "SKILL.md da skill noctalia-plugin" "$NP_SKILL/SKILL.md"
+  assert_grep "STATIC-NP-NAME" "frontmatter name: noctalia-plugin" '^name: noctalia-plugin' "$NP_SKILL/SKILL.md"
+  assert_grep "STATIC-NP-DESC" "descrição cita o padrão de cores/gap" 'paleta do sistema' "$NP_SKILL/SKILL.md"
+  local np_ref
+  for np_ref in design manifest entries ui runtime niri testing search examples; do
+    assert_file "STATIC-NP-REF-${np_ref}" "references/${np_ref}.md" "$NP_SKILL/references/${np_ref}.md"
+  done
+  local np_ex
+  for np_ex in minimal-widget niri-panel theme-probe; do
+    assert_file "STATIC-NP-EX-${np_ex}" "exemplo ${np_ex} com manifesto" "$NP_SKILL/examples/${np_ex}/plugin.toml"
+  done
 
   if [[ -f "$SKILL_DIR/SKILL.md" ]]; then
     assert_grep "STATIC-SKILL-NAME" "frontmatter da skill" '^name: omyfedora' "$SKILL_DIR/SKILL.md"

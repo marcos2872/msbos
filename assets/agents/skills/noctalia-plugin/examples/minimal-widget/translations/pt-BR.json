@@ -1,0 +1,6 @@
+{
+  "settings.label.label": "Texto",
+  "settings.label.description": "Texto exibido no widget da barra.",
+  "settings.glyph.label": "Ícone",
+  "settings.glyph.description": "Glifo Tabler exibido antes do texto."
+}

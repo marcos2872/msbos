@@ -58,6 +58,6 @@ precisar reinstalar o código antigo, use a tag `v0.2.0` em um clone separado.
 
 ## Plugin AI Chat
 
-O plugin `omyfedora/ai-chat` é um projeto separado
-(`marcos2872/omyfedora-ai-chat`). Ele ainda pode aparecer com o nome antigo até
-ser renomeado e publicado; isso não afeta o sistema nem o helper privilegiado.
+O plugin `msbos/ai-chat` é um projeto separado
+(`marcos2872/msbos-ai-chat`). A versão 0.2.0 já migra o workspace, o agente e o
+ID antigo no Noctalia; isso não afeta o sistema nem o helper privilegiado.

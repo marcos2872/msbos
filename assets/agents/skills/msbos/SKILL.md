@@ -61,19 +61,20 @@ Regras do texto principal:
   destaque"/"cor secundária".
 - Não mostre caminhos (`~/.config/...`), comandos (`noctalia msg ...`),
   hexadecimais (`#0AE5E9`) nem nomes de chave.
-- Explique em uma frase **o que muda na prática** e outra **como desfazer**.
+- Explique em uma frase **o que muda na prática** e outra **como desfazer** (na
+  lista de alterações do chat: relógio → “Alterações no sistema” → “Desfazer”).
 - **Uma pergunta por vez**, no fim ("Posso aplicar?").
 - Se o pedido for ambíguo (ex.: "azul" tem vários tons), faça **uma** pergunta
   curta antes de propor — não despeje opções técnicas.
 
-Detalhes técnicos vão no fim, curtos, sob **"Detalhes técnicos"**, e só quando
-ajudarem ou quando o usuário pedir ("como?", "onde fica?", "qual arquivo?"):
+**Por padrão, não inclua detalhes técnicos.** Arquivo, comando, hexadecimal,
+backup e validação ficam de fora da resposta. Só mostre se o usuário pedir
+("como?", "onde fica?", "qual arquivo?"):
 
 ```
 Detalhes técnicos:
 - arquivo: ~/.config/noctalia/config.toml (backup antes)
 - comando: noctalia msg color-scheme-set custom macOS-celeste
-- desfazer: noctalia msg color-scheme-set custom macOS-forest
 ```
 
 Uma mudança por confirmação. Se forem várias coisas relacionadas, liste todas no
@@ -83,7 +84,7 @@ mesmo pedido, em linguagem comum.
 
 | Nível | Exemplos | Como |
 |---|---|---|
-| **Usuário** (sem root) | `~/.config/niri/config.kdl`, `~/.config/noctalia/config.toml`, paletas, atalhos, wallpapers, flatpak `--user` | Pergunte, faça backup, edite, **valide**, resuma o resultado (diff em detalhes técnicos) |
+| **Usuário** (sem root) | `~/.config/niri/config.kdl`, `~/.config/noctalia/config.toml`, paletas, atalhos, wallpapers, flatpak `--user` | Pergunte, faça backup, edite, **valide**, resuma em 2–3 frases |
 | **Root** | `dnf`, `systemctl`, qualquer coisa em `/etc` ou `/usr` | Pergunte, depois `pkexec /usr/local/libexec/msbos-priv ...` |
 
 O usuário pode afrouxar a confirmação de edições de configuração pessoal em `references/local.md`. Leia esse arquivo no início. **Instalar, remover e mexer em serviços sempre pedem confirmação**, sem exceção.
@@ -108,7 +109,7 @@ niri msg action spawn -- alacritty -e /usr/bin/pkexec /usr/local/libexec/msbos-p
 3. **Backup** do arquivo ou anotar o estado (veja `references/seguranca.md`).
 4. **Aplicar.**
 5. **Validar** (`niri validate`; para pacotes, conferir com `rpm -q`).
-6. **Resumir** o resultado em linguagem comum e dizer como desfazer (diff e caminhos só em "Detalhes técnicos").
+6. **Resumir em 2–3 frases**: o que mudou na prática e que dá para desfazer na lista de alterações do chat (detalhes técnicos só se o usuário pedir).
 7. **Registrar** em `~/.local/state/msbos/agent-changes.log` (uma linha: data, o que mudou, como desfazer).
 
 ## O que o helper privilegiado aceita

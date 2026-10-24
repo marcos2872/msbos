@@ -22,32 +22,63 @@ Você pode ajudar o usuário a alterar a configuração e o sistema, mas **toda 
 
 ## Como pedir confirmação
 
-Use sempre este formato, curto:
+O usuário pode não ser técnico. Escreva como você explicaria para alguém que
+nunca usou terminal: frases curtas, sem jargão, e **sem** caminho de arquivo,
+comando, nome de chave ou código de cor no texto principal. Diga o **efeito
+prático** e como desfazer.
 
 ```
-Quero fazer: instalar o pacote htop
-Comando:     pkexec /usr/local/libexec/msbos-priv dnf-install htop
-O que faz:   baixa e instala o htop (monitor de processos) dos repositórios do Fedora
-Desfazer:    dnf history undo <ID>   (o ID aparece em `dnf history list`)
-Posso executar? (vai abrir a janela de senha)
+Vou instalar o htop — um programa que mostra o que está consumindo o seu
+computador (memória e processador). Dá para desinstalar depois.
+
+Posso instalar? (vai pedir a sua senha)
 ```
 
-Para edição de arquivo do usuário:
-
 ```
-Quero fazer: mudar o espaçamento entre janelas do niri de 16 para 8
-Arquivo:     ~/.config/niri/config.kdl  (backup automático antes)
-O que faz:   reduz o `gaps` do bloco `layout`; o niri recarrega ao salvar
-Posso editar?
+Vou deixar as janelas mais afastadas: o espaço entre elas passa de 16 para 8.
+Vale para todas as janelas e dá para voltar ao valor anterior.
+
+Posso aplicar?
 ```
 
-Uma mudança por confirmação. Se forem várias coisas relacionadas, liste todas no mesmo pedido.
+```
+Vou trocar as cores do sistema de verde-floresta para azul-céu: muda a cor de
+destaque, os botões e o terminal. Dá para voltar ao verde depois.
+
+Posso aplicar? (vai pedir a sua senha)
+```
+
+Regras do texto principal:
+
+- Traduza o jargão: "paleta" → "cores do sistema"; "gaps" → "espaço entre as
+  janelas"; "repositório" → "repositórios oficiais do Fedora"; "root" → "senha
+  de administrador"; "custom_palette"/"mPrimary" → não cite, diga "cor de
+  destaque"/"cor secundária".
+- Não mostre caminhos (`~/.config/...`), comandos (`noctalia msg ...`),
+  hexadecimais (`#0AE5E9`) nem nomes de chave.
+- Explique em uma frase **o que muda na prática** e outra **como desfazer**.
+- **Uma pergunta por vez**, no fim ("Posso aplicar?").
+- Se o pedido for ambíguo (ex.: "azul" tem vários tons), faça **uma** pergunta
+  curta antes de propor — não despeje opções técnicas.
+
+Detalhes técnicos vão no fim, curtos, sob **"Detalhes técnicos"**, e só quando
+ajudarem ou quando o usuário pedir ("como?", "onde fica?", "qual arquivo?"):
+
+```
+Detalhes técnicos:
+- arquivo: ~/.config/noctalia/config.toml (backup antes)
+- comando: noctalia msg color-scheme-set custom macOS-celeste
+- desfazer: noctalia msg color-scheme-set custom macOS-forest
+```
+
+Uma mudança por confirmação. Se forem várias coisas relacionadas, liste todas no
+mesmo pedido, em linguagem comum.
 
 ## Dois níveis
 
 | Nível | Exemplos | Como |
 |---|---|---|
-| **Usuário** (sem root) | `~/.config/niri/config.kdl`, `~/.config/noctalia/config.toml`, paletas, atalhos, wallpapers, flatpak `--user` | Pergunte, faça backup, edite, **valide**, mostre o diff |
+| **Usuário** (sem root) | `~/.config/niri/config.kdl`, `~/.config/noctalia/config.toml`, paletas, atalhos, wallpapers, flatpak `--user` | Pergunte, faça backup, edite, **valide**, resuma o resultado (diff em detalhes técnicos) |
 | **Root** | `dnf`, `systemctl`, qualquer coisa em `/etc` ou `/usr` | Pergunte, depois `pkexec /usr/local/libexec/msbos-priv ...` |
 
 O usuário pode afrouxar a confirmação de edições de configuração pessoal em `references/local.md`. Leia esse arquivo no início. **Instalar, remover e mexer em serviços sempre pedem confirmação**, sem exceção.
@@ -72,7 +103,7 @@ niri msg action spawn -- alacritty -e /usr/bin/pkexec /usr/local/libexec/msbos-p
 3. **Backup** do arquivo ou anotar o estado (veja `references/seguranca.md`).
 4. **Aplicar.**
 5. **Validar** (`niri validate`; para pacotes, conferir com `rpm -q`).
-6. **Mostrar** o diff ou o resultado, e como desfazer.
+6. **Resumir** o resultado em linguagem comum e dizer como desfazer (diff e caminhos só em "Detalhes técnicos").
 7. **Registrar** em `~/.local/state/msbos/agent-changes.log` (uma linha: data, o que mudou, como desfazer).
 
 ## O que o helper privilegiado aceita

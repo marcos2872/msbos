@@ -475,11 +475,7 @@ mem_total="$(awk '/^MemTotal:/{print $2}' /proc/meminfo)"
 mem_disp="$(awk '/^MemAvailable:/{print $2}' /proc/meminfo)"
 ram_mib=$(((mem_total - mem_disp) / 1024))
 if [[ ${XDG_CURRENT_DESKTOP:-} == *niri* ]]; then
-  if ((ram_mib <= 600)); then
-    ok "RAM em uso: ${ram_mib} MiB (alvo < 600 MiB em idle)"
-  else
-    av "RAM em uso: ${ram_mib} MiB acima do alvo de 600 MiB — feche apps pesados para medir o idle"
-  fi
+  ok "RAM em uso: ${ram_mib} MiB (o consumo varia com kernel, drivers e hardware; sem meta numérica)"
 else
   skip "RAM em uso: ${ram_mib} MiB — meça dentro da sessão niri em idle"
 fi

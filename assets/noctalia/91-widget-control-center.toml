@@ -1,7 +1,7 @@
-# omyfedora — ícone da Central de Controle na barra
+# msbos — ícone da Central de Controle na barra
 #
-# Usa a logo do omyfedora no widget control-center. O 50-configs.sh instala a
-# imagem em ~/.local/share/omyfedora/omyfedora-logo.png (além dos caminhos de
+# Usa a logo do msbos no widget control-center. O 50-configs.sh instala a
+# imagem em ~/.local/share/msbos/msbos-logo.png (além dos caminhos de
 # sistema) e renderiza este arquivo com o home do usuário-alvo; como o Noctalia
 # lê todos os .toml de ~/.config/noctalia/, a configuração vale também para
 # instalações existentes, sem tocar no settings.toml da GUI.
@@ -9,5 +9,5 @@
 # custom_image_colorize = true deixa o ícone na cor padrão dos widgets da
 # barra (monocromático). Mude para false para manter o violeta da marca.
 [widget.control-center]
-custom_image = "__TU_HOME__/.local/share/omyfedora/omyfedora-logo.png"
+custom_image = "__TU_HOME__/.local/share/msbos/msbos-logo.png"
 custom_image_colorize = true

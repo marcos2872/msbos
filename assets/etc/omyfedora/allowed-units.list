@@ -1,6 +1,0 @@
-# Unidades systemd EXTRAS que o omyfedora-priv pode habilitar/desabilitar/reiniciar.
-# Arquivo de ROOT (dono root, sem escrita para grupo/outros): o agente não edita.
-# Uma unidade por linha, com sufixo (.service/.socket/.timer). Comentários com #.
-#
-# Exemplo:
-# docker.socket

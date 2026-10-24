@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=msbos Greeter Sync
+Comment=Sincroniza a aparência do Noctalia com a tela de login no primeiro login
+Exec=/usr/local/bin/msbos-greeter-sync
+Icon=preferences-desktop-theme
+Terminal=false
+Type=Application
+NoDisplay=true
+X-GNOME-Autostart-enabled=true

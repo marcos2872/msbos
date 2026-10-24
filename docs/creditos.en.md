@@ -2,24 +2,24 @@
 
 [Português](creditos.md) · [English](creditos.en.md)
 
-omyfedora is a personal customization project: it would not exist without the work of many
+msbos is a personal Fedora-based distribution: it would not exist without the work of many
 people. This page records the main projects and communities that make this configuration
-possible. omyfedora is **not affiliated with, endorsed by, or maintained by** any of them.
+possible. msbos is **not affiliated with, endorsed by, or maintained by** any of them.
 
 ## Base and desktop
 
-| Project | Role in omyfedora | Where |
+| Project | Role in msbos | Where |
 |---|---|---|
 | **Fedora Project** | System base, packages, dnf, SELinux, systemd and release cycle | <https://fedoraproject.org> |
 | **KDE Community** | KDE apps kept, Breeze Dark, `plasma-integration`, portals and `polkit-kde` | <https://kde.org> |
 | **Fedora KDE** | Reference image used as the recommended base | <https://fedoraproject.org/kde> |
 
 Thanks to the Fedora Project and the KDE community for building and packaging the base on top
-of which omyfedora applies a personal layer.
+of which msbos applies a personal layer.
 
 ## Compositor, shell and login
 
-| Project | Author/team | Role in omyfedora | Where |
+| Project | Author/team | Role in msbos | Where |
 |---|---|---|---|
 | **niri** | YaLTeR | Scrollable-tiling Wayland compositor | <https://github.com/YaLTeR/niri> |
 | **Noctalia** | Noctalia team | Shell (bar, launcher, OSD, lock screen, wallpaper) and greeter | <https://noctalia.dev> |
@@ -31,19 +31,19 @@ these projects open and well documented.
 
 ## System, audio and services
 
-| Project | Role in omyfedora | Where |
+| Project | Role in msbos | Where |
 |---|---|---|
 | **systemd** | Services, units, `systemd-oomd`, boot integration | <https://systemd.io> |
 | **PipeWire / WirePlumber** | Audio and audio session management | <https://pipewire.org> |
 | **zram-generator** | Compressed swap in RAM (zram + zstd) | <https://github.com/systemd/zram-generator> |
 | **tuned** | Performance profiles and `tuned-ppd` | <https://github.com/redhat-performance/tuned> |
-| **Plymouth** | omyfedora boot theme | <https://www.freedesktop.org/wiki/Software/Plymouth/> |
+| **Plymouth** | msbos boot theme | <https://www.freedesktop.org/wiki/Software/Plymouth/> |
 | **SELinux** | Contexts and local modules that keep the session working | <https://selinuxproject.org> |
 | **dnf** | Package manager and dependency resolution | <https://github.com/rpm-software-management/dnf5> |
 
 ## Applications and tools
 
-| Project | Role in omyfedora | Where |
+| Project | Role in msbos | Where |
 |---|---|---|
 | **Zed** | Code editor and REPL/Jupyter | <https://zed.dev> |
 | **OpenCode** | AI in the terminal; configuration via `agents-config` | <https://opencode.ai> |
@@ -70,13 +70,13 @@ Thanks also to the translation, documentation, packaging and support communities
 niri, Noctalia and every project above. Bug reports, patches, documentation and discussions are
 what keep this ecosystem alive.
 
-If you maintain one of these projects and find something in omyfedora that violates a convention
-or expectation, please open an issue in the omyfedora repository — the intent is always to
+If you maintain one of these projects and find something in msbos that violates a convention
+or expectation, please open an issue in the msbos repository — the intent is always to
 respect and highlight upstream work.
 
 ## License and trademarks
 
-omyfedora's code is distributed under the [MIT](../LICENSE) license. The names, logos and
+msbos's code is distributed under the [MIT](../LICENSE) license. The names, logos and
 trademarks of Fedora, KDE, niri, Noctalia, greetd, Zed, Brave, ONLYOFFICE and the other projects
 belong to their respective owners. Their use here is descriptive only, with no indication of
 affiliation or endorsement.

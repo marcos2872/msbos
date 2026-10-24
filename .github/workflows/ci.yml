@@ -20,9 +20,9 @@ jobs:
       - name: bash -n em todos os scripts
         shell: bash
         run: |
-          # assets/bin/omyfedora-seapplet é Python; validar só quem tem shebang shell.
+          # assets/bin/msbos-seapplet é Python; validar só quem tem shebang shell.
           scripts=()
-          for f in install.sh bootstrap.sh pessoal-pc.sh lib/common.sh scripts/*.sh assets/bin/* assets/libexec/* tests/agent-skill/*.sh; do
+          for f in install.sh bootstrap.sh pessoal-pc.sh lib/common.sh scripts/*.sh assets/bin/* assets/libexec/* tests/*.sh tests/agent-skill/*.sh; do
             first="$(head -n1 "$f")"
             case "$first" in
               *bash*|*'/sh'*|*dash*|*ksh*) scripts+=("$f") ;;
@@ -47,7 +47,7 @@ jobs:
         run: |
           # O applet é Python; shellcheck só recebe os arquivos com shebang shell.
           scripts=()
-          for f in install.sh bootstrap.sh pessoal-pc.sh lib/common.sh scripts/*.sh assets/bin/* assets/libexec/* tests/agent-skill/*.sh; do
+          for f in install.sh bootstrap.sh pessoal-pc.sh lib/common.sh scripts/*.sh assets/bin/* assets/libexec/* tests/*.sh tests/agent-skill/*.sh; do
             first="$(head -n1 "$f")"
             case "$first" in
               *bash*|*'/sh'*|*dash*|*ksh*) scripts+=("$f") ;;
@@ -72,6 +72,14 @@ jobs:
       - name: ./install.sh --dry-run --user ci
         run: ./install.sh --dry-run --user ci
 
+  rebranding:
+    name: rebranding (nome antigo)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: tests/rename-guard.sh
+        run: ./tests/rename-guard.sh
+
   agent-skill:
     name: agent-skill (dry-run)
     runs-on: ubuntu-latest
@@ -92,7 +100,7 @@ jobs:
         run: |
           runuser -u ci -- bash tests/agent-skill/run.sh \
             --phase 1 --known-issues \
-            --helper "$PWD/assets/libexec/omyfedora-priv" \
-            --skill-dir "$PWD/assets/agents/skills/omyfedora" \
-            --policy "$PWD/assets/polkit/org.omyfedora.priv.policy" \
+            --helper "$PWD/assets/libexec/msbos-priv" \
+            --skill-dir "$PWD/assets/agents/skills/msbos" \
+            --policy "$PWD/assets/polkit/org.msbos.priv.policy" \
             --report /tmp/agent-skill-ci.log

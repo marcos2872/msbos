@@ -4,7 +4,7 @@
 #   • Noctalia (esqueleto de config do usuário)
 #   • tema dark dos apps: Breeze Dark (o dark padrão do KDE) + GTK
 #   • greetd + PAM (greeter Noctalia se disponível)
-#   • papel de parede padrão + helpers omyfedora-wallpaper e omyfedora-doctor
+#   • papel de parede padrão + helpers msbos-wallpaper e msbos-doctor
 #   • autostart do primeiro login que sincroniza a aparência com o greeter
 #   • Brave como navegador padrão do usuário
 
@@ -41,16 +41,16 @@ log "config: configurando para o usuário: ${TU} (${TU_HOME})"
 # ─── 1. niri ────────────────────────────────────────────────────────────────
 # Config do USUÁRIO: só instala se não existir (install_file_once) — o niri
 # substitui TODOS os binds default quando o config define qualquer bind, então
-# esse arquivo é o "default set" completo do omyfedora; sobrescrevê-lo depois comeria
+# esse arquivo é o "default set" completo do msbos; sobrescrevê-lo depois comeria
 # a personalização de quem mexeu nos atalhos.
 install_file_once "niri/config.kdl" "${TU_HOME}/.config/niri/config.kdl"
-# Fallback de sistema: o omyfedora é dono dele, pode ser sempre atualizado.
+# Fallback de sistema: o msbos é dono dele, pode ser sempre atualizado.
 install_file "niri/config.kdl" "/etc/xdg/niri/config.kdl"
 
 # ─── 2. Noctalia (esqueleto; padrões da instalação já funcionam) ────────────
 install_file_once "noctalia/config.toml" "${TU_HOME}/.config/noctalia/config.toml"
 # Auto-Sync do Greeter em arquivo separado: o Noctalia lê todos os .toml de
-# ~/.config/noctalia/, então o omyfedora pode atualizar esta política sem
+# ~/.config/noctalia/, então o msbos pode atualizar esta política sem
 # tocar no config.toml personalizado do usuário.
 install_file "noctalia/90-greeter-sync.toml" "${TU_HOME}/.config/noctalia/90-greeter-sync.toml"
 # Ícone da Central de Controle na barra: aponta para a logo instalada no home
@@ -62,16 +62,16 @@ render_file "noctalia/91-widget-control-center.toml" \
 # ─── 2a. Noctalia: paleta(s) do tema ────────────────────────────────────────
 # [theme] custom_palette (config.toml) aponta para "macOS", que o Noctalia
 # procura em ~/.config/noctalia/palettes/macOS.json. A paleta é parte do tema
-# que o omyfedora entrega, então usa install_file (com backup .omyfedora-bak): para
+# que o msbos entrega, então usa install_file (com backup .msbos-bak): para
 # customizar, crie outra paleta nessa pasta e aponte custom_palette para ela.
 NOCT_CONF="${TU_HOME}/.config/noctalia"
-for paleta in "${OMYFEDORA_ROOT}"/assets/noctalia/palettes/*.json; do
+for paleta in "${MSBOS_ROOT}"/assets/noctalia/palettes/*.json; do
   [[ -f ${paleta} ]] || continue
   install_file "noctalia/palettes/$(basename "${paleta}")" \
     "${NOCT_CONF}/palettes/$(basename "${paleta}")"
 done
 
-# ─── 2b. Noctalia: defaults do omyfedora (settings + plugins) ────────────────────
+# ─── 2b. Noctalia: defaults do msbos (settings + plugins) ────────────────────
 # A config real do Noctalia v5 vive em ~/.local/state/noctalia/ (settings.toml
 # + plugins/). Instalamos os defaults do repo SOMENTE se ainda não existirem —
 # uma personalização existente nunca é sobrescrita.
@@ -87,11 +87,11 @@ if [[ ${DRY_RUN} == 1 ]]; then
 else
   # copia_plugin <dir_do_plugin_no_repo> <dir_de_destino> — copia arquivo por
   # arquivo via install_file (nunca cp direto): garante modo, dono e contexto
-  # SELinux corretos no destino, além do backup .omyfedora-bak. Se o destino já
+  # SELinux corretos no destino, além do backup .msbos-bak. Se o destino já
   # existe, o plugin é mantido como está.
   copia_plugin() {
     local src_dir="$1" dst_dir="$2" rel f sub
-    rel="${src_dir#"${OMYFEDORA_ROOT}"/assets/}"
+    rel="${src_dir#"${MSBOS_ROOT}"/assets/}"
     if [[ -d ${dst_dir} ]]; then
       log "noctalia: plugin '${rel}' já instalado — mantido"
       return 0
@@ -104,14 +104,14 @@ else
     log "noctalia: plugin '${rel}' instalado"
   }
 
-  for plug in "${OMYFEDORA_ROOT}"/assets/noctalia/plugins/*/*/*; do
+  for plug in "${MSBOS_ROOT}"/assets/noctalia/plugins/*/*/*; do
     [[ -d ${plug} ]] || continue
-    rel="${plug#"${OMYFEDORA_ROOT}"/assets/noctalia/plugins/}"
+    rel="${plug#"${MSBOS_ROOT}"/assets/noctalia/plugins/}"
     copia_plugin "${plug}" "${NOCT_STATE}/plugins/${rel}"
   done
   # plugins locais (documentado: ~/.local/share/noctalia/plugins/<plugin>/ é
   # descoberto como "local source" — funciona sem rede e sem registro)
-  for plug in "${OMYFEDORA_ROOT}"/assets/noctalia/plugins-local/*; do
+  for plug in "${MSBOS_ROOT}"/assets/noctalia/plugins-local/*; do
     [[ -d ${plug} ]] || continue
     name="$(basename "${plug}")"
     copia_plugin "${plug}" "${TU_HOME}/.local/share/noctalia/plugins/${name}"
@@ -119,24 +119,24 @@ else
 fi
 
 # ─── 2c. Tema dark dos apps: Breeze Dark (o dark padrão do KDE) ─────────────
-# O omyfedora não entrega tema próprio: os apps usam o "Breeze Dark" do KDE. O
+# O msbos não entrega tema próprio: os apps usam o "Breeze Dark" do KDE. O
 # shell (Noctalia) segue com o visual próprio dele — ele não é KDE/GTK/Qt.
 # A fonte da verdade é o KDE do próprio usuário: o 1º bloco só PREENCHE chaves
 # que o usuário ainda não definiu no ~/.config/kdeglobals/kcminputrc (o System
 # Settings mexe nos MESMOS arquivos — uma escolha feita na GUI nunca é
 # sobrescrita). O resto garante o mesmo dark nos apps GTK/Electron, que leem
 # dconf/portal + settings.ini:
-#   • /etc/dconf/db/local.d/00-omyfedora-dark: padrão de sistema (color-scheme +
+#   • /etc/dconf/db/local.d/00-msbos-dark: padrão de sistema (color-scheme +
 #     gtk/icon/cursor-theme) aplicado via `dconf update` — vale para todo usuário.
 #   • ~/.config/gtk-3.0|4.0/settings.ini: fallback lido direto pelo GTK, sem
 #     precisar de sessão D-Bus (cobre diálogos no primeiro login).
-#   • /etc/profile.d/omyfedora-theme.sh: XCURSOR_* (cursor breeze_cursors único no
+#   • /etc/profile.d/msbos-theme.sh: XCURSOR_* (cursor breeze_cursors único no
 #     niri e nos apps) + QT_QPA_PLATFORMTHEME=kde (platform theme do KDE,
 #     plasma-integration — sem ele os apps Qt não aplicam o Breeze).
 #   • gsettings como TU: atualiza o banco dconf EXISTENTE do usuário (o default
 #     de sistema sozinho não muda um user db já criado como claro).
-# Idempotente: arquivos de tema são dono do omyfedora (install_file, com backup
-# .omyfedora-bak); o gsettings só escreve quando o valor atual ainda não é o escuro;
+# Idempotente: arquivos de tema são dono do msbos (install_file, com backup
+# .msbos-bak); o gsettings só escreve quando o valor atual ainda não é o escuro;
 # o kwriteconfig6 só escreve no kdeglobals o que o usuário não escolheu.
 if [[ ${DRY_RUN} == 1 ]]; then
   log "dry-run: preencheria Breeze Dark (ColorScheme/widgetStyle/Icons/cursor) no kdeglobals/kcminputrc de ${TU} — só o que ainda não foi definido"
@@ -214,8 +214,8 @@ else
 fi
 install_file "gtk-3.0/settings.ini" "${TU_HOME}/.config/gtk-3.0/settings.ini"
 install_file "gtk-4.0/settings.ini" "${TU_HOME}/.config/gtk-4.0/settings.ini"
-install_file "profile.d/omyfedora-theme.sh" "/etc/profile.d/omyfedora-theme.sh"
-install_file "dconf/db/local.d/00-omyfedora-dark" "/etc/dconf/db/local.d/00-omyfedora-dark"
+install_file "profile.d/msbos-theme.sh" "/etc/profile.d/msbos-theme.sh"
+install_file "dconf/db/local.d/00-msbos-dark" "/etc/dconf/db/local.d/00-msbos-dark"
 run_cmd dconf update || warn "dconf update falhou — padrão de sistema pode não aplicar"
 if [[ ${DRY_RUN} == 1 ]]; then
   log "dry-run: definiria gtk-theme=Breeze, color-scheme=prefer-dark, icon-theme=breeze-dark e cursor=breeze_cursors para ${TU}"
@@ -242,15 +242,15 @@ else
   gset font-name "'Noto Sans 10'"
 fi
 
-# ─── 2d. Plymouth — tema de boot do omyfedora ───────────────────────────────
+# ─── 2d. Plymouth — tema de boot do msbos ───────────────────────────────
 # O splash do boot é do Plymouth (não do GRUB nem do greeter). O Fedora usa o
 # tema bgrt, que mostra o watermark do Fedora quando a máquina não tem logo
-# BGRT no firmware. O tema omyfedora reaproveita a animação do pacote
+# BGRT no firmware. O tema msbos reaproveita a animação do pacote
 # plymouth-theme-spinner e troca o watermark pelo wordmark do projeto, com o
 # fundo mSurface (#0B0B0D). O -R regenera o initramfs: sem ele o tema não
 # entra no boot (e um rebuild é necessário sempre que os assets mudarem).
 PLY_SRC="/usr/share/plymouth/themes/spinner"
-PLY_DST="/usr/share/plymouth/themes/omyfedora"
+PLY_DST="/usr/share/plymouth/themes/msbos"
 if [[ -d ${PLY_SRC} || ${DRY_RUN} == 1 ]]; then
   # Uma execução interrompida da versão antiga podia deixar PLY_DST como
   # ARQUIVO (install -D com destino terminando em / falhava); remove para
@@ -268,13 +268,13 @@ if [[ -d ${PLY_SRC} || ${DRY_RUN} == 1 ]]; then
     run_cmd find "${PLY_SRC}" -maxdepth 1 -type f -name '*.png' ! -name watermark.png \
       -exec install -m 644 -t "${PLY_DST}" {} +
   fi
-  install_file "plymouth/omyfedora/omyfedora.plymouth" "${PLY_DST}/omyfedora.plymouth"
-  install_file "plymouth/omyfedora/watermark.png" "${PLY_DST}/watermark.png"
+  install_file "plymouth/msbos/msbos.plymouth" "${PLY_DST}/msbos.plymouth"
+  install_file "plymouth/msbos/watermark.png" "${PLY_DST}/watermark.png"
   if command -v plymouth-set-default-theme >/dev/null 2>&1; then
-    if run_cmd plymouth-set-default-theme -R omyfedora; then
-      ok "plymouth: tema de boot omyfedora aplicado (initramfs regenerado)"
+    if run_cmd plymouth-set-default-theme -R msbos; then
+      ok "plymouth: tema de boot msbos aplicado (initramfs regenerado)"
     else
-      warn "plymouth: falha ao aplicar o tema de boot omyfedora"
+      warn "plymouth: falha ao aplicar o tema de boot msbos"
     fi
   else
     warn "plymouth: plymouth-set-default-theme ausente — tema de boot não aplicado"
@@ -284,15 +284,15 @@ else
 fi
 
 # Logo do sistema (mesma marca do watermark do boot): ícone hicolor + pixmap.
-install_file "branding/omyfedora-logo.png" "/usr/share/icons/hicolor/512x512/apps/omyfedora.png"
-install_file "branding/omyfedora-logo.png" "/usr/share/pixmaps/omyfedora-logo.png"
+install_file "branding/msbos-logo.png" "/usr/share/icons/hicolor/512x512/apps/msbos.png"
+install_file "branding/msbos-logo.png" "/usr/share/pixmaps/msbos-logo.png"
 # A mesma marca como ícone do widget control-center da barra do Noctalia
 # (config renderizado em ~/.config/noctalia/91-widget-control-center.toml).
-install_file "branding/omyfedora-logo.png" "${TU_HOME}/.local/share/omyfedora/omyfedora-logo.png"
+install_file "branding/msbos-logo.png" "${TU_HOME}/.local/share/msbos/msbos-logo.png"
 # Avatar padrão do usuário: o AccountsService lê ~/.face (IconFile) e o
 # Control Center do Noctalia usa esse mesmo caminho. install_file_once: um
 # avatar escolhido pelo usuário nunca é sobrescrito por uma reexecução.
-install_file_once "branding/omyfedora-mascot.png" "${TU_HOME}/.face"
+install_file_once "branding/msbos-mascot.png" "${TU_HOME}/.face"
 if command -v gtk-update-icon-cache >/dev/null 2>&1; then
   run_cmd gtk-update-icon-cache -q -t -f /usr/share/icons/hicolor \
     || warn "ícones: falha ao atualizar o cache do hicolor"
@@ -332,14 +332,14 @@ else
 fi
 
 # ─── 3. Papel de parede + helpers ───────────────────────────────────────────
-install_file "bin/omyfedora-wallpaper" "/usr/local/bin/omyfedora-wallpaper"
-run_cmd chmod 755 /usr/local/bin/omyfedora-wallpaper
+install_file "bin/msbos-wallpaper" "/usr/local/bin/msbos-wallpaper"
+run_cmd chmod 755 /usr/local/bin/msbos-wallpaper
 # Diagnóstico somente-leitura do sistema instalado (não altera nada).
-install_file "bin/omyfedora-doctor" "/usr/local/bin/omyfedora-doctor"
-run_cmd chmod 755 /usr/local/bin/omyfedora-doctor
-for w in "${OMYFEDORA_ROOT}"/assets/wallpapers/*; do
+install_file "bin/msbos-doctor" "/usr/local/bin/msbos-doctor"
+run_cmd chmod 755 /usr/local/bin/msbos-doctor
+for w in "${MSBOS_ROOT}"/assets/wallpapers/*; do
   [[ -f ${w} ]] || continue
-  install_file "wallpapers/$(basename "${w}")" "/usr/share/omyfedora-walls/$(basename "${w}")"
+  install_file "wallpapers/$(basename "${w}")" "/usr/share/msbos-walls/$(basename "${w}")"
 done
 
 # ─── 4. greetd — escolhe o greeter disponível ───────────────────────────────
@@ -355,7 +355,7 @@ if [[ -n ${GREETER_BIN} ]]; then
   # NOCTALIA_GREETER_ASSETS_DIR. O pacote original fica intacto e um upgrade
   # do noctalia-greeter não desfaz a marca.
   GREETER_SRC_ASSETS="/usr/share/noctalia-greeter/assets"
-  GREETER_ASSETS="/usr/share/omyfedora/greeter-assets"
+  GREETER_ASSETS="/usr/share/msbos/greeter-assets"
   if [[ -d ${GREETER_SRC_ASSETS}/fonts || ${DRY_RUN} == 1 ]]; then
     run_cmd install -d -m 755 "${GREETER_ASSETS}"
     if [[ -L ${GREETER_ASSETS}/fonts || ! -e ${GREETER_ASSETS}/fonts ]]; then
@@ -363,7 +363,7 @@ if [[ -n ${GREETER_BIN} ]]; then
     else
       warn "greeter: ${GREETER_ASSETS}/fonts existe e não é symlink — mantendo"
     fi
-    install_file "branding/omyfedora-mascot.svg" "${GREETER_ASSETS}/noctalia.svg"
+    install_file "branding/msbos-mascot.svg" "${GREETER_ASSETS}/noctalia.svg"
     # O greeter só aceita o bundle se achar as fontes de ícones e o SVG; se
     # algo faltar, mantém o comando original (logo padrão) em vez de apontar
     # para um bundle inválido.
@@ -371,7 +371,7 @@ if [[ -n ${GREETER_BIN} ]]; then
       [[ -f ${GREETER_ASSETS}/fonts/tabler.ttf && -f ${GREETER_ASSETS}/fonts/tabler.json &&
         -f ${GREETER_ASSETS}/noctalia.svg ]]; then
       GREETER_CMD="/usr/bin/env NOCTALIA_GREETER_ASSETS_DIR=${GREETER_ASSETS} ${GREETER_BIN} -- --session niri"
-      ok "greeter: Noctalia (${GREETER_BIN}) com o mascote do omyfedora"
+      ok "greeter: Noctalia (${GREETER_BIN}) com o mascote do msbos"
     else
       warn "greeter: bundle de assets incompleto — mantendo o logo padrão"
       GREETER_CMD="${GREETER_BIN} -- --session niri"
@@ -390,13 +390,19 @@ render_file "greetd/config.toml" "/etc/greetd/config.toml" "__GREETER_CMD__" "${
 # PAM do greetd: o pacote do Fedora já traz o arquivo correto (com pam_selinux —
 # sem ele o SELinux em enforcing bloqueia o systemctl --user da sessão e o niri
 # volta para a tela de login). NÃO sobrescrevemos; apenas restauramos se
-# detectarmos uma versão antiga do omyfedora sem pam_selinux.
+# detectarmos uma versão antiga do msbos sem pam_selinux.
 if [[ -f /etc/pam.d/greetd ]] && ! grep -q 'pam_selinux' /etc/pam.d/greetd; then
-  if [[ -f /etc/pam.d/greetd.omyfedora-bak ]]; then
+  # Aceita o backup com o nome atual e o legado (instalações feitas antes do
+  # rebranding omyfedora -> msbos).
+  PAM_BAK=''
+  for _bak in /etc/pam.d/greetd.msbos-bak /etc/pam.d/greetd.omyfedora-bak; do
+    [[ -f ${_bak} ]] && { PAM_BAK="${_bak}"; break; }
+  done
+  if [[ -n ${PAM_BAK} ]]; then
     warn "greetd: /etc/pam.d/greetd sem pam_selinux — restaurando backup do pacote"
-    run_cmd cp -f /etc/pam.d/greetd.omyfedora-bak /etc/pam.d/greetd
+    run_cmd cp -f "${PAM_BAK}" /etc/pam.d/greetd
   else
-    warn "greetd: /etc/pam.d/greetd sem pam_selinux — instalando versão correta do omyfedora"
+    warn "greetd: /etc/pam.d/greetd sem pam_selinux — instalando versão correta do msbos"
     install_file "pam.d/greetd" "/etc/pam.d/greetd"
   fi
 elif [[ ! -f /etc/pam.d/greetd ]]; then
@@ -436,11 +442,11 @@ fi
 # install_file_once: são configs pessoais — uma personalização feita no Zed
 # depois da instalação nunca é sobrescrita por uma reexecução do install.sh.
 ZED_CONF="${TU_HOME}/.config/zed"
-if [[ -d ${OMYFEDORA_ROOT}/assets/zed ]]; then
+if [[ -d ${MSBOS_ROOT}/assets/zed ]]; then
   while IFS= read -r -d '' f; do
-    rel="${f#"${OMYFEDORA_ROOT}"/assets/zed/}"
+    rel="${f#"${MSBOS_ROOT}"/assets/zed/}"
     install_file_once "zed/${rel}" "${ZED_CONF}/${rel}"
-  done < <(find "${OMYFEDORA_ROOT}/assets/zed" -type f -print0 | sort -z)
+  done < <(find "${MSBOS_ROOT}/assets/zed" -type f -print0 | sort -z)
 fi
 if rpm -q python3-ipykernel >/dev/null 2>&1 || [[ ${DRY_RUN} == 1 ]]; then
   install_file "jupyter/kernels/zed-python/kernel.json" \
@@ -559,9 +565,9 @@ if [[ -f /etc/xdg/autostart/sealertauto.desktop || ${DRY_RUN} == 1 ]]; then
   # seapplet: o applet do setroubleshoot fechava notificações órfãs tratando só
   # IOError, mas o Noctalia responde GLib.GError ("NotFound") — a exceção
   # escapava para o abrt (popup "uncaught exception" a cada AVC). Aponta para a
-  # cópia com patch em /usr/local/bin/omyfedora-seapplet.
-  install_file "bin/omyfedora-seapplet" "/usr/local/bin/omyfedora-seapplet"
-  run_cmd chmod 755 /usr/local/bin/omyfedora-seapplet
+  # cópia com patch em /usr/local/bin/msbos-seapplet.
+  install_file "bin/msbos-seapplet" "/usr/local/bin/msbos-seapplet"
+  run_cmd chmod 755 /usr/local/bin/msbos-seapplet
   install_file_once "autostart/sealertauto.desktop" "${TU_HOME}/.config/autostart/sealertauto.desktop"
   ok "autostart: seapplet com patch (notificação órfã não derruba mais o applet)"
 fi
@@ -576,16 +582,16 @@ if [[ ${GREETER_SYNC_READY} == 1 ]]; then
   # Instalação limpa: o Noctalia só sobe no primeiro login, então o Sync Now
   # do fim desta etapa não tem sessão para rodar. O helper espera o IPC do
   # Noctalia e faz o sync uma vez; o marcador evita repetir a cada login.
-  install_file "bin/omyfedora-greeter-sync" "/usr/local/bin/omyfedora-greeter-sync"
-  run_cmd chmod 755 /usr/local/bin/omyfedora-greeter-sync
-  install_file_once "autostart/omyfedora-greeter-sync.desktop" "${TU_HOME}/.config/autostart/omyfedora-greeter-sync.desktop"
+  install_file "bin/msbos-greeter-sync" "/usr/local/bin/msbos-greeter-sync"
+  run_cmd chmod 755 /usr/local/bin/msbos-greeter-sync
+  install_file_once "autostart/msbos-greeter-sync.desktop" "${TU_HOME}/.config/autostart/msbos-greeter-sync.desktop"
   ok "autostart: sync da aparência com o greeter no primeiro login"
 fi
 
 # ─── 9. Permissões dos arquivos do usuário ──────────────────────────────────
 run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.config/niri" "${TU_HOME}/.config/noctalia" "${TU_HOME}/.config/alacritty" "${TU_HOME}/.config/autostart" "${TU_HOME}/.config/gtk-3.0" "${TU_HOME}/.config/gtk-4.0" "${TU_HOME}/.local/state/noctalia" "${TU_HOME}/.local/share/noctalia"
 run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.config/zed" "${TU_HOME}/.local/share/jupyter"
-run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.local/share/omyfedora"
+run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.local/share/msbos"
 if [[ -d ${TU_HOME}/.local/share/dbus-1 || ${DRY_RUN} == 1 ]]; then
   run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.local/share/dbus-1"
 fi
@@ -610,7 +616,7 @@ fi
 # regra Polkit, o pkexec abriria um diálogo de autenticação e o script ficaria
 # preso esperando alguém clicar (o timeout evita, mas não há por que arriscar).
 # Numa instalação limpa não há sessão Noctalia: o autostart instalado na
-# seção 8 (omyfedora-greeter-sync) faz esse primeiro sync após o login.
+# seção 8 (msbos-greeter-sync) faz esse primeiro sync após o login.
 if [[ ${DRY_RUN} == 1 ]]; then
   log "dry-run: dispararia 'noctalia msg greeter-sync' para ${TU} (se a sessão estiver aberta)"
 elif [[ ${GREETER_SYNC_READY} == 1 ]] && pgrep -u "${TU}" -x noctalia >/dev/null 2>&1; then
@@ -644,10 +650,10 @@ fi
 cat <<EOF
 
 ──────────────────────────────────────────────────────────────
- omyfedora instalado. O que esperar no próximo boot:
+ msbos instalado. O que esperar no próximo boot:
 
    • Tela de login do greetd (Noctalia Greeter, se instalado)
-     com a sessão "niri" já disponível; no primeiro login o omyfedora
+     com a sessão "niri" já disponível; no primeiro login o msbos
      sincroniza a aparência automaticamente (se não aparecer:
      noctalia msg greeter-sync)
    • O shell do Plasma é removido no PRÓXIMO boot; os apps KDE ficam
@@ -661,7 +667,7 @@ cat <<EOF
      Arquivos na LAN: LocalSend · VMs: virt-manager (libvirt no próximo login)
 
  Verificações pós-reboot:
-   omyfedora-doctor                  # diagnóstico completo (somente leitura)
+   msbos-doctor                  # diagnóstico completo (somente leitura)
    systemctl status greetd
    journalctl -u greetd -n 30
    free -h ; zramctl                 # swap comprimido ativo

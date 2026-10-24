@@ -2,7 +2,7 @@
 
 [Português](arquitetura.md) · [English](arquitetura.en.md)
 
-O omyfedora é uma **suíte de scripts bash idempotentes** — não há código compilado, pacote ou
+O msbos é uma **suíte de scripts bash idempotentes** — não há código compilado, pacote ou
 build. O `install.sh` é o orquestrador; `lib/common.sh` concentra os helpers; cada
 `scripts/NN-*.sh` é uma etapa; e `assets/` é a fonte da verdade dos arquivos instalados.
 
@@ -47,11 +47,11 @@ pessoal-pc.sh           # script pessoal (layout de monitores + Chrome), fora do
 
 - **`install.sh`** — parseia as flags, exporta as variáveis, reexecuta com `sudo` quando
   necessário (exceto em `--dry-run`), descobre as etapas, executa uma a uma e registra o
-  sucesso em `/var/lib/omyfedora/steps/`. Se uma etapa falhar, mostra o código, o histórico e
+  sucesso em `/var/lib/msbos/steps/`. Se uma etapa falhar, mostra o código, o histórico e
   como retomar.
 - **`bootstrap.sh`** — baixa o repositório como `.tar.gz`, extrai em um diretório temporário
-  e chama o `install.sh`. Não precisa de `git`; aceita `OMYFEDORA_REF`, `OMYFEDORA_REPO`,
-  `OMYFEDORA_URL` e `OMYFEDORA_KEEP`.
+  e chama o `install.sh`. Não precisa de `git`; aceita `MSBOS_REF`, `MSBOS_REPO`,
+  `MSBOS_URL` e `MSBOS_KEEP`.
 - **`lib/common.sh`** — carregado por todas as etapas. Define logs, `run_cmd`/`run_sh`
   (respeitam `DRY_RUN`), `exige_ok` (portão de operações destrutivas), `require_fedora`,
   `resolve_target_user`, `user_home`, `install_file`, `install_file_once` e `render_file`.
@@ -70,7 +70,7 @@ pessoal-pc.sh           # script pessoal (layout de monitores + Chrome), fora do
 | `require_fedora` | Valida `/etc/os-release`, `ID`/`ID_LIKE` e a presença do `dnf` |
 | `resolve_target_user` | Resolve `--user`, `SUDO_USER` ou o primeiro UID ≥ 1000 |
 | `user_home` | Lê o home do usuário via `getent passwd` |
-| `install_file` | Copia um asset para o destino, com backup `.omyfedora-bak`; sempre sobrescreve |
+| `install_file` | Copia um asset para o destino, com backup `.msbos-bak`; sempre sobrescreve |
 | `install_file_once` | Só instala se o destino não existir — para configs pessoais |
 | `render_file` | Copia um asset substituindo `__VAR__` e força modo `0644` |
 | `_backup_dst` | Cria o backup da primeira versão de um arquivo sobrescrito |
@@ -99,10 +99,14 @@ Contrato entre `install.sh`, `bootstrap.sh` e as etapas:
 | `GPU_PROFILE` | `auto` | `auto`, `intel`, `amd`, `nvidia`, `hybrid` ou `none` |
 | `SKIP_REMOVE` | `0` | `1` nunca remove pacotes (inclusive o shell do Plasma e o LibreOffice) |
 
-O bootstrap acrescenta `OMYFEDORA_REF`, `OMYFEDORA_REPO`, `OMYFEDORA_URL` e `OMYFEDORA_KEEP`.
+O bootstrap acrescenta `MSBOS_REF`, `MSBOS_REPO`, `MSBOS_URL` e `MSBOS_KEEP`.
 As etapas também leem `FEDORA_VERSION`, exportada por `require_fedora`.
 
-## As sete etapas
+## As sete etapas + migração
+
+Além das sete etapas abaixo, o `install.sh` roda `00-migrate-names.sh` (prepara uma instalação
+antiga, sem apagar nada) e `99-cleanup-legacy.sh` (remove os artefatos antigos depois que os
+novos já existem). Em uma instalação nova, as duas são no-op.
 
 ### `10-gpu.sh` — detecção e drivers
 
@@ -111,7 +115,7 @@ As etapas também leem `FEDORA_VERSION`, exportada por `require_fedora`.
 - Perfis: `auto` (detecta), `intel`, `amd`, `nvidia`, `hybrid`, `none`.
 - **NVIDIA**: habilita o RPM Fusion (free + nonfree, pré-requisito), instala o `akmod-nvidia`
   e compila o módulo antes do reboot. Adiciona `nvidia-drm.modeset=1` ao kernel via `grubby`
-  e instala o `profile.d/omyfedora-nvidia.sh` com offload GLX. Em híbrido, mantém a iGPU com
+  e instala o `profile.d/msbos-nvidia.sh` com offload GLX. Em híbrido, mantém a iGPU com
   Mesa e microcódigo. Com Secure Boot ativo, avisa que a chave do akmod precisa ser enrolada.
 - **Intel/AMD**: instala `mesa-dri-drivers` e o microcódigo (`microcode_ctl` ou
   `amd-ucode-firmware`).
@@ -151,7 +155,7 @@ O driver efetivo só vale depois do reboot.
 - **Shell do Plasma**: se não houver `--skip-remove`, simula a transação com
   `dnf remove --assumeno` e aborta se algum app/suporte mantido aparecer no plano; só então
   pergunta via `exige_ok` e **agenda** a remoção para o próximo boot com
-  `omyfedora-remove-plasma.service`. Nunca remove na sessão viva.
+  `msbos-remove-plasma.service`. Nunca remove na sessão viva.
 - **Malcontent**: se o `accounts-daemon` expõe `com.endlessm.ParentalControls`, garante o
   pacote `malcontent` (sem ele todo `flatpak run` falha). Caso contrário, não instala.
 
@@ -172,7 +176,7 @@ Tudo é idempotente: detecta o que já existe e pula.
   na sessão atual.
 - Cria o usuário `greeter` (quando o Noctalia Greeter está disponível), ajusta o contexto
   SELinux `xdm_var_lib_t` para `/var/lib/noctalia-greeter` e aplica `restorecon`.
-- Instala o módulo SELinux local `omyfedora-loadkeys-dontaudit`, que silencia o falso positivo
+- Instala o módulo SELinux local `msbos-loadkeys-dontaudit`, que silencia o falso positivo
   do `loadkeys` no VT da sessão.
 - Desativa `avahi-daemon`, `cups` (o `cups.socket` continua para impressão sob demanda),
   `sssd`, `fprintd`, `dnf-automatic` (+ timer, mascarado), `systemd-pstore`,
@@ -203,19 +207,19 @@ Tudo é idempotente: detecta o que já existe e pula.
   `91-widget-control-center.toml` são atualizados; paletas com backup; `settings.toml` e
   plugins só se ausentes.
 - **Breeze Dark**: preenche `kdeglobals`/`kcminputrc` só com chaves vazias; instala
-  `gtk-3.0`/`gtk-4.0/settings.ini`, o padrão dconf, o `profile.d/omyfedora-theme.sh` e aplica
+  `gtk-3.0`/`gtk-4.0/settings.ini`, o padrão dconf, o `profile.d/msbos-theme.sh` e aplica
   `gsettings` como o usuário.
 - **Secret Service (KWallet)**: instala o service de D-Bus
   `~/.local/share/dbus-1/services/org.freedesktop.secrets.service` e recarrega o barramento —
   apps Electron/Tauri ativam o `ksecretd` sob demanda (sem unit systemd; o processo do PAM
   continua residente).
-- **Plymouth e marca**: cria o tema de boot `omyfedora` a partir do spinner, troca o watermark,
+- **Plymouth e marca**: cria o tema de boot `msbos` a partir do spinner, troca o watermark,
   instala logo e avatar (`~/.face`).
-- **Wallpapers**: instala o helper e as imagens em `/usr/share/omyfedora-walls/`.
+- **Wallpapers**: instala o helper e as imagens em `/usr/share/msbos-walls/`.
 - **greetd**: escolhe Noctalia Greeter (com bundle de mascote) ou o greeter padrão; preserva o
   `/etc/pam.d/greetd` do pacote quando ele já tem `pam_selinux`; habilita o sync sem prompt via
   Polkit e dispara o Sync Now (se já houver uma sessão Noctalia; em instalação limpa, o
-  autostart `omyfedora-greeter-sync` faz o primeiro sync no login).
+  autostart `msbos-greeter-sync` faz o primeiro sync no login).
 - **Zed**: instala `assets/zed/` uma vez e o kernelspec `zed-python` do REPL.
 - **OpenCode**: clona/atualiza o `agents-config` e roda o `sync.sh`.
 - **Padrões**: Brave como navegador; Dolphin, KWrite, Gwenview, Okular, Dragon e Elisa por
@@ -223,28 +227,28 @@ Tudo é idempotente: detecta o que já existe e pula.
 - **Terminal**: alacritty e `.zshrc` uma vez; define zsh como shell e garante o caminho em
   `/etc/shells` (necessário para o `pkexec` do sync do greeter).
 - **Autostart**: instala o seapplet com patch, desliga o XwaylandVideoBridge (`Hidden=true`) e
-  instala o `omyfedora-greeter-sync`, que sincroniza a aparência com o greeter no primeiro
-  login (marcador em `~/.local/state/omyfedora/greeter-sync.done`).
+  instala o `msbos-greeter-sync`, que sincroniza a aparência com o greeter no primeiro
+  login (marcador em `~/.local/state/msbos/greeter-sync.done`).
 - **Permissões**: ajusta o dono dos arquivos do usuário e, se houver sessão Noctalia, dispara
   o sync final do greeter.
 
 ### `60-agent-skill.sh` — helper privilegiado e skill de agentes
 
-- **Helper** `/usr/local/libexec/omyfedora-priv` (root, sem escrita de grupo/outros, rótulo
+- **Helper** `/usr/local/libexec/msbos-priv` (root, sem escrita de grupo/outros, rótulo
   SELinux `bin_t`): é a única porta para root de um agente de IA. Aceita só `dnf-install`,
   `dnf-simulate-remove`, `dnf-remove` e `svc-enable|disable|restart`, com nomes validados por
   regex (sem glob, caminho, URL ou opção) e lista de pacotes protegidos. O `--dry-run` valida
   argumentos e checa os protegidos sem privilégio.
-- **Polkit**: instala `org.omyfedora.priv.policy` (auth_admin) e avisa se o agente polkit-kde
+- **Polkit**: instala `org.msbos.priv.policy` (auth_admin) e avisa se o agente polkit-kde
   não estiver rodando na sessão — sem ele o `pkexec` não abre a janela de senha.
-- **Listas de root**: `/etc/omyfedora/{allowed-units,protected}.list`, instaladas uma vez; o
+- **Listas de root**: `/etc/msbos/{allowed-units,protected}.list`, instaladas uma vez; o
   agente não as edita.
-- **Trilha**: `/var/log/omyfedora/actions.log` (0750 root) registra `EXEC`,
+- **Trilha**: `/var/log/msbos/actions.log` (0750 root) registra `EXEC`,
   `SIMULATE-REMOVE`, `DENY` e `RESULT rc=` de cada chamada.
-- **Skills**: copia `assets/agents/skills/omyfedora/` para `~/.agents/skills/omyfedora/`
+- **Skills**: copia `assets/agents/skills/msbos/` para `~/.agents/skills/msbos/`
   (arquivos do projeto sempre atualizados, com backup; `references/local.md` uma vez), copia
   `assets/agents/skills/noctalia-plugin/` para `~/.agents/skills/noctalia-plugin/` (sempre
-  atualizada) e cria `~/.local/state/omyfedora/agent-backups/`.
+  atualizada) e cria `~/.local/state/msbos/agent-backups/`.
 
 ## Assets e propriedade dos arquivos
 
@@ -259,15 +263,15 @@ CIL instalados via `semodule`, não arquivos copiados.
 | Estado da GUI | `~/.local/state/noctalia/settings.toml`, plugins | Só instala se ausente |
 | Paleta do tema | `~/.config/noctalia/palettes/macOS.json` | `install_file` com backup; para customizar, crie outra paleta |
 | Módulos SELinux | `assets/selinux/*.cil` | Instalados via `semodule` |
-| Helper e skills de agentes | `assets/libexec/omyfedora-priv`, `assets/polkit/*.policy`, `assets/agents/skills/{omyfedora,noctalia-plugin}/*` | `install_file` (helper 755 root com `bin_t`, política 644); `references/local.md` uma vez |
+| Helper e skills de agentes | `assets/libexec/msbos-priv`, `assets/polkit/*.policy`, `assets/agents/skills/{msbos,noctalia-plugin}/*` | `install_file` (helper 755 root com `bin_t`, política 644); `references/local.md` uma vez |
 
 ## Idempotência, backups e estado
 
 - **Toda etapa pode rodar de novo.** A detecção é feita antes de agir (`rpm -q`, `command -v`,
   existência de arquivos/unidades).
-- **Backups**: arquivos sobrescritos ganham `.omyfedora-bak` na primeira vez; um backup
+- **Backups**: arquivos sobrescritos ganham `.msbos-bak` na primeira vez; um backup
   existente nunca é sobrescrito.
-- **Estado**: `/var/lib/omyfedora/steps/<etapa>` guarda a data/hora da conclusão. Em dry-run
+- **Estado**: `/var/lib/msbos/steps/<etapa>` guarda a data/hora da conclusão. Em dry-run
   nada é gravado.
 - **Falha**: o `install.sh` interrompe, mostra o código e orienta a rodar tudo de novo ou só a
   etapa que falhou.
@@ -280,14 +284,14 @@ CIL instalados via `semodule`, não arquivos copiados.
   só vale no próximo boot.
 - **Remoção do Plasma no boot**: o `%preun` do plasmalogin/plasma-* mexe nos serviços systemd e
   derrubaria a sessão no meio da transação dnf. Por isso a remoção é feita pelo
-  `omyfedora-remove-plasma.service`, antes do login. O script move temporariamente a proteção
+  `msbos-remove-plasma.service`, antes do login. O script move temporariamente a proteção
   do dnf, simula a transação e aborta se um pacote mantido for sair junto, protege os pacotes
   que mantêm os apps KDE funcionais e, se falhar, tenta de novo no boot seguinte.
 - **PAM**: o `/etc/pam.d/greetd` precisa de `pam_selinux`; sem ele o `systemctl --user` da
   sessão é negado e o niri volta para o login. O instalador preserva o arquivo do pacote e só
   restaura a versão do projeto se detectar uma versão antiga sem `pam_selinux`.
 - **SELinux**: o contexto do home do greeter (`xdm_var_lib_t`) e o módulo
-  `omyfedora-loadkeys-dontaudit` evitam AVCs/falsos positivos no login.
+  `msbos-loadkeys-dontaudit` evitam AVCs/falsos positivos no login.
 
 ## Decisões de projeto
 
@@ -307,7 +311,7 @@ Não há `package.json`, `Makefile` ou testes automatizados no repo. A verifica�
 
 ```bash
 # bash -n com vários arquivos só valida o PRIMEIRO (os demais viram $1, $2...).
-# Por isso o loop, e o filtro de shebang (assets/bin/omyfedora-seapplet é Python).
+# Por isso o loop, e o filtro de shebang (assets/bin/msbos-seapplet é Python).
 scripts=()
 for f in install.sh bootstrap.sh pessoal-pc.sh lib/common.sh scripts/*.sh assets/bin/* assets/libexec/*; do
   first="$(head -n1 "$f")"

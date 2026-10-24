@@ -1,36 +1,36 @@
 <p align="center">
-  <img src="assets/branding/omyfedora-logo.png" alt="Logo do omyfedora" width="120" height="120">
+  <img src="assets/branding/msbos-logo.png" alt="Logo do msbos" width="120" height="120">
   &nbsp;&nbsp;&nbsp;
-  <img src="assets/branding/omyfedora-mascot.png" alt="Mascote do omyfedora" width="120" height="120">
+  <img src="assets/branding/msbos-mascot.png" alt="Mascote do msbos" width="120" height="120">
 </p>
 
-<h1 align="center">omyfedora</h1>
+<h1 align="center">msbos</h1>
 
 <p align="center">
-  <strong>Uma personalização pessoal do Fedora KDE com niri + Noctalia v5.</strong><br>
+  <strong>Minha distro pessoal baseada no Fedora, com niri + Noctalia v5.</strong><br>
   <a href="README.en.md">English</a> ·
   <a href="docs/index.md">Documentação</a> ·
   <a href="docs/solucao-de-problemas.md">Solução de problemas</a>
 </p>
 
-O **omyfedora** não é uma distro nem uma ISO própria: é um conjunto de scripts bash
-idempotentes que transforma um **Fedora 44/45 já instalado** num desktop enxuto. A
-instalação segue a **rota C**: em vez de gerar uma ISO, um script de bootstrap troca o shell
-do Plasma pelo **niri** (compositor Wayland) e pelo **Noctalia v5**, instala o driver de GPU
-e aplica os ajustes de memória e desempenho. Os **apps do KDE continuam** e o tema dos
-aplicativos segue o **Breeze Dark**, o dark padrão do KDE.
+O **msbos** é minha distro pessoal baseada no Fedora: um conjunto de scripts bash
+idempotentes que transforma um **Fedora 44/45 já instalado** num desktop enxuto, sem ISO
+própria. A instalação segue a **rota C**: em vez de gerar uma ISO, um script de bootstrap
+troca o shell do Plasma pelo **niri** (compositor Wayland) e pelo **Noctalia v5**, instala o
+driver de GPU e aplica os ajustes de memória e desempenho. Os **apps do KDE continuam** e o
+tema dos aplicativos segue o **Breeze Dark**, o dark padrão do KDE.
 
-O objetivo é um desktop de uso pessoal que fique **abaixo de ~600 MB de RAM em idle**
-(contra ~1,5 GB de um Plasma típico), sem abrir mão dos apps do dia a dia.
+O foco é um desktop enxuto e de baixo consumo, sem abrir mão dos apps do dia a dia. Não há
+meta numérica de RAM: o consumo varia com o kernel, os drivers, a GPU e o hardware.
 
-> **Obrigado a quem torna isso possível.** O omyfedora é só a cola pessoal entre projetos
+> **Obrigado a quem torna isso possível.** O msbos é só a cola pessoal entre projetos
 > excelentes: o [Fedora Project](https://fedoraproject.org) e a
 > [comunidade KDE](https://kde.org) fornecem a base e os aplicativos; o
 > [niri](https://github.com/YaLTeR/niri), de **YaLTeR**, oferece o compositor; o
 > [Noctalia](https://noctalia.dev) traz o shell e o greeter; e o
 > [greetd](https://github.com/kennylevinsen/greetd), de **Kenny Levinsen**, cuida do login.
 > Obrigado também a todos os projetos upstream citados nos
-> [créditos completos](docs/creditos.md). O omyfedora é um projeto pessoal, sem afiliação
+> [créditos completos](docs/creditos.md). O msbos é um projeto pessoal, sem afiliação
 > com Fedora, KDE, niri ou Noctalia.
 
 ## O que é
@@ -59,18 +59,18 @@ O objetivo é um desktop de uso pessoal que fique **abaixo de ~600 MB de RAM em 
 Sem clonar o repositório:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/marcos2872/omyfedora/main/bootstrap.sh -o /tmp/omyfedora.sh
+curl -fsSL https://raw.githubusercontent.com/marcos2872/msbos/main/bootstrap.sh -o /tmp/msbos.sh
 
-sudo bash /tmp/omyfedora.sh --dry-run   # simula tudo (recomendado na 1ª vez)
-sudo bash /tmp/omyfedora.sh             # instala de verdade
+sudo bash /tmp/msbos.sh --dry-run   # simula tudo (recomendado na 1ª vez)
+sudo bash /tmp/msbos.sh             # instala de verdade
 sudo reboot
 ```
 
 Ou com clone (para desenvolvimento):
 
 ```bash
-git clone https://github.com/marcos2872/omyfedora.git
-cd omyfedora
+git clone https://github.com/marcos2872/msbos.git
+cd msbos
 
 ./install.sh --dry-run   # simula tudo, sem alterar nada
 ./install.sh             # instala (pergunta antes de remover o shell do Plasma)
@@ -82,7 +82,7 @@ atual. A troca para o greetd/niri vale no **próximo boot**. **Não** rode o `in
 `%post` do Anaconda — veja [instalação](docs/instalacao.md).
 
 Depois de reiniciar, a sessão **niri** aparece na tela do greetd. No primeiro login, o
-omyfedora sincroniza a aparência com a tela de login automaticamente; o wallpaper aparece no
+msbos sincroniza a aparência com a tela de login automaticamente; o wallpaper aparece no
 próximo logout/reboot (para repetir: `noctalia msg greeter-sync`). Atalhos básicos:
 `Super+T` terminal · `Super+Space` launcher · `Super+S` control center · `Super+P` monitores.
 
@@ -92,9 +92,9 @@ próximo logout/reboot (para repetir: `noctalia msg greeter-sync`). Atalhos bás
 |---|---|
 | [Instalação](docs/instalacao.md) | Base, ISOs, VM, bootstrap, opções, Anaconda e primeiros passos |
 | [Uso diário](docs/uso.md) | Atalhos do niri/Noctalia, wallpapers, apps padrão, tema e configs pessoais |
-| [Arquitetura e etapas](docs/arquitetura.md) | Fluxo dos scripts, as 7 etapas, `lib/common.sh`, assets e verificação |
+| [Arquitetura e etapas](docs/arquitetura.md) | Fluxo dos scripts, as 7 etapas + migração, `lib/common.sh`, assets e verificação |
 | [Solução de problemas](docs/solucao-de-problemas.md) | dnf, VM/GPU, flatpak, Noctalia, greeter e recuperação |
-| [Créditos](docs/creditos.md) | Projetos e pessoas que tornam o omyfedora possível |
+| [Créditos](docs/creditos.md) | Projetos e pessoas que tornam o msbos possível |
 | [Índice](docs/index.md) | Ponto de entrada de toda a documentação |
 
 Toda a documentação tem versão em inglês com sufixo `.en.md` (por exemplo,

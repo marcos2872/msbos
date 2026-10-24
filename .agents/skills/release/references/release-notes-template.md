@@ -1,5 +1,5 @@
 <!--
-Notas da release do omyfedora.
+Notas da release do msbos.
 
 - Escreva em PT-BR, focado no que o usuário percebe.
 - O workflow anexa automaticamente as seções "Instalação" e "Verificação"; não as repita.

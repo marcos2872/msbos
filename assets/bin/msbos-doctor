@@ -1,0 +1,610 @@
+#!/usr/bin/env bash
+# msbos-doctor — diagnóstico SOMENTE-LEITURA do sistema instalado.
+#
+# Uso:
+#   msbos-doctor [--user NOME] [--strict] [--no-color]
+#
+# Opções:
+#   --user NOME   usuário-alvo a inspecionar (padrão: quem chamou o sudo ou o usuário atual)
+#   --strict      considera avisos como falha (código de saída 1)
+#   --no-color    desliga as cores (também respeita NO_COLOR)
+#   -h, --help    esta ajuda
+#
+# O doctor não altera nada: apenas lê o sistema e o home do usuário-alvo.
+# Saída: [OK ], [AV ] (aviso), [ER ] (erro) e [-- ] (não avaliado).
+# Código de saída: 0 = nenhum erro; 1 = pelo menos um erro (ou aviso com --strict);
+#                  2 = erro de uso (opção inválida, usuário/home não encontrado).
+#
+# Verificações: base Fedora, etapas concluídas, greetd/PAM/greeter, niri/Noctalia,
+# apps KDE, menu XDG (redhat-menus), remoção do shell do Plasma, tema Breeze Dark,
+# zram/sysctl/governor, RAM em idle, SELinux, Podman rootless e GPU NVIDIA.
+
+set -euo pipefail
+
+# ─── opções ────────────────────────────────────────────────────────────────
+ALVO=''
+STRICT=0
+NO_COLOR_FLAG=0
+
+usage() { awk 'NR==1{next} !/^#/{exit} {sub(/^# ?/,""); print}' "${BASH_SOURCE[0]}"; }
+
+while (($#)); do
+  case "$1" in
+    --user)      shift; ALVO="${1:?--user requer um nome}" ;;
+    --strict)    STRICT=1 ;;
+    --no-color)  NO_COLOR_FLAG=1 ;;
+    -h|--help)   usage; exit 0 ;;
+    *) echo "opção desconhecida: $1" >&2; usage >&2; exit 2 ;;
+  esac
+  shift
+done
+
+# ─── saída ─────────────────────────────────────────────────────────────────
+if [[ -t 1 && ${NO_COLOR_FLAG} == 0 && -z ${NO_COLOR:-} ]]; then
+  C_OK=$'\033[0;32m' C_WARN=$'\033[0;33m' C_ERR=$'\033[0;31m' C_INFO=$'\033[0;36m' C_DIM=$'\033[2m' C_RST=$'\033[0m'
+else
+  C_OK='' C_WARN='' C_ERR='' C_INFO='' C_DIM='' C_RST=''
+fi
+
+N_OK=0 N_AV=0 N_ER=0 N_SKIP=0
+ok()   { N_OK=$((N_OK + 1));   printf '%s[OK ]%s %s\n' "${C_OK}"   "${C_RST}" "$1"; }
+av()   { N_AV=$((N_AV + 1));   printf '%s[AV ]%s %s\n' "${C_WARN}" "${C_RST}" "$1"; }
+er()   { N_ER=$((N_ER + 1));   printf '%s[ER ]%s %s\n' "${C_ERR}"  "${C_RST}" "$1"; }
+skip() { N_SKIP=$((N_SKIP + 1)); printf '%s[-- ]%s %s\n' "${C_DIM}" "${C_RST}" "$1"; }
+section() { printf '\n%s── %s ──%s\n' "${C_INFO}" "$1" "${C_RST}"; }
+die() { printf '%s[ER ]%s %s\n' "${C_ERR}" "${C_RST}" "$1" >&2; exit 2; }
+
+have()    { command -v "$1" >/dev/null 2>&1; }
+rpm_has() { rpm -q "$1" >/dev/null 2>&1; }
+unit_state() { systemctl is-enabled "$1" 2>/dev/null || true; }
+unit_active() { systemctl is-active --quiet "$1" 2>/dev/null; }
+unit_masked() { [[ "$(unit_state "$1")" == masked ]]; }
+
+# ─── usuário-alvo ──────────────────────────────────────────────────────────
+if [[ -n ${ALVO} ]]; then
+  id "${ALVO}" >/dev/null 2>&1 || die "usuário '${ALVO}' não existe"
+  TU="${ALVO}"
+elif [[ ${EUID} -eq 0 ]]; then
+  if [[ -n ${SUDO_USER:-} && ${SUDO_USER} != root ]]; then
+    TU="${SUDO_USER}"
+  else
+    TU="$(awk -F: '$3>=1000 && $3<65000 {print $1; exit}' /etc/passwd)" || TU=''
+    [[ -n ${TU} ]] || die "nenhum usuário normal encontrado; use --user NOME"
+  fi
+else
+  TU="$(id -un)"
+fi
+
+TU_HOME="$(getent passwd "${TU}" | cut -d: -f6)"
+TU_UID="$(id -u "${TU}")"
+[[ -n ${TU_HOME} && -d ${TU_HOME} ]] || die "home de ${TU} não encontrado"
+if [[ ${EUID} -ne 0 && ${TU} != "$(id -un)" ]]; then
+  die "inspecionar outro usuário (${TU}) exige root: sudo msbos-doctor --user ${TU}"
+fi
+
+# shellcheck disable=SC1091
+. /etc/os-release
+printf '\n%smsbos-doctor%s — diagnóstico somente-leitura\n' "${C_INFO}" "${C_RST}"
+printf '%susuário: %s (%s) · base: %s%s\n' "${C_DIM}" "${TU}" "${TU_HOME}" "${PRETTY_NAME:-?}" "${C_RST}"
+
+# ─── 1. base e instalação ──────────────────────────────────────────────────
+section 'Base e instalação'
+if [[ ${ID:-} == fedora ]]; then
+  if [[ ${VERSION_ID:-} =~ ^4[45]$ ]]; then
+    ok "Fedora ${VERSION_ID} (versão suportada)"
+  else
+    av "Fedora ${VERSION_ID:-?} — o projeto suporta Fedora 44/45"
+  fi
+else
+  av "base '${ID:-?}' não é Fedora — o msbos não é suportado aqui"
+fi
+
+STATE_DIR='/var/lib/msbos/steps'
+EXPECTED_STEPS=(10-gpu.sh 20-stack.sh 25-devtools.sh 30-services.sh 40-tuning.sh 50-configs.sh 60-agent-skill.sh)
+if [[ -d ${STATE_DIR} ]]; then
+  faltando=()
+  for s in "${EXPECTED_STEPS[@]}"; do
+    [[ -f ${STATE_DIR}/${s} ]] || faltando+=("${s}")
+  done
+  if ((${#faltando[@]} == 0)); then
+    ok 'as 7 etapas do instalador foram concluídas'
+  else
+    av "etapas sem marcador em ${STATE_DIR}: ${faltando[*]}"
+  fi
+else
+  av "sem marcadores de etapa (${STATE_DIR}) — o install.sh já rodou neste sistema?"
+fi
+
+if [[ ${XDG_CURRENT_DESKTOP:-} == *niri* ]]; then
+  ok 'sessão gráfica atual: niri'
+elif [[ -z ${XDG_CURRENT_DESKTOP:-} ]]; then
+  skip 'sem sessão gráfica (TTY/SSH) — sessão atual não avaliada'
+else
+  av "sessão atual: ${XDG_CURRENT_DESKTOP} (esperado: niri)"
+fi
+
+# ─── 2. login ──────────────────────────────────────────────────────────────
+section 'Login (greetd + Noctalia Greeter)'
+if rpm_has greetd; then
+  ok 'greetd instalado'
+else
+  er 'greetd não instalado — o login gráfico do msbos depende dele'
+fi
+
+estado_greetd="$(unit_state greetd)"
+case ${estado_greetd} in
+  enabled) ok 'greetd habilitado no boot' ;;
+  masked)  er 'greetd está mascarado — o login gráfico não sobe' ;;
+  *)       av "greetd não habilitado no boot (estado: ${estado_greetd:-?})" ;;
+esac
+
+if unit_active greetd; then
+  ok 'greetd ativo agora'
+elif [[ ${estado_greetd} == masked ]]; then
+  skip 'greetd mascarado — o login gráfico não sobe (erro já reportado)'
+elif unit_active plasmalogin || unit_active gdm || unit_active sddm; then
+  av 'outro display manager está ativo; o greetd assume no próximo boot'
+else
+  er 'greetd não está ativo — confira journalctl -u greetd'
+fi
+
+# Confere o par pacote:unit — o pacote do Plasma Login Manager não se chama
+# "plasmalogin" (esse é só o nome da unit).
+check_dm() {
+  local pkg="$1" unit="${2:-$1}"
+  rpm_has "${pkg}" || return 0
+  if unit_masked "${unit}"; then
+    ok "${unit} mascarado (não disputa o boot)"
+  else
+    av "${unit} instalado e não mascarado — pode disputar o boot com o greetd"
+  fi
+}
+check_dm plasma-login-manager plasmalogin
+check_dm gdm
+check_dm sddm
+
+if [[ -r /etc/pam.d/greetd ]]; then
+  if grep -q 'pam_selinux' /etc/pam.d/greetd; then
+    ok '/etc/pam.d/greetd tem pam_selinux (evita loop de login com SELinux)'
+  else
+    er '/etc/pam.d/greetd sem pam_selinux — a sessão pode voltar para o login'
+  fi
+else
+  er '/etc/pam.d/greetd ausente'
+fi
+
+if [[ -r /etc/greetd/config.toml ]]; then
+  ok '/etc/greetd/config.toml presente'
+  if grep -q 'noctalia-greeter-session' /etc/greetd/config.toml; then
+    if have noctalia-greeter-session; then
+      ok 'greeter configurado: Noctalia'
+    else
+      av 'config aponta para o Noctalia Greeter, mas o binário não está no PATH'
+    fi
+  else
+    ok 'greeter configurado: padrão do greetd'
+  fi
+else
+  er '/etc/greetd/config.toml ausente'
+fi
+
+if have noctalia-greeter; then
+  if [[ -f /usr/share/msbos/greeter-assets/noctalia.svg ]]; then
+    ok 'bundle do greeter com o mascote do msbos'
+  else
+    av 'bundle de assets do greeter ausente — o login usa o logo padrão'
+  fi
+  if [[ -f ${TU_HOME}/.config/noctalia/90-greeter-sync.toml ]]; then
+    ok 'Auto-Sync do greeter configurado'
+  else
+    av '90-greeter-sync.toml ausente — reexecute 50-configs.sh'
+  fi
+  if [[ ! -d /var/lib/noctalia-greeter ]]; then
+    av '/var/lib/noctalia-greeter ausente — reexecute 30-services.sh (o sync não tem onde gravar)'
+  elif [[ ! -x /var/lib/noctalia-greeter ]]; then
+    # o home do greeter é 750 greeter:greeter; sem root não dá para distinguir
+    # "sync.toml ausente" de "sem permissão de leitura" — não acuse sem saber.
+    skip 'sync.toml do greeter não verificável sem root — confira com sudo'
+  else
+    dono_estado="$(stat -c '%U' /var/lib/noctalia-greeter 2>/dev/null || true)"
+    if [[ ${dono_estado} != greeter ]]; then
+      av "/var/lib/noctalia-greeter pertence a '${dono_estado:-?}' (esperado greeter)"
+    fi
+    if [[ -r /var/lib/noctalia-greeter/sync.toml ]]; then
+      if grep -qE '^[[:space:]]*\[appearance\.wallpaper\]' /var/lib/noctalia-greeter/sync.toml; then
+        ok 'wallpaper presente na tela de login (sync.toml)'
+      else
+        av "sem wallpaper no sync.toml — rode 'noctalia msg greeter-sync' na sessão"
+      fi
+    else
+      av "sync.toml do greeter ausente — rode 'noctalia msg greeter-sync' na sessão"
+    fi
+  fi
+  if compgen -G '/etc/polkit-1/rules.d/*.rules' >/dev/null; then
+    if grep -qs 'sync-appearance' /etc/polkit-1/rules.d/*.rules; then
+      ok 'regra Polkit do sync sem senha presente'
+    else
+      av 'regra Polkit do sync ausente — o Auto-Sync vai pedir autenticação'
+    fi
+  else
+    skip 'regras Polkit ilegíveis — sync sem senha não avaliado'
+  fi
+else
+  skip 'Noctalia Greeter não instalado (greeter padrão do greetd)'
+fi
+
+# ─── 3. desktop ────────────────────────────────────────────────────────────
+section 'Desktop (niri + Noctalia)'
+if rpm_has niri || have niri; then
+  ok 'niri instalado'
+else
+  er 'niri não instalado'
+fi
+
+niri_cfg=''
+if [[ -f ${TU_HOME}/.config/niri/config.kdl ]]; then
+  niri_cfg="${TU_HOME}/.config/niri/config.kdl"
+elif [[ -f /etc/xdg/niri/config.kdl ]]; then
+  niri_cfg='/etc/xdg/niri/config.kdl'
+fi
+if [[ -n ${niri_cfg} ]]; then
+  ok "config do niri: ${niri_cfg}"
+else
+  er 'config do niri ausente (usuário e sistema)'
+fi
+
+if rpm_has noctalia || have noctalia; then
+  ok 'Noctalia instalado'
+else
+  er 'Noctalia não instalado — não há barra/launcher'
+fi
+
+if [[ -f ${TU_HOME}/.config/noctalia/config.toml ]]; then
+  ok 'config do Noctalia presente'
+else
+  av 'config.toml do Noctalia ausente'
+fi
+if [[ -f ${TU_HOME}/.local/state/noctalia/settings.toml ]]; then
+  ok 'settings.toml do Noctalia presente'
+else
+  av 'settings.toml do Noctalia ausente (a GUI cria no primeiro uso)'
+fi
+
+if rpm_has konsole; then
+  ok 'Konsole presente (terminal do dia a dia)'
+else
+  er 'Konsole ausente — ele não deve ser removido'
+fi
+
+kde_faltando=()
+for p in dolphin kwrite okular gwenview spectacle dragon elisa-player; do
+  rpm_has "${p}" || kde_faltando+=("${p}")
+done
+if ((${#kde_faltando[@]} == 0)); then
+  ok 'apps KDE garantidos presentes (Dolphin, Kate/KWrite, Okular...)'
+else
+  av "apps KDE ausentes: ${kde_faltando[*]}"
+fi
+
+# Sem applications.menu o kbuildsycoca6 gera um cache sem nenhum .desktop:
+# o KIO não resolve handler padrão e o Dolphin abre "Abrir com" vazio.
+if [[ -f /etc/xdg/menus/applications.menu ]]; then
+  ok 'menu XDG presente (redhat-menus)'
+else
+  er 'applications.menu ausente (instale redhat-menus) — Dolphin abre "Abrir com" vazio'
+fi
+
+plasma_presente=()
+for p in plasma-desktop plasma-workspace plasma-login-manager plasma-setup plasma-welcome; do
+  rpm_has "${p}" && plasma_presente+=("${p}")
+done
+if ((${#plasma_presente[@]} == 0)); then
+  ok 'shell do Plasma removido'
+elif [[ -f /etc/systemd/system/msbos-remove-plasma.service ]] &&
+  [[ "$(unit_state msbos-remove-plasma.service)" == enabled ]]; then
+  av "shell do Plasma presente (${plasma_presente[*]}) — remoção agendada para o próximo boot"
+else
+  av "shell do Plasma presente (${plasma_presente[*]}) — remoção não agendada"
+fi
+
+TU_SHELL="$(getent passwd "${TU}" | cut -d: -f7)"
+case ${TU_SHELL} in
+  */zsh) ok "shell padrão de ${TU}: ${TU_SHELL}" ;;
+  *)     av "shell padrão de ${TU}: ${TU_SHELL:-?} (esperado zsh)" ;;
+esac
+
+pessoais_faltando=()
+[[ -f ${TU_HOME}/.config/alacritty/alacritty.toml ]] || pessoais_faltando+=('alacritty.toml')
+[[ -f ${TU_HOME}/.zshrc ]] || pessoais_faltando+=('.zshrc')
+[[ -f ${TU_HOME}/.face ]] || pessoais_faltando+=('.face')
+if ((${#pessoais_faltando[@]} == 0)); then
+  ok 'configs pessoais presentes (alacritty, .zshrc, avatar)'
+else
+  av "configs ausentes no home: ${pessoais_faltando[*]}"
+fi
+
+if find /usr/share/msbos-walls -maxdepth 1 -type f -print -quit 2>/dev/null | grep -q .; then
+  ok 'wallpapers do msbos instalados'
+else
+  av '/usr/share/msbos-walls vazio ou ausente'
+fi
+
+# ─── 4. tema ───────────────────────────────────────────────────────────────
+section 'Tema dos apps (Breeze Dark)'
+if [[ -r ${TU_HOME}/.config/kdeglobals ]]; then
+  esquema="$(awk -F= '/^[[:space:]]*ColorScheme[[:space:]]*=/{gsub(/[[:space:]]/, "", $2); print $2; exit}' \
+    "${TU_HOME}/.config/kdeglobals")"
+  if [[ ${esquema} == BreezeDark ]]; then
+    ok 'kdeglobals: ColorScheme=BreezeDark'
+    fundo="$(awk -F= '/^\[Colors:Window\]/{f=1; next} /^\[/{f=0} f && /^BackgroundNormal=/{print $2; exit}' \
+      "${TU_HOME}/.config/kdeglobals" 2>/dev/null)"
+    if [[ -n ${fundo} ]]; then
+      IFS=, read -r r g b <<< "${fundo}"
+      if ((r + g + b < 300)); then
+        ok 'kdeglobals: cores do Breeze Dark aplicadas (fundo escuro)'
+      else
+        av "kdeglobals: fundo claro (${fundo}) apesar do ColorScheme=BreezeDark — reexecute 50-configs.sh"
+      fi
+    fi
+  elif [[ -z ${esquema} ]]; then
+    av 'kdeglobals sem ColorScheme — reexecute 50-configs.sh'
+  else
+    av "kdeglobals: ColorScheme=${esquema} (esperado BreezeDark)"
+  fi
+else
+  av 'kdeglobals ausente no home do usuário'
+fi
+
+gtk_ok=1
+for f in "${TU_HOME}/.config/gtk-3.0/settings.ini" "${TU_HOME}/.config/gtk-4.0/settings.ini"; do
+  if [[ ! -f ${f} ]] || ! grep -q 'Breeze' "${f}"; then
+    gtk_ok=0
+  fi
+done
+if ((gtk_ok)); then
+  ok 'GTK 3/4 configurados com Breeze'
+else
+  av 'settings.ini do GTK 3/4 ausente ou sem Breeze'
+fi
+
+tema_sistema=()
+[[ -f /etc/dconf/db/local.d/00-msbos-dark ]] || tema_sistema+=('/etc/dconf/db/local.d/00-msbos-dark')
+[[ -f /etc/profile.d/msbos-theme.sh ]] || tema_sistema+=('/etc/profile.d/msbos-theme.sh')
+if ((${#tema_sistema[@]} == 0)); then
+  ok 'tema de sistema (dconf + profile.d) presente'
+else
+  av "arquivos de tema do sistema ausentes: ${tema_sistema[*]}"
+fi
+
+# ─── 5. memória e desempenho ───────────────────────────────────────────────
+section 'Memória e desempenho'
+if [[ -f /etc/systemd/zram-generator.conf ]]; then
+  ok 'config do zram presente (/etc/systemd/zram-generator.conf)'
+else
+  er 'config do zram ausente — reexecute 40-tuning.sh'
+fi
+
+if [[ -e /sys/block/zram0 ]]; then
+  if swapon --show=NAME --noheadings 2>/dev/null | grep -qx '/dev/zram0'; then
+    dados="$(zramctl --noheadings --bytes --output DATA /dev/zram0 2>/dev/null | tr -d ' ' || true)"
+    if [[ ${dados} =~ ^[0-9]+$ ]]; then
+      ok "zram0 ativo como swap (dados comprimidos: $((dados / 1024 / 1024)) MiB)"
+    else
+      ok 'zram0 ativo como swap'
+    fi
+  else
+    av 'zram0 existe, mas não está como swap — reinicie após 40-tuning.sh'
+  fi
+else
+  av 'zram não ativo — reinicie após 40-tuning.sh'
+fi
+
+if [[ -f /etc/sysctl.d/99-msbos.conf ]]; then
+  swappiness="$(sysctl -n vm.swappiness 2>/dev/null || echo '?')"
+  minfree="$(sysctl -n vm.min_free_kbytes 2>/dev/null || echo '?')"
+  mem_kb="$(awk '/^MemTotal:/{print $2}' /proc/meminfo)"
+  esperado=$((mem_kb / 64))
+  ((esperado < 8192)) && esperado=8192
+  ((esperado > 8388608)) && esperado=8388608
+  if [[ ${swappiness} == 60 && ${minfree} == "${esperado}" ]]; then
+    ok "sysctl de memória aplicado (swappiness=60, min_free=${minfree}K)"
+  else
+    av "sysctl diverge (swappiness=${swappiness}, min_free=${minfree}K; esperado 60/${esperado}K)"
+  fi
+else
+  er '/etc/sysctl.d/99-msbos.conf ausente — reexecute 40-tuning.sh'
+fi
+
+tem_bateria=0
+for ps in /sys/class/power_supply/*; do
+  [[ -r ${ps}/type ]] || continue
+  [[ "$(<"${ps}/type")" == Battery ]] && tem_bateria=1
+done
+if ((tem_bateria)); then
+  skip 'bateria detectada — governor de CPU fica com o perfil de energia'
+else
+  governadores="$(cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor 2>/dev/null | sort -u | tr '\n' ' ' || true)"
+  if [[ -z ${governadores} ]]; then
+    skip 'cpufreq indisponível — governor não avaliado'
+  elif [[ ${governadores// /} == performance ]]; then
+    ok 'governor de CPU: performance'
+  else
+    av "governor de CPU: ${governadores% } (esperado performance)"
+  fi
+  if [[ -f /etc/systemd/system/msbos-cpu-governor.service ]]; then
+    if [[ "$(unit_state msbos-cpu-governor.service)" == enabled ]]; then
+      ok 'serviço msbos-cpu-governor habilitado no boot'
+    else
+      av 'serviço msbos-cpu-governor não habilitado — reexecute 40-tuning.sh'
+    fi
+  else
+    av 'serviço msbos-cpu-governor ausente — reexecute 40-tuning.sh'
+  fi
+fi
+
+if [[ -f /usr/lib/systemd/system/systemd-oomd.service ]]; then
+  if unit_active systemd-oomd; then
+    ok 'systemd-oomd ativo'
+  else
+    av 'systemd-oomd não está ativo — reexecute 30-services.sh'
+  fi
+else
+  skip 'systemd-oomd indisponível nesta versão'
+fi
+
+if unit_active tuned; then
+  perfil="$(cat /etc/tuned/active_profile 2>/dev/null || true)"
+  if [[ -z ${perfil} ]]; then
+    perfil="$(tuned-adm active 2>/dev/null | sed -n 's/^[^:]*: //p' | head -n1 || true)"
+  fi
+  # No Fedora 44+ o tuned-ppd assume os perfis de energia e alterna o perfil
+  # conforme a fonte de alimentação — comparar com latency-performance aqui
+  # geraria aviso falso.
+  if rpm_has tuned-ppd || unit_active tuned-ppd; then
+    skip "tuned ativo; perfil gerenciado pelo tuned-ppd (atual: ${perfil:-?})"
+  elif [[ ${perfil} == latency-performance ]]; then
+    ok 'tuned ativo (perfil latency-performance)'
+  else
+    av "tuned ativo com perfil '${perfil:-?}' (esperado latency-performance)"
+  fi
+else
+  av 'tuned não está ativo'
+fi
+
+mem_total="$(awk '/^MemTotal:/{print $2}' /proc/meminfo)"
+mem_disp="$(awk '/^MemAvailable:/{print $2}' /proc/meminfo)"
+ram_mib=$(((mem_total - mem_disp) / 1024))
+if [[ ${XDG_CURRENT_DESKTOP:-} == *niri* ]]; then
+  if ((ram_mib <= 600)); then
+    ok "RAM em uso: ${ram_mib} MiB (alvo < 600 MiB em idle)"
+  else
+    av "RAM em uso: ${ram_mib} MiB acima do alvo de 600 MiB — feche apps pesados para medir o idle"
+  fi
+else
+  skip "RAM em uso: ${ram_mib} MiB — meça dentro da sessão niri em idle"
+fi
+
+# ─── 6. integrações ────────────────────────────────────────────────────────
+section 'Integrações e segurança'
+# Secret Service do KWallet: sem org.freedesktop.secrets no barramento, apps
+# Electron/Tauri (Delta, VS Code...) falham ao ler credenciais.
+secret_service="${TU_HOME}/.local/share/dbus-1/services/org.freedesktop.secrets.service"
+if [[ -f ${secret_service} ]]; then
+  ok 'service de D-Bus do Secret Service instalado (ativação sob demanda)'
+else
+  av 'service de D-Bus do Secret Service ausente — reexecute 50-configs.sh'
+fi
+if have busctl; then
+  if [[ ! -S /run/user/${TU_UID}/bus ]]; then
+    skip 'barramento de sessão do usuário indisponível — Secret Service não avaliado'
+  else
+    bus_addr="unix:path=/run/user/${TU_UID}/bus"
+    if ! saida_secret="$(busctl --address="${bus_addr}" list --no-legend 2>/dev/null)"; then
+      skip 'não foi possível consultar o barramento de sessão — Secret Service não avaliado'
+    else
+      linha_secret="$(printf '%s\n' "${saida_secret}" | awk '$1=="org.freedesktop.secrets"{print}')"
+      if [[ -z ${linha_secret} ]]; then
+        er 'org.freedesktop.secrets não publicado — apps Electron/Tauri falham no keychain'
+      elif [[ ${linha_secret} == *activatable* ]]; then
+        ok 'Secret Service ativável sob demanda (ksecretd)'
+      else
+        ok 'Secret Service ativo no barramento (ksecretd)'
+      fi
+    fi
+  fi
+else
+  skip 'busctl ausente — Secret Service não avaliado'
+fi
+
+if [[ -d /sys/fs/selinux ]]; then
+  modo_selinux="$(getenforce 2>/dev/null || echo '?')"
+  if [[ ${modo_selinux} == Disabled ]]; then
+    skip 'SELinux desligado'
+  elif [[ ${EUID} -eq 0 ]]; then
+    if semodule -l 2>/dev/null | awk '{print $1}' | grep -qx 'msbos-loadkeys-dontaudit'; then
+      ok 'módulo SELinux msbos-loadkeys-dontaudit instalado'
+    else
+      av 'módulo SELinux msbos-loadkeys-dontaudit ausente — reexecute 30-services.sh'
+    fi
+  else
+    skip 'módulo SELinux só verificável com root (sudo semodule -l | grep msbos)'
+  fi
+fi
+
+if rpm_has podman; then
+  wants="${TU_HOME}/.config/systemd/user/sockets.target.wants/podman.socket"
+  if [[ -L ${wants} || -f ${wants} ]]; then
+    ok 'Podman rootless habilitado (lazydocker sem sudo)'
+  else
+    av 'socket rootless do Podman não habilitado — reexecute 30-services.sh'
+  fi
+  if [[ -S /run/user/${TU_UID}/podman/podman.sock ]]; then
+    ok 'socket rootless do Podman ativo agora'
+  else
+    av 'socket rootless do Podman ainda não está ativo (sobe no próximo login)'
+  fi
+else
+  skip 'Podman não instalado'
+fi
+
+if have lspci && lspci -nn 2>/dev/null | grep -Eqi '(vga|3d|display).*\[10de:'; then
+  if have nvidia-smi && nvidia-smi -L >/dev/null 2>&1; then
+    ok 'GPU NVIDIA com driver ativo'
+  else
+    av 'GPU NVIDIA detectada sem driver ativo — reexecute 10-gpu.sh'
+  fi
+else
+  skip 'sem GPU NVIDIA detectada — driver proprietário não se aplica'
+fi
+
+section 'Rebranding (omyfedora/myos → msbos)'
+legado=()
+for p in \
+  /etc/omyfedora \
+  /var/log/omyfedora \
+  /var/lib/omyfedora \
+  /usr/share/omyfedora \
+  /usr/share/omyfedora-walls \
+  /usr/share/myos-walls \
+  /var/lib/myos \
+  /var/log/myos \
+  /usr/share/polkit-1/actions/org.omyfedora.priv.policy \
+  /usr/share/plymouth/themes/omyfedora \
+  /etc/systemd/system/omyfedora-cpu-governor.service \
+  /etc/systemd/system/omyfedora-remove-plasma.service \
+  /etc/systemd/system/myos-cpu-governor.service \
+  /usr/local/libexec/omyfedora-priv \
+  /usr/local/bin/omyfedora-doctor \
+  /usr/local/bin/myos-cpu-governor \
+  "${TU_HOME}/.agents/skills/omyfedora" \
+  "${TU_HOME}/.local/share/omyfedora" \
+  "${TU_HOME}/.local/state/omyfedora" \
+  "${TU_HOME}/.config/autostart/omyfedora-greeter-sync.desktop"; do
+  [[ -e ${p} ]] && legado+=("${p}")
+done
+if ((${#legado[@]} > 0)); then
+  av "artefatos antigos encontrados: ${#legado[@]} caminho(s) — rode sudo ./install.sh --yes"
+  printf '     %s\n' "${legado[@]}" >&2
+else
+  ok 'nenhum artefato antigo do omyfedora/myos'
+fi
+
+# ─── resumo ────────────────────────────────────────────────────────────────
+printf '\n──────────────────────────────────────────────────────────────\n'
+printf 'Resumo: %s%d OK%s · %s%d aviso(s)%s · %s%d erro(s)%s · %d não avaliado(s)\n' \
+  "${C_OK}" "${N_OK}" "${C_RST}" "${C_WARN}" "${N_AV}" "${C_RST}" \
+  "${C_ERR}" "${N_ER}" "${C_RST}" "${N_SKIP}"
+
+if ((N_ER > 0)); then
+  printf '\n%sHá %d erro(s).%s As etapas são idempotentes; para reparar (no repositório):\n' "${C_ERR}" "${N_ER}" "${C_RST}"
+  printf '  sudo ./install.sh              # tudo, desde o início\n'
+  printf '  sudo bash scripts/50-configs.sh  # só a etapa que falhou\n'
+  printf '  journalctl -b -p warning         # avisos do boot\n'
+  exit 1
+fi
+if ((STRICT == 1 && N_AV > 0)); then
+  printf '\n--strict: %d aviso(s) tratado(s) como falha.\n' "${N_AV}"
+  exit 1
+fi
+printf '\n%sNenhum erro encontrado.%s\n' "${C_OK}" "${C_RST}"
+exit 0

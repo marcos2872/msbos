@@ -18,7 +18,7 @@ require_fedora
 install_file "zram-generator.conf" "/etc/systemd/zram-generator.conf"
 # limpa arquivo antigo no path errado (versões anteriores; aceita o nome antigo
 # e o atual, para não deixar lixo de uma instalação pré-renomeação)
-if [[ -f /etc/zram-generator.conf ]] && grep -qiE 'omyfedora|my[-_ ]?os' /etc/zram-generator.conf; then
+if [[ -f /etc/zram-generator.conf ]] && grep -qiE 'msbos|omyfedora|my[-_ ]?os' /etc/zram-generator.conf; then
   run_cmd rm -f /etc/zram-generator.conf
   log "tuning: removido /etc/zram-generator.conf (path errado de versão antiga)"
 fi
@@ -41,7 +41,7 @@ mem_kb="$(awk '/^MemTotal:/{print $2}' /proc/meminfo)"
 mfk=$(( mem_kb / 64 ))
 if (( mfk < 8192 )); then mfk=8192; fi
 if (( mfk > 8388608 )); then mfk=8388608; fi
-render_file "sysctl.d/99-omyfedora.conf" "/etc/sysctl.d/99-omyfedora.conf" "__MINFREE__" "${mfk}"
+render_file "sysctl.d/99-msbos.conf" "/etc/sysctl.d/99-msbos.conf" "__MINFREE__" "${mfk}"
 run_cmd sysctl --system >/dev/null 2>&1 || true
 ok "sysctl aplicado (min_free_kbytes=${mfk}K)"
 
@@ -53,12 +53,12 @@ if [[ ${rootfs} == btrfs ]]; then
   elif [[ ${DRY_RUN} == 1 ]]; then
     log "dry-run: adicionaria compress=zstd:1 ao /etc/fstab"
   else
-    cp -a /etc/fstab /etc/fstab.omyfedora-bak 2>/dev/null || true
+    cp -a /etc/fstab /etc/fstab.msbos-bak 2>/dev/null || true
     if sed -i -E 's|^([^#][^[:space:]]*[[:space:]]+/[[:space:]]+btrfs[[:space:]]+)([a-zA-Z0-9=,_-]+)|\1compress=zstd:1,\2|' /etc/fstab \
        && grep -E '^[^#][^[:space:]]*[[:space:]]+/[[:space:]]+btrfs[[:space:]]' /etc/fstab | grep -q 'compress=zstd'; then
       ok "btrfs: compress=zstd:1 adicionado ao /etc/fstab (vale após reboot)"
     else
-      warn "btrfs: não consegui editar /etc/fstab automaticamente (backup em /etc/fstab.omyfedora-bak)"
+      warn "btrfs: não consegui editar /etc/fstab automaticamente (backup em /etc/fstab.msbos-bak)"
     fi
   fi
 else
@@ -75,10 +75,10 @@ for ps in /sys/class/power_supply/*; do
   fi
 done
 if (( has_battery == 0 )); then
-  install_file "omyfedora-cpu-governor.service" "/etc/systemd/system/omyfedora-cpu-governor.service"
-  install_file "bin/omyfedora-cpu-governor" "/usr/local/bin/omyfedora-cpu-governor"
-  run_cmd chmod 755 /usr/local/bin/omyfedora-cpu-governor
-  run_cmd systemctl enable omyfedora-cpu-governor.service >/dev/null 2>&1 || true
+  install_file "msbos-cpu-governor.service" "/etc/systemd/system/msbos-cpu-governor.service"
+  install_file "bin/msbos-cpu-governor" "/usr/local/bin/msbos-cpu-governor"
+  run_cmd chmod 755 /usr/local/bin/msbos-cpu-governor
+  run_cmd systemctl enable msbos-cpu-governor.service >/dev/null 2>&1 || true
   ok "governor: performance fixado no boot (desktop sem bateria)"
 else
   log "tuning: bateria detectada — power-profiles-daemon cuida da energia"

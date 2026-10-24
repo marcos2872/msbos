@@ -1,7 +1,7 @@
-# omyfedora — greetd (display manager)
+# msbos — greetd (display manager)
 # __GREETER_CMD__ é substituído na instalação:
 #   - com noctalia-greeter: "/usr/bin/env NOCTALIA_GREETER_ASSETS_DIR=...
-#     /usr/bin/noctalia-greeter-session -- --session niri" (mascote do omyfedora)
+#     /usr/bin/noctalia-greeter-session -- --session niri" (mascote do msbos)
 #   - sem:                  "greetd" (greeter padrão em texto)
 
 [terminal]

@@ -1,12 +1,12 @@
-# omyfedora — repo comunitário Terra (fyralabs)
+# msbos — repo comunitário Terra (fyralabs)
 # Usado APENAS para o pacote noctalia-greeter (o Fedora oficial ainda não o
 # empacota). O includepkgs impede que o Terra substitua pacotes do Fedora.
 # Procedência: https://repos.fyralabs.com — desative com --no-greeter.
 # Config alinhada com o terra.repo oficial (gpgcheck + repo_gpgcheck).
 # Se um dia o noctalia-greeter passar a depender de algo só do Terra, inclua o
 # nome desse pacote no includepkgs (senão o dnf não o enxerga neste repo).
-[omyfedora-terra]
-name=Terra (omyfedora — noctalia-greeter)
+[msbos-terra]
+name=Terra (msbos — noctalia-greeter)
 baseurl=https://repos.fyralabs.com/terra$releasever
 enabled=1
 gpgcheck=1

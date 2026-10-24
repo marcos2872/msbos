@@ -34,9 +34,9 @@ jobs:
       - name: sintaxe e lint
         shell: bash
         run: |
-          # assets/bin/omyfedora-seapplet é Python: validar só quem tem shebang shell.
+          # assets/bin/msbos-seapplet é Python: validar só quem tem shebang shell.
           scripts=()
-          for f in install.sh bootstrap.sh pessoal-pc.sh lib/common.sh scripts/*.sh assets/bin/* assets/libexec/*; do
+          for f in install.sh bootstrap.sh pessoal-pc.sh lib/common.sh scripts/*.sh assets/bin/* assets/libexec/* tests/*.sh tests/agent-skill/*.sh; do
             first="$(head -n1 "$f")"
             case "$first" in
               *bash*|*'/sh'*|*dash*|*ksh*) scripts+=("$f") ;;
@@ -50,6 +50,8 @@ jobs:
           useradd -m -u 1000 ci
       - name: ./install.sh --dry-run --user ci
         run: ./install.sh --dry-run --user ci
+      - name: rename-guard
+        run: ./tests/rename-guard.sh
 
   publicar:
     name: empacotar e publicar
@@ -90,11 +92,11 @@ jobs:
           TAG: ${{ steps.validar_tag.outputs.tag }}
         run: |
           mkdir -p dist
-          git archive --format=tar.gz --prefix="omyfedora-${TAG}/" \
-            -o "dist/omyfedora-${TAG}.tar.gz" HEAD
-          (cd dist && sha256sum "omyfedora-${TAG}.tar.gz" > SHA256SUMS)
-          tar -tzf "dist/omyfedora-${TAG}.tar.gz" | grep -qx "omyfedora-${TAG}/install.sh"
-          tar -tzf "dist/omyfedora-${TAG}.tar.gz" | grep -qx "omyfedora-${TAG}/bootstrap.sh"
+          git archive --format=tar.gz --prefix="msbos-${TAG}/" \
+            -o "dist/msbos-${TAG}.tar.gz" HEAD
+          (cd dist && sha256sum "msbos-${TAG}.tar.gz" > SHA256SUMS)
+          tar -tzf "dist/msbos-${TAG}.tar.gz" | grep -qx "msbos-${TAG}/install.sh"
+          tar -tzf "dist/msbos-${TAG}.tar.gz" | grep -qx "msbos-${TAG}/bootstrap.sh"
           ls -lh dist
 
       - name: monta as notas da release
@@ -105,29 +107,29 @@ jobs:
           if [[ -f "${NOTES_FILE}" ]]; then
             cp "${NOTES_FILE}" release-notes.md
           else
-            printf 'Release **%s** do omyfedora.\n' "${TAG}" > release-notes.md
+            printf 'Release **%s** do msbos.\n' "${TAG}" > release-notes.md
           fi
           cat >> release-notes.md <<'NOTES'
 
           ## Instalação
 
           ```bash
-          curl -fsSL https://raw.githubusercontent.com/marcos2872/omyfedora/main/bootstrap.sh -o /tmp/omyfedora.sh
-          sudo bash /tmp/omyfedora.sh --dry-run   # simula tudo
-          sudo bash /tmp/omyfedora.sh             # instala
+          curl -fsSL https://raw.githubusercontent.com/marcos2872/msbos/main/bootstrap.sh -o /tmp/msbos.sh
+          sudo bash /tmp/msbos.sh --dry-run   # simula tudo
+          sudo bash /tmp/msbos.sh             # instala
           ```
 
           Para instalar exatamente esta versão:
 
           ```bash
-          sudo env OMYFEDORA_REF=__TAG__ bash /tmp/omyfedora.sh
+          sudo env MSBOS_REF=__TAG__ bash /tmp/msbos.sh
           ```
 
           ## Verificação
 
-          - `omyfedora-doctor` após o primeiro boot (somente leitura).
+          - `msbos-doctor` após o primeiro boot (somente leitura).
           - `sha256sum -c SHA256SUMS` para conferir o tarball anexado.
-          - Documentação: https://github.com/marcos2872/omyfedora/tree/__TAG__/docs
+          - Documentação: https://github.com/marcos2872/msbos/tree/__TAG__/docs
           NOTES
           sed -i "s|__TAG__|${TAG}|g" release-notes.md
 
@@ -142,7 +144,7 @@ jobs:
           else
             gh release create "${TAG}" dist/* \
               --verify-tag \
-              --title "omyfedora ${TAG}" \
+              --title "msbos ${TAG}" \
               --notes-file release-notes.md \
               --generate-notes \
               --latest

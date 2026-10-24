@@ -1,40 +1,40 @@
 #!/usr/bin/env bash
-# omyfedora — baixa o repositório e executa o install.sh sem precisar de git clone.
+# msbos — baixa o repositório e executa o install.sh sem precisar de git clone.
 #
 # Uso recomendado (terminal interativo):
-#   curl -fsSL https://raw.githubusercontent.com/marcos2872/omyfedora/main/bootstrap.sh -o /tmp/omyfedora.sh
-#   sudo bash /tmp/omyfedora.sh [opções do install.sh]
+#   curl -fsSL https://raw.githubusercontent.com/marcos2872/msbos/main/bootstrap.sh -o /tmp/msbos.sh
+#   sudo bash /tmp/msbos.sh [opções do install.sh]
 #
 # Uso não interativo (VM descartável / CI):
-#   curl -fsSL https://raw.githubusercontent.com/marcos2872/omyfedora/main/bootstrap.sh | sudo bash -s -- --yes
+#   curl -fsSL https://raw.githubusercontent.com/marcos2872/msbos/main/bootstrap.sh | sudo bash -s -- --yes
 #
 # Variáveis de ambiente:
-#   OMYFEDORA_REF   branch, tag ou commit a baixar (padrão: main)
-#   OMYFEDORA_REPO  owner/repo alternativo (padrão: marcos2872/omyfedora)
-#   OMYFEDORA_URL   URL completa do .tar.gz (sobrepõe REPO/REF; útil para espelho/teste)
-#   OMYFEDORA_KEEP=1 mantém o diretório temporário para depuração
+#   MSBOS_REF   branch, tag ou commit a baixar (padrão: main)
+#   MSBOS_REPO  owner/repo alternativo (padrão: marcos2872/msbos)
+#   MSBOS_URL   URL completa do .tar.gz (sobrepõe REPO/REF; útil para espelho/teste)
+#   MSBOS_KEEP=1 mantém o diretório temporário para depuração
 #
 # Exemplos:
-#   sudo bash /tmp/omyfedora.sh --dry-run
-#   sudo bash /tmp/omyfedora.sh --yes
-#   sudo env OMYFEDORA_REF=SEU_TAG_OU_COMMIT bash /tmp/omyfedora.sh --yes
+#   sudo bash /tmp/msbos.sh --dry-run
+#   sudo bash /tmp/msbos.sh --yes
+#   sudo env MSBOS_REF=SEU_TAG_OU_COMMIT bash /tmp/msbos.sh --yes
 #
 # O script só baixa o código; toda a instalação (dnf, arquivos, serviços) é feita
 # pelo install.sh, que continua sendo a única fonte da verdade.
 
 set -euo pipefail
 
-REPO="${OMYFEDORA_REPO:-marcos2872/omyfedora}"
-REF="${OMYFEDORA_REF:-main}"
-URL="${OMYFEDORA_URL:-https://github.com/${REPO}/archive/${REF}.tar.gz}"
-TMP="$(mktemp -d "${TMPDIR:-/tmp}/omyfedora.XXXXXX")"
+REPO="${MSBOS_REPO:-marcos2872/msbos}"
+REF="${MSBOS_REF:-main}"
+URL="${MSBOS_URL:-https://github.com/${REPO}/archive/${REF}.tar.gz}"
+TMP="$(mktemp -d "${TMPDIR:-/tmp}/msbos.XXXXXX")"
 TARBALL="${TMP}/repo.tar.gz"
 
 cleanup() {
   local rc
   rc=$?
   trap - EXIT
-  if [[ ${OMYFEDORA_KEEP:-0} == 1 ]]; then
+  if [[ ${MSBOS_KEEP:-0} == 1 ]]; then
     echo "→ arquivos mantidos em ${TMP}" >&2
   else
     rm -rf "${TMP}"
@@ -44,7 +44,7 @@ cleanup() {
 trap cleanup EXIT
 
 if [[ ! -r /etc/fedora-release ]]; then
-  echo "erro: o omyfedora é feito para Fedora (arquivo /etc/fedora-release não encontrado)" >&2
+  echo "erro: o msbos é feito para Fedora (arquivo /etc/fedora-release não encontrado)" >&2
   exit 1
 fi
 

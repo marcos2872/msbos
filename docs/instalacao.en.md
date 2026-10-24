@@ -2,9 +2,10 @@
 
 [Português](instalacao.md) · [English](instalacao.en.md)
 
-omyfedora is installed **on top of an existing Fedora** (route C): there is no custom ISO.
-`install.sh` runs seven idempotent steps, installs packages, configures services and applies
-the tuning. Replacing the Plasma shell with niri/Noctalia only takes effect after a reboot.
+msbos is installed **on top of an existing Fedora** (route C): there is no custom ISO.
+`install.sh` runs seven idempotent steps (+ two migration steps, no-ops on a fresh install),
+installs packages, configures services and applies the tuning. Replacing the Plasma shell with
+niri/Noctalia only takes effect after a reboot.
 
 ## Before you start
 
@@ -13,7 +14,7 @@ the tuning. Replacing the Plasma shell with niri/Noctalia only takes effect afte
   sudo).
 - Disk space and time proportional to the number of packages (the first install downloads a
   lot; later runs are incremental).
-- Back up anything important. The installer creates `.omyfedora-bak` backups of files it
+- Back up anything important. The installer creates `.msbos-bak` backups of files it
   overwrites, but that is not a replacement for your own backup.
 
 The recommended base is **Fedora KDE**: the script removes only the Plasma *shell* (desktop,
@@ -44,7 +45,7 @@ acceleration** and **GL on Spice**; otherwise the session stays black. The `qxl`
 common in VMs, does not work with niri.
 
 ```bash
-virt-install --name omyfedora --memory 4096 --vcpus 3 --disk size=25 \
+virt-install --name msbos --memory 4096 --vcpus 3 --disk size=25 \
   --cdrom /path/to/Fedora-KDE-Desktop-Live-44.x86_64.iso \
   --os-variant fedora-unknown \
   --graphics spice,gl=on --video virtio,accel3d=yes
@@ -63,22 +64,22 @@ Save the bootstrap to a file before running it: that way the interactive `instal
 keep reading from the terminal.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/marcos2872/omyfedora/main/bootstrap.sh -o /tmp/omyfedora.sh
+curl -fsSL https://raw.githubusercontent.com/marcos2872/msbos/main/bootstrap.sh -o /tmp/msbos.sh
 
-sudo bash /tmp/omyfedora.sh --dry-run   # simulate everything (recommended first)
-sudo bash /tmp/omyfedora.sh             # install for real
+sudo bash /tmp/msbos.sh --dry-run   # simulate everything (recommended first)
+sudo bash /tmp/msbos.sh             # install for real
 ```
 
 Pin a branch, tag or commit:
 
 ```bash
-sudo env OMYFEDORA_REF=YOUR_TAG_OR_COMMIT bash /tmp/omyfedora.sh --yes
+sudo env MSBOS_REF=YOUR_TAG_OR_COMMIT bash /tmp/msbos.sh --yes
 ```
 
 Non-interactive install (throwaway VM/CI):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/marcos2872/omyfedora/main/bootstrap.sh \
+curl -fsSL https://raw.githubusercontent.com/marcos2872/msbos/main/bootstrap.sh \
   | sudo bash -s -- --yes
 ```
 
@@ -86,18 +87,18 @@ Variables accepted by the bootstrap:
 
 | Variable | Default | Effect |
 |---|---|---|
-| `OMYFEDORA_REF` | `main` | Branch, tag or commit to download |
-| `OMYFEDORA_REPO` | `marcos2872/omyfedora` | Alternative repository (`owner/repo`) |
-| `OMYFEDORA_URL` | — | Full `.tar.gz` URL; overrides `REPO`/`REF` |
-| `OMYFEDORA_KEEP` | `0` | `1` keeps the temporary directory for debugging |
+| `MSBOS_REF` | `main` | Branch, tag or commit to download |
+| `MSBOS_REPO` | `marcos2872/msbos` | Alternative repository (`owner/repo`) |
+| `MSBOS_URL` | — | Full `.tar.gz` URL; overrides `REPO`/`REF` |
+| `MSBOS_KEEP` | `0` | `1` keeps the temporary directory for debugging |
 
 The bootstrap accepts every `install.sh` option and forwards the arguments.
 
 ## Install with a clone (development)
 
 ```bash
-git clone https://github.com/marcos2872/omyfedora.git
-cd omyfedora
+git clone https://github.com/marcos2872/msbos.git
+cd msbos
 
 ./install.sh --dry-run   # simulate everything, change nothing
 ./install.sh             # install for real
@@ -111,7 +112,7 @@ preserving the installation variables.
 | Option | Effect |
 |---|---|
 | `--dry-run` | Simulates everything: installs nothing, removes nothing, writes nothing and does not access the network |
-| `--yes`, `-y` | Authorizes destructive operations (Plasma shell removal) without asking |
+| `--yes`, `-y` | Authorizes destructive operations (Plasma shell removal and old-artifact cleanup) without asking |
 | `--no-greeter` | Does not add the Terra repository; uses greetd's default greeter |
 | `--user NAME` | Target user for the configuration (default: whoever invoked sudo) |
 | `--gpu-profile P` | Forces `auto`, `intel`, `amd`, `nvidia`, `hybrid` or `none` |
@@ -119,7 +120,7 @@ preserving the installation variables.
 | `-h`, `--help` | Shows the help extracted from the `install.sh` header |
 
 The same options work with the bootstrap, for example
-`sudo bash /tmp/omyfedora.sh --gpu-profile nvidia`.
+`sudo bash /tmp/msbos.sh --gpu-profile nvidia`.
 
 ## What happens during installation
 
@@ -133,22 +134,22 @@ The same options work with the bootstrap, for example
 | `30-services.sh` | Puts greetd on boot, masks other display managers and disables unnecessary daemons |
 | `40-tuning.sh` | zram, memory sysctls, btrfs compression, CPU governor and oomd |
 | `50-configs.sh` | Configures niri, Noctalia, Breeze Dark, greetd/PAM, wallpapers, Zed, zsh and default apps |
-| `60-agent-skill.sh` | Installs the privileged helper (polkit), the root lists and the `omyfedora` skill for AI agents |
+| `60-agent-skill.sh` | Installs the privileged helper (polkit), the root lists and the `msbos` skill for AI agents |
 
 Details for each step: [Architecture and steps](arquitetura.en.md).
 
 **Nothing is stopped in the current session.** Plasma keeps working until reboot; the Plasma
 shell removal is scheduled for the next boot, before login, through
-`omyfedora-remove-plasma.service`. This avoids killing the session in the middle of a dnf
+`msbos-remove-plasma.service`. This avoids killing the session in the middle of a dnf
 transaction.
 
-Each completed step leaves a marker in `/var/lib/omyfedora/steps/`. If a step fails, the
+Each completed step leaves a marker in `/var/lib/msbos/steps/`. If a step fails, the
 installer prints the error code, the history and how to resume.
 
 ## Anaconda/Kickstart
 
 **Do not run `install.sh` directly from `%post`.** `%post` runs inside the installed system's
-chroot without systemd as PID 1, and omyfedora needs a booted system (`systemctl
+chroot without systemd as PID 1, and msbos needs a booted system (`systemctl
 daemon-reload`, `runuser`, dconf/gsettings). The right approach is to run the bootstrap after
 the first boot — or use `%post` only to install a first-boot service that runs the bootstrap.
 
@@ -161,13 +162,13 @@ sudo reboot
 ```
 
 On the next boot, the **greetd** screen should appear with the **niri** session available. On
-the first login, the `omyfedora-greeter-sync` autostart syncs the appearance with the login
+the first login, the `msbos-greeter-sync` autostart syncs the appearance with the login
 screen; the wallpaper shows up on the next logout/reboot.
 
 Useful checks on the installed system:
 
 ```bash
-omyfedora-doctor                 # full diagnosis (read-only)
+msbos-doctor                 # full diagnosis (read-only)
 systemctl status greetd          # display manager
 journalctl -u greetd -n 30       # login log
 free -h ; zramctl                # compressed swap active
@@ -196,10 +197,10 @@ DRY_RUN=1 bash scripts/40-tuning.sh  # simulate one step without root
 The history lives in:
 
 ```bash
-ls /var/lib/omyfedora/steps/
+ls /var/lib/msbos/steps/
 ```
 
-To restore an overwritten file, look for the `.omyfedora-bak` backup next to the original.
+To restore an overwritten file, look for the `.msbos-bak` backup next to the original.
 Personal configurations installed with `install_file_once` are not overwritten on a re-run;
 to return to the default, delete the file and run the corresponding step.
 

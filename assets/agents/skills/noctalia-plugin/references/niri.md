@@ -106,7 +106,7 @@ Mudanças via `niri msg output` são **temporárias** e não são gravadas no `c
 ## Configuração KDL
 
 - Config do usuário: `~/.config/niri/config.kdl`.
-- Fallback do sistema: `/etc/xdg/niri/config.kdl` (não edite; o projeto omyfedora pode sobrescrever).
+- Fallback do sistema: `/etc/xdg/niri/config.kdl` (não edite; o projeto msbos pode sobrescrever).
 - Valide sempre: `niri validate`.
 - Para aplicar sem reiniciar o compositor, salvar o config normalmente dispara reload; se necessário, use o comando de reload do niri.
 - `spawn-at-startup` no config para processos persistentes; `binds` para atalhos.

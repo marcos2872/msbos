@@ -101,7 +101,7 @@ CORE=(
   curl git xdg-utils
   google-noto-sans-fonts google-noto-sans-mono-fonts
   breeze-icon-theme breeze-cursor-theme
-  # assets do spinner usados pelo tema de boot omyfedora (ver 50-configs.sh)
+  # assets do spinner usados pelo tema de boot msbos (ver 50-configs.sh)
   plymouth-theme-spinner
 )
 log "stack: instalando núcleo: ${CORE[*]}"
@@ -144,15 +144,15 @@ for p in swaybg wlsunset ddcutil pipewire-alsa; do
 done
 
 # ─── 2b. Tema dark do KDE (Breeze) + apps garantidos ────────────────────────
-# O omyfedora não entrega tema próprio: os apps usam o "Breeze Dark", o dark padrão
+# O msbos não entrega tema próprio: os apps usam o "Breeze Dark", o dark padrão
 # do KDE (o mesmo que o Plasma usa). Nada de Kvantum/qt6ct/qt5ct — o visual vem
 # de:
 #   • ~/.config/kdeglobals (ColorScheme=BreezeDark, widgetStyle=Breeze,
 #     ícones breeze-dark, cursor breeze_cursors) — preenchido na etapa
 #     50-configs via kwriteconfig6 (o System Settings mexe no MESMO arquivo e
-#     o omyfedora só preenche chaves ainda vazias);
+#     o msbos só preenche chaves ainda vazias);
 #   • plasma-integration: platform theme Qt6 "kde" (QT_QPA_PLATFORMTHEME em
-#     /etc/profile.d/omyfedora-theme.sh) — sem ele os apps Qt ficam sem o Breeze;
+#     /etc/profile.d/msbos-theme.sh) — sem ele os apps Qt ficam sem o Breeze;
 #   • breeze-gtk-common: tema GTK Breeze/Breeze-Dark (lido pelo settings.ini);
 #   • pam-kwallet: destrava o cofre KWallet no login (o PAM do greetd no
 #     Fedora já chama o pam_kwallet5.so);
@@ -171,7 +171,7 @@ SUPORTE=(
   redhat-menus kio-extras kio-admin kdegraphics-thumbnailers ffmpegthumbs
   kglobalacceld kf6-kwallet
 )
-# Apps KDE que o omyfedora garante presentes (a base KDE já os tem — o Dolphin, o
+# Apps KDE que o msbos garante presentes (a base KDE já os tem — o Dolphin, o
 # Konsole, o Kate/KWrite etc. são os apps do dia a dia; numa instalação mínima
 # eles completam o desktop). Sem haruna/strawberry/ksystemlog: os equivalentes
 # padrão do KDE são dragon/elisa/kjournald.
@@ -209,11 +209,11 @@ if command -v balooctl6 >/dev/null 2>&1; then
     || warn "baloo: falha ao desligar o indexador"
 fi
 
-# ─── 2c. Curadoria: apps KDE e LibreOffice que o omyfedora não usa ───────────────
-# A base KDE já traz os apps padrão; o omyfedora remove só o que não se usa num
+# ─── 2c. Curadoria: apps KDE e LibreOffice que o msbos não usa ───────────────
+# A base KDE já traz os apps padrão; o msbos remove só o que não se usa num
 # desktop de dev: jogos, a suíte PIM/e-mail (substituível por webmail), o
 # pacote de ajuda/acessibilidade e o LibreOffice (a suíte de escritório do
-# omyfedora é o ONLYOFFICE, instalado na seção 7). Remoção ao vivo é segura — são
+# msbos é o ONLYOFFICE, instalado na seção 7). Remoção ao vivo é segura — são
 # apps, sem scriptlet que derruba a sessão (o SHELL do Plasma sai de cena no
 # próximo boot, agendado na seção 8: esse sim derrubaria a sessão). A marcação
 # user-installed da 2b roda antes para a cascata não levar tema/KIO/apps.
@@ -235,7 +235,7 @@ else
   # as dependências exclusivas dele (ex.: java headless) pela cascata padrão do
   # dnf. Idempotente: só age se a suíte estiver instalada.
   if rpm -q libreoffice-core >/dev/null 2>&1; then
-    log "curadoria: removendo o LibreOffice (escritório do omyfedora = ONLYOFFICE)"
+    log "curadoria: removendo o LibreOffice (escritório do msbos = ONLYOFFICE)"
     run_cmd dnf -y "${DNFOPT}" remove 'libreoffice*' || warn "libreoffice: falha na remoção"
   fi
 fi
@@ -274,7 +274,7 @@ fi
 if [[ ${NO_GREETER} == 1 ]]; then
   log "stack: greeter Noctalia desativado (--no-greeter)"
 else
-  install_file "yum.repos.d/terra.repo" "/etc/yum.repos.d/omyfedora-terra.repo"
+  install_file "yum.repos.d/terra.repo" "/etc/yum.repos.d/msbos-terra.repo"
   warn "repo comunitário Terra (fyralabs) habilitado para o pacote noctalia-greeter"
   run_cmd dnf -y "${DNFOPT}" install noctalia-greeter \
     || warn "noctalia-greeter indisponível — o greetd usará o greeter padrão"
@@ -415,7 +415,7 @@ fi
 # serviços systemd (remove-system-units para/desabilita o plasmalogin), o que
 # derruba a sessão gráfica atual — matando o instalador no meio da transação
 # dnf (o mesmo valia para o gdm). A remoção é agendada via systemd para rodar
-# no próximo boot, ANTES do login (omyfedora-remove-plasma.service).
+# no próximo boot, ANTES do login (msbos-remove-plasma.service).
 # Sai só o SHELL do Plasma (desktop/workspace/login manager + wizard de
 # primeiro login). Os apps KDE ficam — inclusive o plasma-discover, que segue
 # funcionando com o PackageKit.
@@ -430,7 +430,7 @@ else
   done
   # Pacotes que a remoção NUNCA pode levar na cascata
   # (clean_requirements_on_remove). Manter em sincronia com KEEP_PKGS + APP_PKGS
-  # de assets/libexec/omyfedora-remove-plasma.
+  # de assets/libexec/msbos-remove-plasma.
   KDE_KEEP=(
     NetworkManager tuned tuned-ppd
     dolphin konsole kwrite okular gwenview ark kcalc spectacle
@@ -456,18 +456,18 @@ else
       cleanup_prot() {
         local f
         for f in "${moved[@]}"; do
-          [[ -e ${f}.omyfedora-off ]] && mv -f "${f}.omyfedora-off" "${f}"
+          [[ -e ${f}.msbos-off ]] && mv -f "${f}.msbos-off" "${f}"
         done
       }
       trap 'exit 130' INT TERM
       trap cleanup_prot EXIT
       # limpa sobra de uma execução interrompida (SIGKILL) antes de mover de novo
       for f in /etc/dnf/protected.d/plasma-desktop.conf /etc/dnf/protected.d/fedora-workstation.conf; do
-        [[ -e ${f}.omyfedora-off ]] && mv -f "${f}.omyfedora-off" "${f}"
+        [[ -e ${f}.msbos-off ]] && mv -f "${f}.msbos-off" "${f}"
       done
       for f in /etc/dnf/protected.d/plasma-desktop.conf /etc/dnf/protected.d/fedora-workstation.conf; do
         [[ -e ${f} ]] || continue
-        mv -f "${f}" "${f}.omyfedora-off" && moved+=("${f}") \
+        mv -f "${f}" "${f}.msbos-off" && moved+=("${f}") \
           || warn "preflight: não consegui afastar ${f} — a simulação pode falhar"
       done
       LC_ALL=C dnf remove --assumeno "${REMOVE_PKGS[@]}" 2>&1
@@ -496,10 +496,10 @@ else
     elif ! preflight_remocao; then
       warn "remoção do shell do Plasma NÃO agendada — corrija os conflitos e rode a etapa de novo"
     elif exige_ok "agendar a remoção do shell do Plasma (${REMOVE_PKGS[*]}) para o próximo boot?"; then
-      install_file "libexec/omyfedora-remove-plasma" "/usr/local/libexec/omyfedora-remove-plasma"
-      run_cmd chmod 755 /usr/local/libexec/omyfedora-remove-plasma
-      install_file "omyfedora-remove-plasma.service" "/etc/systemd/system/omyfedora-remove-plasma.service"
-      run_cmd systemctl enable omyfedora-remove-plasma.service >/dev/null 2>&1 || true
+      install_file "libexec/msbos-remove-plasma" "/usr/local/libexec/msbos-remove-plasma"
+      run_cmd chmod 755 /usr/local/libexec/msbos-remove-plasma
+      install_file "msbos-remove-plasma.service" "/etc/systemd/system/msbos-remove-plasma.service"
+      run_cmd systemctl enable msbos-remove-plasma.service >/dev/null 2>&1 || true
       ok "shell do Plasma será removido no PRÓXIMO BOOT (antes do login, sem sessão em uso)"
     else
       warn "shell do Plasma mantido — será apenas mascarado em 30-services.sh"

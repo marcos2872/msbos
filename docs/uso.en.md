@@ -80,11 +80,11 @@ bar, half-height auto-hiding dock, glass panels and faster animations.
 
 ### The two configuration layers
 
-Noctalia v5 assembles its configuration in layers. Two matter in omyfedora:
+Noctalia v5 assembles its configuration in layers. Two matter in msbos:
 
 | Layer | File | Contents | Written by |
 |---|---|---|---|
-| Style | `~/.config/noctalia/config.toml` | Theme, palette, bar, dock, panels, animations | omyfedora (installed once; you may edit) |
+| Style | `~/.config/noctalia/config.toml` | Theme, palette, bar, dock, panels, animations | msbos (installed once; you may edit) |
 | State/GUI | `~/.local/state/noctalia/settings.toml` | Widget lists, wallpaper, plugins, lock-screen geometry, persisted `[dock]` | The Noctalia GUI |
 
 `settings.toml` is read **last** and wins key by key. So if an appearance change “does not
@@ -93,12 +93,12 @@ stick”, there is almost always a duplicate key there. `config.toml` holds styl
 
 Supporting files in `~/.config/noctalia/`:
 
-- `90-greeter-sync.toml` — enables Auto-Sync of the appearance with the login screen (omyfedora
+- `90-greeter-sync.toml` — enables Auto-Sync of the appearance with the login screen (msbos
   updates this file).
 - `91-widget-control-center.toml` — control-center icon in the bar (rendered with the user's
   home path).
-- `palettes/macOS.json` — theme palette. omyfedora owns and updates it with an
-  `.omyfedora-bak` backup; to use another one, create a new palette in `palettes/` and point
+- `palettes/macOS.json` — theme palette. msbos owns and updates it with an
+  `.msbos-bak` backup; to use another one, create a new palette in `palettes/` and point
   `custom_palette` in `config.toml` to it.
 
 Default plugins: **tmelik/system-monitor** (CPU/RAM) and **raycursive/niri-displays** (displays).
@@ -109,15 +109,15 @@ yet.
 ### Wallpaper
 
 **Noctalia owns the wallpaper.** The default is
-`/usr/share/omyfedora-walls/wp11280214-rx7-4k-wallpapers.jpg`, set in `settings.toml`. Change
+`/usr/share/msbos-walls/wp11280214-rx7-4k-wallpapers.jpg`, set in `settings.toml`. Change
 it through Noctalia itself (Settings → Wallpaper) — the choice is persisted and Auto-Sync
 carries it to the login screen.
 
-The `omyfedora-wallpaper` helper is a **fallback** for sessions without Noctalia: it uses
+The `msbos-wallpaper` helper is a **fallback** for sessions without Noctalia: it uses
 `swaybg` and looks for the first image in alphabetical order in:
 
-1. `~/.config/omyfedora-walls/` (user, takes precedence)
-2. `/usr/share/omyfedora-walls/` (system)
+1. `~/.config/msbos-walls/` (user, takes precedence)
+2. `/usr/share/msbos-walls/` (system)
 
 Accepted formats: PNG, JPG/JPEG and WebP. With no images, it uses the solid color `#0B0B0D`.
 The helper's `spawn-at-startup` is commented out in `config.kdl` precisely because Noctalia
@@ -125,21 +125,21 @@ already handles the wallpaper.
 
 ## App theme: Breeze Dark
 
-omyfedora does not install a theme of its own. Apps use **Breeze Dark**, KDE's default dark
+msbos does not install a theme of its own. Apps use **Breeze Dark**, KDE's default dark
 theme, while Noctalia keeps its own look (it is not Qt/GTK).
 
 - **Qt/KDE**: `~/.config/kdeglobals` gets `ColorScheme=BreezeDark`, `widgetStyle=Breeze`,
   `breeze-dark` icons and `breeze_cursors`; `plasma-integration` provides the Qt platform theme
   through `QT_QPA_PLATFORMTHEME=kde`.
 - **GTK**: `~/.config/gtk-3.0/settings.ini` and `gtk-4.0/settings.ini`, the system default in
-  `/etc/dconf/db/local.d/00-omyfedora-dark` and the user's `gsettings` set `gtk-theme=Breeze`,
+  `/etc/dconf/db/local.d/00-msbos-dark` and the user's `gsettings` set `gtk-theme=Breeze`,
   `color-scheme=prefer-dark`, `icon-theme=breeze-dark` and the `breeze_cursors` cursor.
 - **Compatibility**: `pam-kwallet` unlocks the KWallet vault at login and
   `org.freedesktop.secrets` is activated on demand over D-Bus (Electron/Tauri apps also read
   credentials); `xdg-desktop-portal-kde` and `polkit-kde` remain installed for KDE apps.
 
 The installer only **fills keys that are still empty**. If you change the theme through
-**System Settings**, that choice is yours forever: omyfedora does not override it. Theme files
+**System Settings**, that choice is yours forever: msbos does not override it. Theme files
 owned by the project (GTK, dconf, `profile.d`) are updated with a backup.
 
 ## Default apps
@@ -171,7 +171,7 @@ These files are installed **only when they do not exist yet** (`install_file_onc
 - `~/.face` (default avatar)
 - `~/.config/autostart/sealertauto.desktop` and `org.kde.xwaylandvideobridge.desktop`
 
-Re-running the installer does not overwrite these files. To return to the omyfedora default,
+Re-running the installer does not overwrite these files. To return to the msbos default,
 delete the file and run the responsible step:
 
 ```bash
@@ -179,9 +179,9 @@ rm ~/.config/niri/config.kdl
 sudo bash scripts/50-configs.sh
 ```
 
-Files owned by omyfedora — `/etc/xdg/niri/config.kdl`, theme assets, wallpapers, helpers,
+Files owned by msbos — `/etc/xdg/niri/config.kdl`, theme assets, wallpapers, helpers,
 `90-greeter-sync.toml`, `91-widget-control-center.toml` and the palette — are updated with an
-`.omyfedora-bak` backup. `settings.toml` and plugins are only installed when absent.
+`.msbos-bak` backup. `settings.toml` and plugins are only installed when absent.
 
 ## Login screen (greetd + Noctalia Greeter)
 
@@ -192,9 +192,9 @@ session shell.
 `90-greeter-sync.toml` enables **Auto-Sync**: changes to wallpaper, palette, theme and font are
 copied to the login screen. The installer enables passwordless sync through a Polkit rule
 restricted to the greeter action. On a **reinstall** (with Noctalia already running) it
-triggers a **Sync Now** at the end; on a **clean install**, the `omyfedora-greeter-sync`
+triggers a **Sync Now** at the end; on a **clean install**, the `msbos-greeter-sync`
 autostart does the first sync at login and writes the
-`~/.local/state/omyfedora/greeter-sync.done` marker.
+`~/.local/state/msbos/greeter-sync.done` marker.
 
 To repeat it manually:
 
@@ -209,7 +209,7 @@ session shell in `/etc/shells` (`pkexec` requires the shell to be listed). More 
 ## Plasma shell removal
 
 On a Fedora KDE base, the installer **schedules** the Plasma shell removal for the next boot,
-before login, through `omyfedora-remove-plasma.service`. It does not happen in the live session
+before login, through `msbos-remove-plasma.service`. It does not happen in the live session
 because the plasmalogin/plasma-* scriptlets touch systemd services and would kill the session
 in the middle of the dnf transaction.
 
@@ -222,8 +222,8 @@ and portals working (`plasma-integration`, `plasma-breeze`, `plasma-systemsettin
 To follow it:
 
 ```bash
-systemctl status omyfedora-remove-plasma
-journalctl -u omyfedora-remove-plasma -n 50
+systemctl status msbos-remove-plasma
+journalctl -u msbos-remove-plasma -n 50
 ```
 
 If removal fails (for example, no network at boot), the service stays enabled and tries again
@@ -232,7 +232,7 @@ goes to greetd/niri.
 
 ## Updates
 
-omyfedora does not install automatic updates; `dnf-automatic` is disabled on purpose. Update
+msbos does not install automatic updates; `dnf-automatic` is disabled on purpose. Update
 manually when you want:
 
 ```bash
@@ -254,4 +254,4 @@ installers; `lazydocker` can be reinstalled by the `20-stack.sh` step.
 
 - [Troubleshooting](solucao-de-problemas.en.md) — if something does not work.
 - [Architecture and steps](arquitetura.en.md) — to understand what each script does.
-- [Credits](creditos.en.md) — the projects behind omyfedora.
+- [Credits](creditos.en.md) — the projects behind msbos.

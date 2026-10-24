@@ -115,7 +115,7 @@ install_nvidia_driver() {
     warn "grubby ausente: adicione 'nvidia-drm.modeset=1' manualmente à cmdline do kernel"
   fi
   # 3) offload GL para a NVIDIA (inofensivo em dGPU única, essencial em híbrido)
-  install_file "profile.d/omyfedora-nvidia.sh" "/etc/profile.d/omyfedora-nvidia.sh"
+  install_file "profile.d/msbos-nvidia.sh" "/etc/profile.d/msbos-nvidia.sh"
 }
 
 ensure_igpu() {

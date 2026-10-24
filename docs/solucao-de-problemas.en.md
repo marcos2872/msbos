@@ -2,14 +2,14 @@
 
 [Português](solucao-de-problemas.md) · [English](solucao-de-problemas.en.md)
 
-This page covers the most common omyfedora problems. Start with the quick diagnosis and then
+This page covers the most common msbos problems. Start with the quick diagnosis and then
 jump to the relevant section.
 
 ## Quick diagnosis
 
 ```bash
 # Project diagnosis (read-only): errors, warnings and how to repair
-omyfedora-doctor
+msbos-doctor
 
 # Base version and overall state
 cat /etc/fedora-release
@@ -25,7 +25,7 @@ zramctl
 swapon --show
 
 # Completed steps and boot logs
-ls /var/lib/omyfedora/steps/
+ls /var/lib/msbos/steps/
 journalctl -b -p warning
 ```
 
@@ -39,12 +39,12 @@ sudo ./install.sh              # everything, from the start
 sudo bash scripts/50-configs.sh  # only the failed step
 ```
 
-The history lives in `/var/lib/omyfedora/steps/`.
+The history lives in `/var/lib/msbos/steps/`.
 
 ### dnf: “checksum doesn't match” or 404 from repodata
 
 This is the **Fedora mirror out of sync** (transient; it would happen with any `dnf`, not just
-omyfedora). Clean the cache and try again:
+msbos). Clean the cache and try again:
 
 ```bash
 sudo dnf clean all
@@ -71,15 +71,15 @@ virtualization). Free some space before continuing.
 `curl | sudo bash`, stdin is not a TTY. Save the bootstrap to a file and run it:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/marcos2872/omyfedora/main/bootstrap.sh -o /tmp/omyfedora.sh
-sudo bash /tmp/omyfedora.sh
+curl -fsSL https://raw.githubusercontent.com/marcos2872/msbos/main/bootstrap.sh -o /tmp/msbos.sh
+sudo bash /tmp/msbos.sh
 ```
 
 Or use `--yes` on a throwaway VM/CI.
 
 ### Anaconda/Kickstart: the script does not work in `%post`
 
-`%post` runs in the chroot without systemd as PID 1. omyfedora needs a booted system
+`%post` runs in the chroot without systemd as PID 1. msbos needs a booted system
 (`systemctl daemon-reload`, `runuser`, dconf/gsettings). Run the bootstrap after the first boot
 or use `%post` only to install a first-boot service.
 
@@ -156,8 +156,8 @@ commented with these lines; do not remove `debug { }`.
 Removal is **scheduled for the next boot**, not done in the live session. Check:
 
 ```bash
-systemctl status omyfedora-remove-plasma
-journalctl -u omyfedora-remove-plasma -n 80
+systemctl status msbos-remove-plasma
+journalctl -u msbos-remove-plasma -n 80
 rpm -q plasma-desktop plasma-workspace plasma-login-manager
 ```
 
@@ -165,7 +165,7 @@ If the service failed (for example, no network at boot), it stays enabled and re
 next boot. You can also run it manually **from inside the niri session**:
 
 ```bash
-sudo systemctl start omyfedora-remove-plasma
+sudo systemctl start msbos-remove-plasma
 ```
 
 If you used `--skip-remove`, removal was intentionally not scheduled; the Plasma shell remains
@@ -174,7 +174,7 @@ installed, but login already uses greetd/niri.
 ## Wallpaper does not appear on the login screen
 
 The login wallpaper is synced by **Noctalia Greeter** (Auto-Sync). On a clean install, the
-`omyfedora-greeter-sync` autostart does the first sync at login. If the wallpaper does not
+`msbos-greeter-sync` autostart does the first sync at login. If the wallpaper does not
 appear, run it manually inside the session:
 
 ```bash
@@ -184,7 +184,7 @@ noctalia msg greeter-sync
 To force a new sync on the next login, remove the marker:
 
 ```bash
-rm -f ~/.local/state/omyfedora/greeter-sync.done
+rm -f ~/.local/state/msbos/greeter-sync.done
 ```
 
 Then check:
@@ -256,7 +256,7 @@ are updated by the installer (with backup).
    Expected: `'prefer-dark'` and `'Breeze'`.
 
 4. Close and reopen the app (Qt/GTK apps read the theme at startup). If you changed the theme
-   through **System Settings**, that choice wins — omyfedora only fills empty keys and does not
+   through **System Settings**, that choice wins — msbos only fills empty keys and does not
    override it.
 
 If `kwriteconfig6` is missing, install `kde-cli-tools` and run
@@ -292,7 +292,7 @@ dbus-send --session --type=method_call --dest=org.freedesktop.DBus / org.freedes
 ```
 
 Reopen the app and, if `secret-tool` is available, test with `secret-tool store`/`secret-tool
-lookup`. `omyfedora-doctor` also reports when the service is missing.
+lookup`. `msbos-doctor` also reports when the service is missing.
 
 ## Terminal without transparency or blur
 
@@ -317,7 +317,7 @@ Alacritty's transparency (`opacity = 0.85`) is multiplied by niri's global rule
 ## Flatpak: “Not allowed to query parental controls data”
 
 If your Fedora version's `accounts-daemon` exposes `com.endlessm.ParentalControls` and the
-`malcontent` package is missing, every `flatpak run` fails (flatpak/flatpak#6142). omyfedora
+`malcontent` package is missing, every `flatpak run` fails (flatpak/flatpak#6142). msbos
 protects/installs `malcontent` when it detects that build.
 
 Check:
@@ -339,7 +339,7 @@ done.
 
 ## RAM above expectations
 
-The **< ~600 MB idle** target assumes the niri/Noctalia session with no heavy apps open.
+There is no numeric RAM target: usage varies with the kernel, drivers, GPU and hardware.
 Browser, Zed, ONLYOFFICE and VMs consume RAM while running. To investigate:
 
 ```bash
@@ -403,7 +403,7 @@ grep -o 'nvidia-drm.modeset=1' /proc/cmdline
 - With **Secure Boot** enabled, the module needs an enrolled key. If the installer warned:
   `sudo kmodgenca -a`, `sudo mokutil --import /etc/pki/akmods/certs/public_key.der`, reboot and
   finish the enrollment in the firmware menu.
-- On hybrid setups, `profile.d/omyfedora-nvidia.sh` does GLX offload to the dGPU. To force the
+- On hybrid setups, `profile.d/msbos-nvidia.sh` does GLX offload to the dGPU. To force the
   iGPU for a specific app:
 
   ```bash
@@ -414,10 +414,10 @@ grep -o 'nvidia-drm.modeset=1' /proc/cmdline
 
 ## Recovering files and going back
 
-- Every overwritten file has a backup next to it with an `.omyfedora-bak` suffix. To restore:
+- Every overwritten file has a backup next to it with an `.msbos-bak` suffix. To restore:
 
   ```bash
-  cp -a /path/file.omyfedora-bak /path/file
+  cp -a /path/file.msbos-bak /path/file
   ```
 
 - Personal configs (`niri/config.kdl`, `noctalia/config.toml`, `.zshrc`, `alacritty.toml`,
@@ -432,7 +432,7 @@ grep -o 'nvidia-drm.modeset=1' /proc/cmdline
 - To cancel the scheduled Plasma removal before reboot:
 
   ```bash
-  sudo systemctl disable omyfedora-remove-plasma.service
+  sudo systemctl disable msbos-remove-plasma.service
   ```
 
   This keeps the packages; login still uses greetd/niri until you re-enable `plasmalogin`.
@@ -447,8 +447,8 @@ niri --version
 systemctl --failed
 systemctl status greetd
 journalctl -b -p warning
-ls /var/lib/omyfedora/steps/
+ls /var/lib/msbos/steps/
 free -h
 ```
 
-Project issues: <https://github.com/marcos2872/omyfedora/issues>.
+Project issues: <https://github.com/marcos2872/msbos/issues>.

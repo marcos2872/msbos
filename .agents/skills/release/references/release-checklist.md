@@ -1,4 +1,4 @@
-# Checklist de release — omyfedora
+# Checklist de release — msbos
 
 ## Pré-release
 
@@ -21,7 +21,7 @@
 ## Pós-release
 
 - [ ] Release não-draft, não-prerelease e marcada como **Latest**.
-- [ ] Assets: `omyfedora-<tag>.tar.gz` e `SHA256SUMS`.
+- [ ] Assets: `msbos-<tag>.tar.gz` e `SHA256SUMS`.
 - [ ] `sha256sum -c SHA256SUMS` passou após o download.
 - [ ] Tarball contém `install.sh` e `bootstrap.sh`.
 - [ ] Corpo da release tem os destaques + blocos de instalação/verificação.

@@ -7,7 +7,7 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 //
-// omyfedora: instalado com install_file_once — ajustes feitos no Zed depois
+// msbos: instalado com install_file_once — ajustes feitos no Zed depois
 // da instalação nunca são sobrescritos por uma reexecução do install.sh.
 {
   "icon_theme": "JetBrains New UI Icons (Dark)",

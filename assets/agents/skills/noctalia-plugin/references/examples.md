@@ -98,13 +98,13 @@ Não copie o `plugin_api = 36` do exemplo para um Noctalia 5.3.0; ajuste para os
 | `noctalia/official-plugins/timer` | serviço + widget + painel + desktop widget compartilhando estado. |
 | `noctalia/official-plugins/wallhaven` | painel com HTTP/download de imagens e wallpaper. |
 | `raycursive/niri-displays` (local) | serviço que consulta/aplica `niri msg`; painel e widget. |
-| `omyfedora-ai-chat` (local) | painel complexo, SSE, formulários, settings, export e integração com OpenCode. |
+| `msbos-ai-chat` (local) | painel complexo, SSE, formulários, settings, export e integração com OpenCode. |
 
 Caminhos locais:
 
 ```text
 ~/.local/share/noctalia/plugins/niri-displays/
-~/.local/share/noctalia/plugins/omyfedora-ai-chat/
+~/.local/share/noctalia/plugins/msbos-ai-chat/
 ```
 
 ## Padrões que valem copiar

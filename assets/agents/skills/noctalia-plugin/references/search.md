@@ -25,7 +25,7 @@ find ~/.local/share/noctalia/plugins -maxdepth 2 -type f -name '*.luau' -print |
 Plugins locais de referência:
 
 - `~/.local/share/noctalia/plugins/niri-displays/` — widget + painel + serviço + IPC do niri.
-- `~/.local/share/noctalia/plugins/omyfedora-ai-chat/` — painel complexo, SSE, formulários, serviço, settings, tamanho de painel.
+- `~/.local/share/noctalia/plugins/msbos-ai-chat/` — painel complexo, SSE, formulários, serviço, settings, tamanho de painel.
 
 Busca no código local:
 

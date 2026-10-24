@@ -1,13 +1,13 @@
 ---
-name: Release do omyfedora
-description: Prepara, publica e valida releases do omyfedora (tag anotada vX.Y.Z, notas em .github/release-notes, tarball com SHA256SUMS e GitHub Release). Use ao criar uma nova versão, subir tag, publicar ou republicar uma release, ou conferir uma release publicada.
+name: Release do msbos
+description: Prepara, publica e valida releases do msbos (tag anotada vX.Y.Z, notas em .github/release-notes, tarball com SHA256SUMS e GitHub Release). Use ao criar uma nova versão, subir tag, publicar ou republicar uma release, ou conferir uma release publicada.
 ---
 
-# Release do omyfedora
+# Release do msbos
 
 Este skill define o padrão do projeto para releases. A **tag é a fonte da verdade**: não existe
 arquivo `VERSION`. Uma release é uma tag anotada `vX.Y.Z` em `main`; o workflow
-`.github/workflows/release.yml` valida o commit, empacota `omyfedora-<tag>.tar.gz` +
+`.github/workflows/release.yml` valida o commit, empacota `msbos-<tag>.tar.gz` +
 `SHA256SUMS` e cria ou atualiza a GitHub Release.
 
 A skill fica em `.agents/skills/release/` (formato Agent Skills) e é compatível com OpenCode e
@@ -44,7 +44,7 @@ Depois de 1.0, use `MAJOR`.
 ## 1. Confirmar o estado
 
 ```bash
-cd /caminho/do/omyfedora
+cd /caminho/do/msbos
 git status --short                    # deve estar vazio
 git branch --show-current             # main
 git fetch origin
@@ -149,7 +149,7 @@ A tag deve apontar para o HEAD da `main` com CI verde:
 ```bash
 git rev-parse HEAD
 git rev-parse origin/main
-git tag -a "$TAG" -m "omyfedora $TAG — <resumo curto>"
+git tag -a "$TAG" -m "msbos $TAG — <resumo curto>"
 git show "$TAG" --stat --oneline | head -20
 git push origin "$TAG"
 ```
@@ -187,14 +187,14 @@ Baixe e confira os assets:
 tmp=$(mktemp -d)
 gh release download "$TAG" --dir "$tmp"
 (cd "$tmp" && sha256sum -c SHA256SUMS)
-tar -tzf "$tmp/omyfedora-$TAG.tar.gz" | grep -E '/(install.sh|bootstrap.sh)$'
+tar -tzf "$tmp/msbos-$TAG.tar.gz" | grep -E '/(install.sh|bootstrap.sh)$'
 rm -rf "$tmp"
 ```
 
 Esperado:
 
 - release não-draft, não-prerelease e marcada como **Latest**;
-- exatamente dois assets: `omyfedora-<tag>.tar.gz` e `SHA256SUMS`;
+- exatamente dois assets: `msbos-<tag>.tar.gz` e `SHA256SUMS`;
 - checksum OK e tarball com `install.sh` e `bootstrap.sh`;
 - corpo com os destaques + blocos de instalação/verificação.
 

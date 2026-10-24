@@ -43,7 +43,7 @@ echo "ao vivo: aplicado."
 if grep -q 'output "HDMI-A-1"' "${CONFIG}" && grep -q 'output "DP-3"' "${CONFIG}"; then
   echo "config: blocos output já existem em ${CONFIG} — nada a mudar."
 else
-  [[ -f ${CONFIG}.omyfedora-bak ]] || cp -a "${CONFIG}" "${CONFIG}.omyfedora-bak"
+  [[ -f ${CONFIG}.msbos-bak ]] || cp -a "${CONFIG}" "${CONFIG}.msbos-bak"
   tmp="$(mktemp)"
   python3 - "${CONFIG}" "${tmp}" <<'PY'
 import re, sys

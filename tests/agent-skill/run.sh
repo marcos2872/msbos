@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# tests/agent-skill/run.sh — rotina de validação da skill omyfedora + helper.
+# tests/agent-skill/run.sh — rotina de validação da skill msbos + helper.
 #
 # Uso:
 #   ./run.sh --phase 0 --phase 1            # sem senha (preflight + dry-run)
@@ -8,7 +8,7 @@
 #   ./run.sh --all --known-issues           # baseline: falhas conhecidas contam como KNOWN
 #
 # Rode como o usuário-alvo (NÃO como root). O teste NÃO usa sudo: as ações
-# privilegiadas passam por pkexec + /usr/local/libexec/omyfedora-priv, como
+# privilegiadas passam por pkexec + /usr/local/libexec/msbos-priv, como
 # manda a skill. A senha é digitada pelo usuário na janela do polkit.
 #
 # Fases:
@@ -28,27 +28,27 @@
 #   --mutating         inclui a fase 3 (muta; use --yes ou confirme no terminal)
 #   --yes, -y          pula a confirmação da fase 3 (só depois de o usuário aprovar)
 #   --known-issues     falhas já conhecidas/documentadas contam como KNOWN, não FAIL
-#   --helper CAMINHO   helper a testar (padrão: /usr/local/libexec/omyfedora-priv)
-#   --skill-dir DIR    skill a inspecionar (padrão: ~/.agents/skills/omyfedora)
+#   --helper CAMINHO   helper a testar (padrão: /usr/local/libexec/msbos-priv)
+#   --skill-dir DIR    skill a inspecionar (padrão: ~/.agents/skills/msbos)
 #   --policy ARQUIVO   .policy a validar (padrão: /usr/share/polkit-1/actions/...)
-#   --report ARQUIVO   relatório (padrão: ${TMPDIR:-/tmp}/omyfedora-agent-skill-<data>.log)
+#   --report ARQUIVO   relatório (padrão: ${TMPDIR:-/tmp}/msbos-agent-skill-<data>.log)
 #   --no-color         desliga cores
 #   -h, --help         esta ajuda
 
 set -uo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-DEFAULT_HELPER="/usr/local/libexec/omyfedora-priv"
-DEFAULT_POLICY="/usr/share/polkit-1/actions/org.omyfedora.priv.policy"
-DEFAULT_SKILL_DIR="${HOME}/.agents/skills/omyfedora"
-CONF_DIR="/etc/omyfedora"
-LOG_DIR="/var/log/omyfedora"
+DEFAULT_HELPER="/usr/local/libexec/msbos-priv"
+DEFAULT_POLICY="/usr/share/polkit-1/actions/org.msbos.priv.policy"
+DEFAULT_SKILL_DIR="${HOME}/.agents/skills/msbos"
+CONF_DIR="/etc/msbos"
+LOG_DIR="/var/log/msbos"
 
 HELPER="$DEFAULT_HELPER"
 POLICY_FILE="$DEFAULT_POLICY"
 SKILL_DIR="$DEFAULT_SKILL_DIR"
 STAGE="$REPO_ROOT/scripts/60-agent-skill.sh"
-REPORT="${TMPDIR:-/tmp}/omyfedora-agent-skill-$(date +%Y%m%d-%H%M%S).log"
+REPORT="${TMPDIR:-/tmp}/msbos-agent-skill-$(date +%Y%m%d-%H%M%S).log"
 KNOWN_MODE=0
 MUTATING=0
 YES=0
@@ -248,7 +248,7 @@ phase0() {
     assert_owner_root "PRE-HELPER-OWNER" "helper de root" "$HELPER"
     assert_mode_secure "PRE-HELPER-MODE" "helper sem escrita de grupo/outros" "$HELPER"
     run "$HELPER" version
-    assert_cmd "PRE-HELPER-VERSION" "helper responde version" 0 "omyfedora-priv"
+    assert_cmd "PRE-HELPER-VERSION" "helper responde version" 0 "msbos-priv"
     run "$HELPER" --help
     assert_cmd "PRE-HELPER-HELP" "helper responde --help" 0 "dnf-install"
   else
@@ -270,10 +270,10 @@ phase0() {
     if command -v pkaction >/dev/null 2>&1; then
       local a
       for a in dnf-install dnf-simulate-remove dnf-remove svc-enable svc-disable svc-restart; do
-        run pkaction --action-id "org.omyfedora.priv.${a}"
+        run pkaction --action-id "org.msbos.priv.${a}"
         assert_cmd "PRE-PKACTION-${a}" "ação ${a} carregada no polkit" 0
       done
-      run pkaction --action-id org.omyfedora.priv.dnf-install --verbose
+      run pkaction --action-id org.msbos.priv.dnf-install --verbose
       assert_cmd "PRE-PKACTION-ANNOT" "ação usa a anotação exec.argv1" 0 "exec.argv1"
     else
       fail "PRE-PKACTION" "pkaction ausente (pacote polkit)"
@@ -283,7 +283,7 @@ phase0() {
   fi
 
   if [[ -f "$CONF_DIR/allowed-units.list" && -f "$CONF_DIR/protected.list" ]]; then
-    assert_owner_root "PRE-CONF-OWNER" "listas de /etc/omyfedora são de root" "$CONF_DIR/protected.list"
+    assert_owner_root "PRE-CONF-OWNER" "listas de /etc/msbos são de root" "$CONF_DIR/protected.list"
     assert_mode_secure "PRE-CONF-MODE" "listas sem escrita de grupo/outros" "$CONF_DIR/protected.list"
   else
     fail "PRE-CONF" "listas ausentes em $CONF_DIR"
@@ -348,7 +348,7 @@ phase0() {
   fi
 
   assert_file "PRE-SKILL" "SKILL.md instalada" "$SKILL_DIR/SKILL.md"
-  assert_grep "PRE-SKILL-NAME" "frontmatter name: omyfedora" '^name: omyfedora' "$SKILL_DIR/SKILL.md"
+  assert_grep "PRE-SKILL-NAME" "frontmatter name: msbos" '^name: msbos' "$SKILL_DIR/SKILL.md"
   local ref
   for ref in niri noctalia fedora-dnf propriedade seguranca local; do
     assert_file "PRE-SKILL-REF-${ref}" "references/${ref}.md" "$SKILL_DIR/references/${ref}.md"
@@ -390,11 +390,11 @@ phase1() {
   if [[ -f "$SKILL_DIR/SKILL.md" && -f "$SKILL_DIR/references/fedora-dnf.md" ]]; then
     local line bad=0 offending=""
     while IFS= read -r line; do
-      if [[ $line != *"/usr/local/libexec/omyfedora-priv --dry-run"* ]]; then
+      if [[ $line != *"/usr/local/libexec/msbos-priv --dry-run"* ]]; then
         bad=1
         offending+="$line"$'\n'
       fi
-    done < <(grep -h -- 'omyfedora-priv --dry-run' \
+    done < <(grep -h -- 'msbos-priv --dry-run' \
       "$SKILL_DIR/SKILL.md" "$SKILL_DIR/references/fedora-dnf.md" 2>/dev/null || true)
     if ((bad == 0)); then
       pass "STATIC-PATH" "dry-run documentado com caminho absoluto"
@@ -468,7 +468,7 @@ phase1() {
   done
 
   if [[ -f "$SKILL_DIR/SKILL.md" ]]; then
-    assert_grep "STATIC-SKILL-NAME" "frontmatter da skill" '^name: omyfedora' "$SKILL_DIR/SKILL.md"
+    assert_grep "STATIC-SKILL-NAME" "frontmatter da skill" '^name: msbos' "$SKILL_DIR/SKILL.md"
     assert_grep "STATIC-SKILL-DESC" "descrição da skill" '^description:' "$SKILL_DIR/SKILL.md"
   else
     skip "STATIC-SKILL-NAME" "SKILL.md ausente"
@@ -532,7 +532,7 @@ phase2() {
   section "Fase 2 — simulações e validações via pkexec (senha; não altera nada)"
 
   if [[ $HELPER != "$DEFAULT_HELPER" || ! -x $HELPER ]]; then
-    skip "PK-*" "helper instalado não encontrado; fase 2 exige /usr/local/libexec/omyfedora-priv"
+    skip "PK-*" "helper instalado não encontrado; fase 2 exige /usr/local/libexec/msbos-priv"
     return 0
   fi
   if ! command -v pkexec >/dev/null 2>&1; then
@@ -652,7 +652,7 @@ phase3() {
     [[ -n $TEST_PKG ]] && printf '  • instalar e remover o pacote de teste: %s\n' "$TEST_PKG"
     [[ -n $TEST_SVC ]] && printf '  • habilitar/desabilitar e restaurar o serviço: %s\n' "$TEST_SVC"
     printf '  • reiniciar o tuned (sem mudar configuração), se estiver ativo\n'
-    printf '  • deixar entradas no dnf history (desfazíveis) e no /var/log/omyfedora\n'
+    printf '  • deixar entradas no dnf history (desfazíveis) e no /var/log/msbos\n'
     read -r -p "Continuar? [s/N] " ans || ans=""
     if [[ ! $ans =~ ^[sSyY] ]]; then
       skip "MUT-*" "não confirmado pelo usuário"

@@ -2,24 +2,24 @@
 
 [Português](creditos.md) · [English](creditos.en.md)
 
-O omyfedora é um projeto pessoal de customização: ele não existiria sem o trabalho de muita
+O msbos é uma distro pessoal baseada no Fedora: ele não existiria sem o trabalho de muita
 gente. Esta página registra os principais projetos e comunidades que tornam essa configuração
-possível. O omyfedora **não é afiliado, endossado ou mantido** por nenhum deles.
+possível. O msbos **não é afiliado, endossado ou mantido** por nenhum deles.
 
 ## Base e desktop
 
-| Projeto | Papel no omyfedora | Onde |
+| Projeto | Papel no msbos | Onde |
 |---|---|---|
 | **Fedora Project** | Base do sistema, pacotes, dnf, SELinux, systemd e ciclo de releases | <https://fedoraproject.org> |
 | **KDE Community** | Apps KDE mantidos, Breeze Dark, `plasma-integration`, portais e `polkit-kde` | <https://kde.org> |
 | **Fedora KDE** | Imagem de referência usada como base recomendada | <https://fedoraproject.org/kde> |
 
 Obrigado ao Fedora Project e à comunidade KDE por construir e empacotar a base sobre a qual o
-omyfedora apenas aplica uma camada pessoal.
+msbos apenas aplica uma camada pessoal.
 
 ## Compositor, shell e login
 
-| Projeto | Autor/equipe | Papel no omyfedora | Onde |
+| Projeto | Autor/equipe | Papel no msbos | Onde |
 |---|---|---|---|
 | **niri** | YaLTeR | Compositor Wayland com tiling rolável | <https://github.com/YaLTeR/niri> |
 | **Noctalia** | Equipe do Noctalia | Shell (barra, launcher, OSD, lock screen, wallpaper) e greeter | <https://noctalia.dev> |
@@ -31,19 +31,19 @@ projetos abertos e documentados.
 
 ## Sistema, áudio e serviços
 
-| Projeto | Papel no omyfedora | Onde |
+| Projeto | Papel no msbos | Onde |
 |---|---|---|
 | **systemd** | Serviços, unidades, `systemd-oomd`, integração de boot | <https://systemd.io> |
 | **PipeWire / WirePlumber** | Áudio e gerenciamento de sessão de áudio | <https://pipewire.org> |
 | **zram-generator** | Swap comprimido em RAM (zram + zstd) | <https://github.com/systemd/zram-generator> |
 | **tuned** | Perfis de desempenho e `tuned-ppd` | <https://github.com/redhat-performance/tuned> |
-| **Plymouth** | Tema de boot do omyfedora | <https://www.freedesktop.org/wiki/Software/Plymouth/> |
+| **Plymouth** | Tema de boot do msbos | <https://www.freedesktop.org/wiki/Software/Plymouth/> |
 | **SELinux** | Contextos e módulos locais que mantêm a sessão funcionando | <https://selinuxproject.org> |
 | **dnf** | Gerenciador de pacotes e resolução de dependências | <https://github.com/rpm-software-management/dnf5> |
 
 ## Aplicativos e ferramentas
 
-| Projeto | Papel no omyfedora | Onde |
+| Projeto | Papel no msbos | Onde |
 |---|---|---|
 | **Zed** | Editor de código e REPL/Jupyter | <https://zed.dev> |
 | **OpenCode** | IA no terminal; configuração via `agents-config` | <https://opencode.ai> |
@@ -70,13 +70,13 @@ Obrigado também às comunidades de tradução, documentação, empacotamento e 
 KDE, niri, Noctalia e de todos os projetos acima. Bug reports, patches, documentação e
 discussões são o que mantêm esse ecossistema vivo.
 
-Se você mantém um desses projetos e encontrar algo no omyfedora que viole uma convenção ou
-expectativa, abra uma issue no repositório do omyfedora — a intenção é sempre respeitar e
+Se você mantém um desses projetos e encontrar algo no msbos que viole uma convenção ou
+expectativa, abra uma issue no repositório do msbos — a intenção é sempre respeitar e
 destacar o trabalho upstream.
 
 ## Licença e marcas
 
-O código do omyfedora é distribuído sob a licença [MIT](../LICENSE). Os nomes, logotipos e
+O código do msbos é distribuído sob a licença [MIT](../LICENSE). Os nomes, logotipos e
 marcas de Fedora, KDE, niri, Noctalia, greetd, Zed, Brave, ONLYOFFICE e dos demais projetos
 pertencem aos seus respectivos donos. O uso aqui é apenas descritivo, sem qualquer indicação de
 afiliação ou endosso.

@@ -285,7 +285,7 @@ Checklist e empacotamento: [`references/testing.md`](references/testing.md).
 
 Quando a documentação não bastar, siga esta ordem:
 
-1. **Código local instalado**: `~/.local/share/noctalia/plugins/` (inclui `niri-displays` e `omyfedora-ai-chat`).
+1. **Código local instalado**: `~/.local/share/noctalia/plugins/` (inclui `niri-displays` e `msbos-ai-chat`).
 2. **Docs oficiais v5**: <https://docs.noctalia.dev/noctalia/plugins/development/>.
 3. **Repositório oficial**: <https://github.com/noctalia-dev/official-plugins> (`example`, `screen_recorder`, `noctalia.d.luau`).
 4. **Repositório da comunidade**: <https://github.com/noctalia-dev/community-plugins>.

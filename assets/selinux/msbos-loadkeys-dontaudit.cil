@@ -1,0 +1,14 @@
+;; msbos — silencia um falso positivo do loadkeys no login.
+;;
+;; Quando o niri assume o console, o fbcon faz o "deferred takeover" e o udev
+;; reinicia o systemd-vconsole-setup. Ele executa
+;;   loadkeys -q -C /dev/tty1 -u <keymap>
+;; e o /dev/tty1 já pertence ao usuário da sessão (logind, modo 0600). O
+;; loadkeys_t tenta abrir o VT com O_RDWR e O_WRONLY; o SELinux nega essas
+;; duas tentativas por falta de dac_override, mas o fallback O_RDONLY funciona
+;; (dac_read_search é permitido) e o keymap é aplicado. Não há arquivo com
+;; permissão errada: a negação é benigna. Em vez de conceder dac_override,
+;; apenas suprimimos o AVC que o setroubleshoot transforma em alerta.
+(block msbos-loadkeys-dontaudit
+    (dontaudit loadkeys_t loadkeys_t (capability (dac_override)))
+)

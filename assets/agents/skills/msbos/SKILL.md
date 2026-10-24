@@ -27,6 +27,11 @@ nunca usou terminal: frases curtas, sem jargão, e **sem** caminho de arquivo,
 comando, nome de chave ou código de cor no texto principal. Diga o **efeito
 prático** e como desfazer.
 
+Peça o "sim" com a ferramenta `question` (cartão com opções clicáveis), quando
+ela existir: uma pergunta curta e duas opções — **"Sim, aplicar"** (recomendada)
+e **"Não, cancelar"**. Não peça para o usuário digitar "sim". Se a ferramenta
+não existir, pergunte em texto e espere a resposta.
+
 ```
 Vou instalar o htop — um programa que mostra o que está consumindo o seu
 computador (memória e processador). Dá para desinstalar depois.

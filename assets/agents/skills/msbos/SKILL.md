@@ -81,12 +81,18 @@ niri msg action spawn -- alacritty -e /usr/bin/pkexec /usr/local/libexec/msbos-p
 dnf-install <pacote...>          instala (sem pesos fracos, só repositórios já habilitados)
 dnf-simulate-remove <pacote...>  mostra o que seria removido (não altera nada)
 dnf-remove <pacote...>           remove (simula antes e aborta se tocar em pacote protegido)
+dnf-upgrade [--refresh]          atualiza o sistema (sem nomes de pacote; aborta se remover protegido)
 svc-enable <unidade>             habilita e inicia (só unidades da lista permitida)
 svc-disable <unidade>            desabilita e para (idem)
 svc-restart <unidade>            reinicia (idem)
 ```
 
 Para validar argumentos **sem privilégio e sem janela de senha**: `/usr/local/libexec/msbos-priv --dry-run <subcomando> ...` (execute direto, sem `pkexec`).
+
+O helper **nunca reinicia nem desliga a máquina**. Reiniciar é decisão do usuário:
+depois de um upgrade, diga que o reinício é necessário e deixe ele executar
+(`systemctl reboot` no terminal dele). Não peça, não sugira atalho e não tente
+reiniciar por outro caminho.
 
 O que não está nessa lista o helper não faz. Não improvise: diga ao usuário o que seria preciso e deixe que ele execute.
 

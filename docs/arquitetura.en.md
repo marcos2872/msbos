@@ -239,9 +239,12 @@ Everything is idempotent: it detects what already exists and skips it.
 
 - **Helper** `/usr/local/libexec/msbos-priv` (root, not writable by group/others, SELinux
   label `bin_t`): it is the only root path for an AI agent. It accepts only `dnf-install`,
-  `dnf-simulate-remove`, `dnf-remove` and `svc-enable|disable|restart`, with names validated by
-  regex (no glob, path, URL or option) and a protected-package list. `--dry-run` validates
-  arguments and checks the protected list without privileges.
+  `dnf-simulate-remove`, `dnf-remove`, `dnf-upgrade [--refresh]` and
+  `svc-enable|disable|restart`, with names validated by regex (no glob, path, URL or option)
+  and a protected-package list. `dnf-upgrade` upgrades the whole system (no package names)
+  and aborts if the transaction would remove a protected package; **the helper never reboots
+  or powers off the machine**. `--dry-run` validates arguments and checks the protected list
+  without privileges.
 - **Polkit**: installs `org.msbos.priv.policy` (auth_admin) and warns when the polkit-kde
   agent is not running in the session — without it `pkexec` cannot open the password window.
 - **Root lists**: `/etc/msbos/{allowed-units,protected}.list`, installed once; the agent

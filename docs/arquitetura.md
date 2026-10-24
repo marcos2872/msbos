@@ -236,9 +236,11 @@ Tudo é idempotente: detecta o que já existe e pula.
 
 - **Helper** `/usr/local/libexec/msbos-priv` (root, sem escrita de grupo/outros, rótulo
   SELinux `bin_t`): é a única porta para root de um agente de IA. Aceita só `dnf-install`,
-  `dnf-simulate-remove`, `dnf-remove` e `svc-enable|disable|restart`, com nomes validados por
-  regex (sem glob, caminho, URL ou opção) e lista de pacotes protegidos. O `--dry-run` valida
-  argumentos e checa os protegidos sem privilégio.
+  `dnf-simulate-remove`, `dnf-remove`, `dnf-upgrade [--refresh]` e
+  `svc-enable|disable|restart`, com nomes validados por regex (sem glob, caminho, URL ou
+  opção) e lista de pacotes protegidos. `dnf-upgrade` atualiza o sistema inteiro (sem nomes
+  de pacote) e aborta se a transação removeria um protegido; **o helper nunca reinicia nem
+  desliga a máquina**. O `--dry-run` valida argumentos e checa os protegidos sem privilégio.
 - **Polkit**: instala `org.msbos.priv.policy` (auth_admin) e avisa se o agente polkit-kde
   não estiver rodando na sessão — sem ele o `pkexec` não abre a janela de senha.
 - **Listas de root**: `/etc/msbos/{allowed-units,protected}.list`, instaladas uma vez; o

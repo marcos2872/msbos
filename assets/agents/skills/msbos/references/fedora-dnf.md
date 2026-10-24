@@ -41,6 +41,18 @@ O helper desliga a remoção em cascata de dependências órfãs e **recusa** a 
 
 Nesses casos **não tente de novo por outro caminho**. Explique ao usuário.
 
+## Atualizar o sistema
+
+1. `pkexec /usr/local/libexec/msbos-priv dnf-upgrade --refresh` (ou sem `--refresh`).
+2. O helper simula antes e **aborta** se a transação removeria pacote protegido.
+3. Informe como desfazer: `dnf history undo <ID>` (veja o ID em `dnf history list`).
+
+O helper atualiza o sistema inteiro: não aceita nomes de pacote nem outras opções
+além de `--refresh`, e mantém `install_weak_deps=0` como nas instalações. Depois do
+upgrade, diga que o **reinício é necessário** e
+deixe o usuário reiniciar (`systemctl reboot` no terminal dele): o helper não
+reinicia nem desliga a máquina.
+
 ## Serviços
 
 Unidades permitidas por padrão: `tuned`, `tuned-ppd`, `bluetooth`, `libvirtd`, `libvirtd.socket`, `podman.socket`, `cups`, `cups.socket`, `avahi-daemon` (+ `.socket`), `fprintd`, `firewalld`, `sshd`. Ficam **fora** de propósito: `systemd-oomd` (o projeto depende dele) e `power-profiles-daemon` (conflita com o `tuned-ppd`). O administrador pode ampliar em `/etc/msbos/allowed-units.list` (arquivo de root; você não edita).
@@ -56,7 +68,7 @@ Nunca mascare, pare ou desabilite: `greetd`, `NetworkManager`, `systemd-*`, `dbu
 
 ## O que o helper NÃO faz (explique e deixe o usuário agir)
 
-Adicionar ou remover repositórios, `dnf autoremove`, atualizar o sistema, editar `/etc` (sysctl, fstab, zram), GRUB/kernel, SELinux, PAM, greetd, drivers NVIDIA. Se o usuário pedir, diga o comando e o risco e deixe-o executar no terminal dele.
+Adicionar ou remover repositórios, `dnf autoremove`, editar `/etc` (sysctl, fstab, zram), GRUB/kernel, SELinux, PAM, greetd, drivers NVIDIA. **Reiniciar ou desligar a máquina** também não: depois de um upgrade, oriente o usuário a reiniciar. Se o usuário pedir algo dessa lista, diga o comando e o risco e deixe-o executar no terminal dele.
 
 ## Aplicativos sem pacote
 

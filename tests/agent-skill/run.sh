@@ -269,7 +269,7 @@ phase0() {
     fi
     if command -v pkaction >/dev/null 2>&1; then
       local a
-      for a in dnf-install dnf-simulate-remove dnf-remove svc-enable svc-disable svc-restart; do
+      for a in dnf-install dnf-simulate-remove dnf-remove dnf-upgrade svc-enable svc-disable svc-restart; do
         run pkaction --action-id "org.msbos.priv.${a}"
         assert_cmd "PRE-PKACTION-${a}" "ação ${a} carregada no polkit" 0
       done
@@ -497,6 +497,20 @@ phase1() {
   for i in {1..21}; do many+=("pacote$i"); done
   run "$HELPER" --dry-run dnf-install "${many[@]}"
   assert_cmd "DRY-INSTALL-MAX" "recusa mais de 20 pacotes" 1 "máximo"
+
+  # dnf-upgrade: sistema inteiro, sem alvos; só --refresh é aceito.
+  run "$HELPER" --dry-run dnf-upgrade
+  assert_cmd "DRY-UPGRADE-OK" "aceita dnf-upgrade sem argumentos" 0 "dry-run"
+  run "$HELPER" --dry-run dnf-upgrade --refresh
+  assert_cmd "DRY-UPGRADE-REFRESH" "aceita dnf-upgrade --refresh" 0 "--refresh"
+  run "$HELPER" --dry-run dnf-upgrade htop
+  assert_cmd "DRY-UPGRADE-PKG" "recusa nome de pacote" 1 "opção inválida"
+  run "$HELPER" --dry-run dnf-upgrade --allowerasing
+  assert_cmd "DRY-UPGRADE-OPT" "recusa opção extra" 1 "opção inválida"
+  run "$HELPER" --dry-run dnf-upgrade --refresh extra
+  assert_cmd "DRY-UPGRADE-ARGS" "recusa mais de um argumento" 1 "uso:"
+  run "$HELPER" --dry-run system-reboot
+  assert_cmd "DRY-NO-REBOOT" "reiniciar não é subcomando" 1 "desconhecido"
 
   run "$HELPER" --dry-run dnf-remove htop
   assert_cmd "DRY-REMOVE-NORMAL" "aceita remoção de nome válido (htop)" 0 "removeria"

@@ -59,6 +59,19 @@
     <annotate key="org.freedesktop.policykit.exec.allow_gui">true</annotate>
   </action>
 
+  <action id="org.msbos.priv.dnf-upgrade">
+    <description>Atualizar o sistema (msbos)</description>
+    <message>Autenticação necessária para atualizar o sistema a pedido de um assistente</message>
+    <defaults>
+      <allow_any>no</allow_any>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>auth_admin</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/local/libexec/msbos-priv</annotate>
+    <annotate key="org.freedesktop.policykit.exec.argv1">dnf-upgrade</annotate>
+    <annotate key="org.freedesktop.policykit.exec.allow_gui">true</annotate>
+  </action>
+
   <action id="org.msbos.priv.svc-enable">
     <description>Habilitar e iniciar um serviço (msbos)</description>
     <message>Autenticação necessária para habilitar e iniciar um serviço a pedido de um assistente</message>

@@ -10,6 +10,7 @@
 #   dnf-install <pacote...>          instala (sem weak deps; só repos já habilitados)
 #   dnf-simulate-remove <pacote...>  simula a remoção e lista o que sairia
 #   dnf-remove <pacote...>           remove (simula antes; recusa pacotes protegidos)
+#   dnf-upgrade [--refresh]          atualiza o sistema (sem remover pacotes)
 #   svc-enable|svc-disable|svc-restart <unidade>   só unidades da lista permitida
 #   version | help
 #
@@ -17,6 +18,7 @@
 #   • tudo que não está na lista é recusado (falha fechada);
 #   • nomes validados por regex restrita (sem glob, caminho, URL ou opção);
 #   • nunca remove em cascata dependências órfãs;
+#   • nunca reinicia nem desliga a máquina: isso é decisão do usuário;
 #   • toda ação (inclusive recusas) é registrada em /var/log/msbos/actions.log;
 #   • listas extras só são lidas de arquivos de root em /etc/msbos/.
 #
@@ -29,7 +31,7 @@ export PATH=/usr/sbin:/usr/bin:/sbin:/bin
 export LC_ALL=C
 umask 022
 
-readonly VERSAO="1"
+readonly VERSAO="2"
 readonly SELF="/usr/local/libexec/msbos-priv"
 readonly LOG_DIR="/var/log/msbos"
 readonly LOG_FILE="${LOG_DIR}/actions.log"
@@ -218,6 +220,50 @@ cmd_dnf_remove() {
   printf 'Para desfazer: veja o ID em "dnf history list" e rode "dnf history undo <ID>".\n'
 }
 
+# Atualizar o sistema. Sem alvos e sem opções livres: só `--refresh`
+# (renova os metadados dos repositórios antes de calcular a transação).
+# `dnf upgrade` não remove pacotes por padrão; a simulação existe só para o caso
+# de um obsoleto levar junto algum pacote protegido.
+cmd_dnf_upgrade() {
+  local refresh=0 extra=""
+  if (($# > 1)); then
+    die "uso: dnf-upgrade [--refresh] (sem nomes de pacote)"
+  fi
+  if (($# == 1)); then
+    if [[ ${1} != --refresh ]]; then
+      die "opção inválida: '${1}' (só --refresh é aceito)"
+    fi
+    refresh=1
+    extra=" --refresh"
+  fi
+  if [[ ${DRY_RUN} == 1 ]]; then
+    printf 'dry-run: atualizaria o sistema com dnf upgrade%s\n' "${extra}"
+    return 0
+  fi
+
+  local opts=("${DNF_COLOR[@]}")
+  if ((refresh == 1)); then opts+=(--refresh); fi
+
+  local sim
+  sim="$(dnf "${opts[@]}" upgrade --assumeno 2>&1)" || true
+  mapfile -t SAI < <(awk '
+    /^Removing/ { dentro = 1; next }
+    dentro && /^[[:space:]]*$/ { dentro = 0 }
+    dentro && $2 ~ /^(x86_64|noarch|i686|aarch64|src)$/ { print $1 }
+  ' <<<"${sim}" | sort -u)
+  local x
+  if ((${#SAI[@]} > 0)); then
+    for x in "${SAI[@]}"; do
+      if eh_protegido "${x}"; then
+        die "a atualização removeria o pacote protegido '${x}' — abortado"
+      fi
+    done
+  fi
+
+  executa dnf "${opts[@]}" -y "${DNF_INSTALL_OPTS[@]}" upgrade
+  printf 'Para desfazer: veja o ID em "dnf history list" e rode "dnf history undo <ID>".\n'
+}
+
 # ─── serviços ───────────────────────────────────────────────────────────────
 # Unidades que o agente pode mexer. Fora de propósito:
 #   • systemd-oomd  — o projeto depende dele (40-tuning.sh + oomd.conf);
@@ -282,6 +328,7 @@ main() {
     dnf-install)         cmd_dnf_install "$@" ;;
     dnf-simulate-remove) cmd_dnf_simulate_remove "$@" ;;
     dnf-remove)          cmd_dnf_remove "$@" ;;
+    dnf-upgrade)         cmd_dnf_upgrade "$@" ;;
     svc-enable)          cmd_svc enable "$@" ;;
     svc-disable)         cmd_svc disable "$@" ;;
     svc-restart)         cmd_svc restart "$@" ;;

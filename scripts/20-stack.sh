@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # 20-stack.sh — stack base (niri + Noctalia + greetd + áudio + utilitários)
-# sobre a base Fedora KDE: apps KDE mantidos, tema dark do KDE (Breeze Dark)
-# e aplicativos do usuário (Zed, OpenCode v2, Brave, ONLYOFFICE).
+# sobre a base Fedora KDE: apps KDE selecionados mantidos (Discover removido na
+# curadoria), tema dark do KDE (Breeze Dark) e apps do usuário.
 #
 # Métodos de instalação:
 #   niri/Noctalia/greetd/áudio   → dnf (repos oficiais do Fedora)
@@ -12,8 +12,9 @@
 #   ONLYOFFICE                   → repo oficial RPM da ONLYOFFICE
 #   LocalSend                    → flatpak oficial do Flathub (o Fedora não empacota; a release não tem RPM)
 #
-# A base é o Fedora KDE: os APPS KDE ficam (o usuário pediu mantê-los) e só o
-# shell do Plasma sai de cena — remoção AGENDADA para o próximo boot (seção 8).
+# A base é o Fedora KDE: os apps KDE selecionados ficam; o Discover e seu
+# notifier saem na curadoria. O shell do Plasma sai de cena com remoção
+# AGENDADA para o próximo boot (seção 8).
 
 set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/lib/common.sh"
@@ -190,18 +191,19 @@ if ((${#FALHAS_KDE[@]} > 0)); then
   warn "kde: ${#FALHAS_KDE[@]} pacote(s) não instalado(s): ${FALHAS_KDE[*]}"
 fi
 # Marca como user-installed (uma única chamada do dnf) os apps garantidos, o
-# suporte de tema/KIO e o CORE. Sem isso, um pacote que veio como dependência
-# do Plasma (ex.: o Konsole ou o plasma-integration) poderia ser levado na
-# cascata da remoção do shell no próximo boot (clean_requirements_on_remove).
+# suporte de tema/KIO, o CORE e o PackageKit quando instalado. Sem isso, um
+# pacote que veio como dependência do Plasma (ex.: o Konsole, o
+# plasma-integration ou o PackageKit) poderia ser levado na cascata da remoção
+# do Discover ou do shell no próximo boot (clean_requirements_on_remove).
 # Marcar como user-installed protege da cascata, mas o pacote continua removível
 # se o usuário quiser.
 KDE_INSTALADOS=()
-for p in "${CORE[@]}" "${SUPORTE[@]}" "${KDE_APPS[@]}"; do
+for p in "${CORE[@]}" "${SUPORTE[@]}" "${KDE_APPS[@]}" PackageKit; do
   rpm -q "${p}" >/dev/null 2>&1 && KDE_INSTALADOS+=("${p}")
 done
 if ((${#KDE_INSTALADOS[@]} > 0)); then
   run_cmd dnf -y mark user "${KDE_INSTALADOS[@]}" \
-    || warn "kde: falha ao marcar os apps garantidos como user-installed"
+    || warn "kde: falha ao marcar os pacotes garantidos como user-installed"
 fi
 # Baloo (indexador do Dolphin): come RAM/CPU — desligado de propósito.
 if command -v balooctl6 >/dev/null 2>&1; then
@@ -212,8 +214,9 @@ fi
 # ─── 2c. Curadoria: apps KDE e LibreOffice que o msbos não usa ───────────────
 # A base KDE já traz os apps padrão; o msbos remove só o que não se usa num
 # desktop de dev: jogos, a suíte PIM/e-mail (substituível por webmail), o
-# pacote de ajuda/acessibilidade e o LibreOffice (a suíte de escritório do
-# msbos é o ONLYOFFICE, instalado na seção 7). Remoção ao vivo é segura — são
+# pacote de ajuda/acessibilidade, o Discover/notifier (atualizações seguem
+# manuais via DNF) e o LibreOffice (a suíte de escritório do msbos é o
+# ONLYOFFICE, instalado na seção 7). Remoção ao vivo é segura — são
 # apps, sem scriptlet que derruba a sessão (o SHELL do Plasma sai de cena no
 # próximo boot, agendado na seção 8: esse sim derrubaria a sessão). A marcação
 # user-installed da 2b roda antes para a cascata não levar tema/KIO/apps.
@@ -225,6 +228,7 @@ else
     kmail kontact korganizer kaddressbook akregator  # PIM/e-mail (cascata kdepim-*)
     neochat                                          # cliente Matrix
     kmouth kcharselect khelpcenter                   # fala/char picker/ajuda
+    plasma-discover plasma-discover-notifier         # atualizações seguem manuais via DNF
   )
   for p in "${KDE_REMOVE[@]}"; do
     if rpm -q "${p}" >/dev/null 2>&1; then
@@ -417,8 +421,8 @@ fi
 # dnf (o mesmo valia para o gdm). A remoção é agendada via systemd para rodar
 # no próximo boot, ANTES do login (msbos-remove-plasma.service).
 # Sai só o SHELL do Plasma (desktop/workspace/login manager + wizard de
-# primeiro login). Os apps KDE ficam — inclusive o plasma-discover, que segue
-# funcionando com o PackageKit.
+# primeiro login). Os apps KDE mantidos pela curadoria ficam; plasma-discover
+# e plasma-discover-notifier já são removidos na seção 2c.
 if [[ ${SKIP_REMOVE:-0} == 1 ]]; then
   log "stack: remoções desativadas (--skip-remove)"
 else

@@ -218,11 +218,14 @@ antes do login, via `msbos-remove-plasma.service`. A remoção não acontece na 
 porque os scriptlets do plasmalogin/plasma-* mexem nos serviços systemd e derrubariam a
 sessão no meio da transação do dnf.
 
-O que sai: `plasma-desktop`, `plasma-workspace`, `plasma-login-manager`, `plasma-setup` e
-`plasma-welcome`. O que fica: **todos os apps KDE** (Dolphin, Konsole, Kate/KWrite, Okular,
-Gwenview, Spectacle, Dragon, Elisa, plasma-discover…) e os pacotes que mantêm o visual e os
-portais do KDE funcionando (`plasma-integration`, `plasma-breeze`, `plasma-systemsettings`,
-`polkit-kde`, `xdg-desktop-portal-kde`, `pam-kwallet`, `kde-gtk-config`, `konsole`).
+O que sai com o shell: `plasma-desktop`, `plasma-workspace`, `plasma-login-manager`, `plasma-setup` e
+`plasma-welcome`. Na curadoria normal (exceto com `--skip-remove`) também saem `plasma-discover` e
+`plasma-discover-notifier`; as atualizações do sistema continuam manuais via DNF. O PackageKit
+permanece disponível para outros componentes que dependam dele. Os demais apps KDE selecionados
+(Dolphin, Konsole, Kate/KWrite, Okular, Gwenview, Spectacle, Dragon, Elisa…) e os pacotes que
+mantêm o visual e os portais do KDE funcionando (`plasma-integration`, `plasma-breeze`,
+`plasma-systemsettings`, `polkit-kde`, `xdg-desktop-portal-kde`, `pam-kwallet`, `kde-gtk-config`,
+`konsole`) são mantidos.
 
 Para acompanhar:
 
@@ -237,8 +240,8 @@ já vai para o greetd/niri.
 
 ## Atualizações
 
-O msbos não instala atualização automática; o `dnf-automatic` é desativado de propósito.
-Atualize manualmente quando quiser:
+O msbos não instala atualização automática; o `dnf-automatic` é desativado de propósito e o
+Discover/notifier não fazem parte do stack. Atualize manualmente com DNF quando quiser:
 
 ```bash
 sudo dnf upgrade --refresh

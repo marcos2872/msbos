@@ -102,14 +102,17 @@ Fluxo: `install.sh` (orquestrador) → `lib/common.sh` (helpers) → `scripts/NN
   - `20-stack.sh` — núcleo (niri, Noctalia, greetd, PipeWire, portais), utilitários, zsh + fonte,
     lazydocker, apps (Zed, OpenCode v2, Brave, ONLYOFFICE, SSH_Orchestrator, LocalSend), **curadoria dos
     apps KDE e do LibreOffice** (remove jogos/PIM/ajuda e a suíte LibreOffice — o escritório do msbos é o
-    ONLYOFFICE — respeitando `--skip-remove`; garante Dolphin, Konsole, Kate/KWrite, Okular, Spectacle,
-    Dragon, Elisa…, marcando os garantidos como user-installed — imunes à cascata; tema Breeze Dark
+    ONLYOFFICE — respeitando `--skip-remove`; remove `plasma-discover`/`plasma-discover-notifier`;
+    garante Dolphin, Konsole, Kate/KWrite, Okular, Spectacle, Dragon, Elisa…, marcando os garantidos
+    como user-installed — imunes à cascata; tema Breeze Dark
     via plasma-integration/breeze-*) e **agendamento** da remoção do shell do Plasma.
   - `25-devtools.sh` — gcc/make, gh, ipykernel/matplotlib, Rust (rustup), Node LTS via nvm,
     pnpm/yarn e virtualização (@virtualization + libvirtd no boot + usuário no grupo libvirt) —
     idempotente.
   - `30-services.sh` — greetd assume o boot (plasmalogin/gdm/sddm mascarados), desativa daemons
-    dispensáveis (PackageKit/Discover ficam), habilita tuned/tuned-ppd/oomd/podman.socket e instala
+    dispensáveis (PackageKit permanece disponível para componentes que dependam dele; Discover e
+    notifier saem na curadoria, com atualizações manuais via DNF), habilita
+    tuned/tuned-ppd/oomd/podman.socket e instala
     o módulo SELinux local que silencia o falso positivo do `loadkeys` no VT da sessão;
     **nada é parado na sessão atual**.
   - `40-tuning.sh` — zram zstd, sysctl de memória (`__MINFREE__` calculado), `compress=zstd:1` no

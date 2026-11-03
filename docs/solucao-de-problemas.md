@@ -80,8 +80,10 @@ Ou use `--yes` em uma VM descartável/CI.
 ### Anaconda/Kickstart: o script não funciona no `%post`
 
 O `%post` roda no chroot, sem systemd como PID 1. O msbos precisa de um sistema já
-inicializado (`systemctl daemon-reload`, `runuser`, dconf/gsettings). Rode o bootstrap depois
-do primeiro boot ou use o `%post` apenas para instalar um serviço de primeiro boot.
+inicializado (`systemctl daemon-reload`, `runuser`, dconf/gsettings). Use o modo
+`--firstboot` do bootstrap (veja [Instalação desatendida](instalacao.md#instalação-desatendida-kickstart--primeiro-boot))
+— ele instala um serviço que roda a instalação no primeiro boot. Rodar o bootstrap num
+terminal normal, depois do primeiro boot, continua valendo como plano B.
 
 ## VM com tela preta ou cursor invertido
 

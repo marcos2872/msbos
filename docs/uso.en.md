@@ -215,9 +215,10 @@ in the middle of the dnf transaction.
 
 What goes away with the shell: `plasma-desktop`, `plasma-workspace`, `plasma-login-manager`,
 `plasma-setup` and `plasma-welcome`. Normal curation (unless `--skip-remove` is set) also removes
-`plasma-discover` and `plasma-discover-notifier`; system updates remain manual through DNF.
-PackageKit stays available for other components that depend on it. The other selected KDE apps
-(Dolphin, Konsole, Kate/KWrite, Okular, Gwenview, Spectacle, Dragon, Elisa…) and the packages
+the whole Discover (`plasma-discover`, notifier and backends); system updates remain manual
+through DNF. PackageKit stays installed and marked as user-installed (so dnf does not sweep it as
+an orphan), with nothing in the stack consuming it once Discover is gone. The other selected KDE
+apps (Dolphin, Konsole, Kate/KWrite, Okular, Gwenview, Spectacle, Dragon, Elisa…) and the packages
 that keep KDE styling and portals working (`plasma-integration`, `plasma-breeze`,
 `plasma-systemsettings`, `polkit-kde`, `xdg-desktop-portal-kde`, `pam-kwallet`, `kde-gtk-config`,
 `konsole`) are kept.
@@ -241,6 +242,13 @@ Discover/notifier are not part of the stack. Update manually through DNF when yo
 ```bash
 sudo dnf upgrade --refresh
 sudo reboot   # required for kernel, driver and initramfs
+```
+
+Firmware updates are manual now too (Discover was the `fwupd` GUI):
+
+```bash
+sudo fwupdmgr refresh
+sudo fwupdmgr update
 ```
 
 Re-running the installer is also safe and idempotent:

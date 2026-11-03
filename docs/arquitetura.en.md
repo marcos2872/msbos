@@ -136,9 +136,9 @@ The effective driver only applies after reboot.
   optional `swaybg`, `wlsunset`, `ddcutil`, `pipewire-alsa`.
 - **KDE curation**: removes games (`kmahjongg`, `kmines`, `kpat`), PIM/email (`kmail`,
   `kontact`, `korganizer`, `kaddressbook`, `akregator`), `neochat`, `kmouth`, `kcharselect`,
-  `khelpcenter`, `plasma-discover`, `plasma-discover-notifier` and LibreOffice (the project's
-  office suite is ONLYOFFICE). Respects `--skip-remove`; system updates remain manual through
-  DNF.
+  `khelpcenter`, the whole Discover (`plasma-discover`, notifier and backends) and LibreOffice (the
+  project's office suite is ONLYOFFICE). Respects `--skip-remove`; system updates remain manual
+  through DNF.
 - **Theme and guaranteed apps**: installs `plasma-integration`, `plasma-breeze`,
   `breeze-gtk-common`, `pam-kwallet`, `kde-cli-tools`, `dconf`, `kio-extras`, `kio-admin`,
   `kdegraphics-thumbnailers`, `ffmpegthumbs` and `kglobalacceld`, plus the KDE app list
@@ -183,8 +183,9 @@ Everything is idempotent: it detects what already exists and skips it.
   `loadkeys` false positive on the session VT.
 - Disables `avahi-daemon`, `cups` (the `cups.socket` stays for on-demand printing), `sssd`,
   `fprintd`, `dnf-automatic` (+ timer, masked), `systemd-pstore`, `plasma-setup` (when present)
-  and `bluetooth` when there is no adapter. PackageKit remains available for components that
-  depend on it, even though Discover/notifier are removed.
+  and `bluetooth` when there is no adapter. PackageKit stays installed and is marked as
+  user-installed so dnf does not sweep it as an orphan on a minimal install; once Discover is
+  gone, nothing in the stack consumes it.
 - Enables `tuned-ppd` (or `power-profiles-daemon`), `tuned`, `podman.socket` and
   `systemd-oomd`; creates the `/var/run/docker.sock` compatibility symlink and enables the
   rootless Podman socket so `lazydocker` works without sudo.

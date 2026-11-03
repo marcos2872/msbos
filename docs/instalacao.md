@@ -143,13 +143,43 @@ shell do Plasma é agendada para o próximo boot, antes do login, via
 Cada etapa concluída deixa um marcador em `/var/lib/msbos/steps/`. Se uma etapa falhar,
 o instalador mostra o código de erro, o histórico e como retomar.
 
-## Anaconda/Kickstart
+## Instalação desatendida (kickstart + primeiro boot)
 
 **Não execute o `install.sh` diretamente no `%post`.** O `%post` roda no chroot do sistema
 instalado, sem systemd como PID 1, e o msbos precisa de um sistema já inicializado
-(`systemctl daemon-reload`, `runuser`, dconf/gsettings). O caminho certo é rodar o bootstrap
-depois do primeiro boot — ou usar o `%post` apenas para instalar um serviço de primeiro boot
-que execute o bootstrap.
+(`systemctl daemon-reload`, `runuser`, dconf/gsettings). O caminho certo é um serviço de
+primeiro boot que rode o bootstrap depois que o sistema subir — é o que o modo `--firstboot`
+prepara (no `%post`, como root):
+
+```bash
+bash bootstrap.sh --firstboot --user NOME
+```
+
+Esse comando instala três arquivos e **não** instala o desktop agora:
+
+| Arquivo | Papel |
+|---|---|
+| `/usr/local/libexec/msbos-firstboot` | helper que roda o bootstrap com `--yes --user NOME` |
+| `/etc/systemd/system/msbos-firstboot.service` | oneshot habilitada para o primeiro boot |
+| `/etc/msbos/firstboot.conf` | `TARGET_USER` (obrigatório), `MSBOS_REF` e `MSBOS_REPO` (opcionais) |
+
+No primeiro boot a unit baixa e executa o `install.sh` (teto de 2 h). Se der certo, grava o
+marcador `/var/lib/msbos/firstboot.done` e se desabilita — o login seguinte já é o desktop do
+msbos, com a remoção do shell do Plasma agendada como sempre. Se falhar, ela tenta de novo nos
+próximos boots e desiste depois de 3 tentativas (contador em
+`/var/lib/msbos/firstboot.attempts`). Ela **nunca reinicia** a máquina.
+
+Acompanhe e confira:
+
+```bash
+journalctl -u msbos-firstboot -b        # esta tentativa
+journalctl -u msbos-firstboot -b -1     # tentativa anterior, se a atual falhou
+ls /var/lib/msbos/steps/                # etapas concluídas pelo install.sh
+```
+
+`kickstart/msbos-firstboot.ks` traz um `%post` pronto para colar no seu kickstart (ajuste o
+usuário). Em instalação normal, com o sistema já no ar, não use `--firstboot`: rode o bootstrap
+com `--yes` como sempre.
 
 ## Depois de instalar
 

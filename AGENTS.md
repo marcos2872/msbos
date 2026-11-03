@@ -86,7 +86,11 @@ Fluxo: `install.sh` (orquestrador) → `lib/common.sh` (helpers) → `scripts/NN
   e executa `scripts/[0-9][0-9]-*.sh` em ordem lexicográfica. Basta criar `scripts/60-foo.sh` para
   entrar no fluxo automaticamente.
 - `bootstrap.sh` — baixa o repositório como `.tar.gz`, extrai em diretório temporário e chama o
-  `install.sh` (sem `git`); aceita as mesmas flags e `MSBOS_REF`/`REPO`/`URL`/`KEEP`.
+  `install.sh` (sem `git`); aceita as mesmas flags e `MSBOS_REF`/`REPO`/`URL`/`KEEP`. Com
+  `--firstboot --user NOME` (usado no `%post` de um kickstart) não instala nada agora: instala
+  `msbos-firstboot`/unit e habilita a instalação no primeiro boot (veja `kickstart/`).
+- `kickstart/msbos-firstboot.ks` — exemplo de `%post` para instalação desatendida; o `%post`
+  não roda o `install.sh` (chroot sem systemd como PID 1), só prepara o `--firstboot`.
 - `pessoal-pc.sh` — script pessoal de layout de monitores + Chrome; **não** entra no `install.sh`.
 - `lib/common.sh` — carregado (`source`) por toda etapa. Fornece: `log/ok/warn/err`,
   `run_cmd`/`run_sh` (respeitam `DRY_RUN`), `exige_ok` (portão de operações destrutivas),
@@ -146,9 +150,10 @@ Fluxo: `install.sh` (orquestrador) → `lib/common.sh` (helpers) → `scripts/NN
   `assets/bin/` e `assets/libexec/` trazem helpers (`msbos-wallpaper`, `msbos-cpu-governor`,
   `msbos-seapplet` — cópia do applet do setroubleshoot com patch do GLib.GError —,
   `msbos-doctor` — diagnóstico somente-leitura do sistema instalado —,
-  `msbos-greeter-sync` — sync da aparência com o greeter no primeiro login — e
-  `msbos-remove-plasma`) e units systemd (`msbos-cpu-governor.service`,
-  `msbos-remove-plasma.service`).
+  `msbos-greeter-sync` — sync da aparência com o greeter no primeiro login —,
+  `msbos-remove-plasma` e `msbos-firstboot` — instalação desatendida no primeiro boot, só
+  habilitada pelo `bootstrap.sh --firstboot`/kickstart —) e units systemd
+  (`msbos-cpu-governor.service`, `msbos-remove-plasma.service`, `msbos-firstboot.service`).
   `assets/selinux/` não é copiado: contém módulos CIL instalados via `semodule` (ex.:
   `msbos-loadkeys-dontaudit`, que suprime o AVC benigno do `loadkeys` no VT da sessão).
 - Segurança de sessão: nada é parado durante a instalação; efeitos valem no próximo boot. A

@@ -1,0 +1,116 @@
+#!/usr/bin/env bash
+# msbos-firstboot — instala o msbos no primeiro boot (instalação desatendida).
+#
+# NÃO faz parte do fluxo normal do install.sh: é instalado pelo modo
+# `bootstrap.sh --firstboot` (usado no %post de um kickstart) e habilitado só
+# ali. O %post roda no chroot do sistema instalado, sem systemd como PID 1, e o
+# install.sh precisa de um sistema inicializado (systemctl, runuser, dconf) —
+# por isso a instalação real acontece aqui, no primeiro boot.
+#
+# Comportamento:
+#   - lê /etc/msbos/firstboot.conf (TARGET_USER obrigatório; MSBOS_REF e
+#     MSBOS_REPO opcionais) — arquivo de root, sem escrita por grupo/outros;
+#   - baixa o bootstrap.sh da ref pedida e roda `--yes --user NOME`;
+#   - sucesso: grava /var/lib/msbos/firstboot.done e se desabilita;
+#   - falha: conta a tentativa e sai com erro; a unit fica habilitada e tenta de
+#     novo no próximo boot, até MAX_TENTATIVAS (depois se desabilita e para);
+#   - nunca reinicia nem desliga a máquina: isso é decisão do usuário.
+#
+# Logs: journalctl -u msbos-firstboot. O install.sh deixa o histórico de etapas
+# em /var/lib/msbos/steps/.
+
+set -euo pipefail
+export PATH=/usr/sbin:/usr/bin:/sbin:/bin
+export LC_ALL=C
+umask 022
+
+readonly CONF=/etc/msbos/firstboot.conf
+readonly DONE=/var/lib/msbos/firstboot.done
+readonly ESTADO=/var/lib/msbos
+readonly UNIT=msbos-firstboot.service
+readonly MAX_TENTATIVAS=3
+readonly LIMITE_SEGUNDOS=7200 # 2 h: instalação longa é possível; travamento não
+
+log() { printf '[msbos-firstboot] %s\n' "$*"; }
+die() { printf '[msbos-firstboot] erro: %s\n' "$*" >&2; exit 1; }
+
+[[ ${EUID} -eq 0 ]] || die "precisa de root (a unit roda como root)"
+if [[ -f ${DONE} ]]; then
+  log "instalação já concluída (${DONE}) — nada a fazer"
+  exit 0
+fi
+
+# ─── configuração ───────────────────────────────────────────────────────────
+[[ -f ${CONF} ]] || die "configuração ausente: ${CONF} (o kickstart deveria tê-la criado)"
+dono="$(stat -c '%u' "${CONF}")"
+modo="$(stat -c '%a' "${CONF}")"
+if [[ ${dono} != 0 ]] || (( (8#${modo}) & 8#022 )); then
+  die "${CONF} deve ser de root e não pode ser gravável por grupo/outros"
+fi
+
+# conf_get CHAVE — lê `CHAVE=valor` sem executar o arquivo; aceita aspas.
+conf_get() {
+  sed -n "s/^[[:space:]]*$1[[:space:]]*=[[:space:]]*//p" "${CONF}" \
+    | tail -n1 \
+    | sed -e 's/[[:space:]]*$//' -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//"
+}
+
+TARGET_USER="$(conf_get TARGET_USER)"
+MSBOS_REF="$(conf_get MSBOS_REF)"
+MSBOS_REPO="$(conf_get MSBOS_REPO)"
+MSBOS_REF="${MSBOS_REF:-main}"
+MSBOS_REPO="${MSBOS_REPO:-marcos2872/msbos}"
+
+[[ -n ${TARGET_USER} ]] || die "TARGET_USER não definido em ${CONF}"
+getent passwd "${TARGET_USER}" >/dev/null 2>&1 \
+  || die "usuário-alvo '${TARGET_USER}' não existe (crie no kickstart com 'user ...')"
+for cmd in curl tar; do
+  command -v "${cmd}" >/dev/null 2>&1 || die "'${cmd}' não encontrado"
+done
+
+# ─── contador de tentativas ─────────────────────────────────────────────────
+install -d -m 0755 "${ESTADO}"
+tentativas=0
+if [[ -f ${ESTADO}/firstboot.attempts ]]; then
+  tentativas="$(tr -dc '0-9' <"${ESTADO}/firstboot.attempts" || true)"
+fi
+[[ -n ${tentativas} ]] || tentativas=0
+tentativas=$((tentativas + 1))
+printf '%s\n' "${tentativas}" >"${ESTADO}/firstboot.attempts"
+
+if ((tentativas > MAX_TENTATIVAS)); then
+  log "limite de ${MAX_TENTATIVAS} tentativas atingido — desabilitando ${UNIT}"
+  log "histórico: journalctl -u ${UNIT} -b -1 ; /var/lib/msbos/steps/"
+  systemctl disable "${UNIT}" >/dev/null 2>&1 || true
+  exit 1
+fi
+
+log "tentativa ${tentativas}/${MAX_TENTATIVAS}: instalando ${MSBOS_REPO}@${MSBOS_REF} para '${TARGET_USER}'"
+
+tmp="$(mktemp -d)"
+cleanup() { rm -rf "${tmp}"; }
+trap cleanup EXIT
+
+url="https://raw.githubusercontent.com/${MSBOS_REPO}/${MSBOS_REF}/bootstrap.sh"
+curl -fsSL --retry 3 --retry-delay 2 "${url}" -o "${tmp}/bootstrap.sh" \
+  || die "falha ao baixar ${url} (rede? ref ou repositório errado?)"
+
+rc=0
+MSBOS_REF="${MSBOS_REF}" MSBOS_REPO="${MSBOS_REPO}" \
+  timeout "${LIMITE_SEGUNDOS}" bash "${tmp}/bootstrap.sh" --yes --user "${TARGET_USER}" || rc=$?
+
+if ((rc != 0)); then
+  if ((rc == 124)); then
+    log "erro: a instalação passou de ${LIMITE_SEGUNDOS}s e foi interrompida"
+  else
+    log "erro: a instalação falhou (código ${rc})"
+  fi
+  log "a unit continua habilitada e tenta de novo no próximo boot (máx. ${MAX_TENTATIVAS})"
+  exit "${rc}"
+fi
+
+printf '%s ref=%s user=%s\n' "$(date --iso-8601=seconds)" "${MSBOS_REF}" "${TARGET_USER}" >"${DONE}"
+rm -f "${ESTADO}/firstboot.attempts"
+log "instalação concluída — marcador gravado em ${DONE}"
+systemctl disable "${UNIT}" >/dev/null 2>&1 || true
+log "a remoção do shell do Plasma e o primeiro login valem no próximo boot; reinicie quando quiser"

@@ -146,12 +146,42 @@ transaction.
 Each completed step leaves a marker in `/var/lib/msbos/steps/`. If a step fails, the
 installer prints the error code, the history and how to resume.
 
-## Anaconda/Kickstart
+## Unattended install (kickstart + first boot)
 
 **Do not run `install.sh` directly from `%post`.** `%post` runs inside the installed system's
-chroot without systemd as PID 1, and msbos needs a booted system (`systemctl
-daemon-reload`, `runuser`, dconf/gsettings). The right approach is to run the bootstrap after
-the first boot — or use `%post` only to install a first-boot service that runs the bootstrap.
+chroot without systemd as PID 1, and msbos needs a booted system (`systemctl daemon-reload`,
+`runuser`, dconf/gsettings). The right approach is a first-boot service that runs the bootstrap
+once the system is up — which is what the `--firstboot` mode sets up (inside `%post`, as root):
+
+```bash
+bash bootstrap.sh --firstboot --user NAME
+```
+
+That command installs three files and does **not** install the desktop right away:
+
+| File | Role |
+|---|---|
+| `/usr/local/libexec/msbos-firstboot` | helper that runs the bootstrap with `--yes --user NAME` |
+| `/etc/systemd/system/msbos-firstboot.service` | oneshot enabled for the first boot |
+| `/etc/msbos/firstboot.conf` | `TARGET_USER` (required), `MSBOS_REF` and `MSBOS_REPO` (optional) |
+
+On the first boot the unit downloads and runs `install.sh` (capped at 2 h). On success it writes
+the `/var/lib/msbos/firstboot.done` marker and disables itself — the next login is already the
+msbos desktop, with the Plasma shell removal scheduled as usual. On failure it retries on the
+following boots and gives up after 3 attempts (counter in
+`/var/lib/msbos/firstboot.attempts`). It **never reboots** the machine.
+
+Follow and inspect:
+
+```bash
+journalctl -u msbos-firstboot -b        # this attempt
+journalctl -u msbos-firstboot -b -1     # previous attempt, if the current one failed
+ls /var/lib/msbos/steps/                # steps completed by install.sh
+```
+
+`kickstart/msbos-firstboot.ks` has a ready-to-paste `%post` (adjust the user). On a normal
+install, with the system already up, do not use `--firstboot`: run the bootstrap with `--yes` as
+usual.
 
 ## After installation
 

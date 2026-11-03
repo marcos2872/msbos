@@ -1,0 +1,23 @@
+[Unit]
+Description=msbos — instalação no primeiro boot (desatendida)
+Documentation=https://github.com/marcos2872/msbos
+# Só existe em instalações preparadas: o enable é feito pelo modo --firstboot do
+# bootstrap.sh (kickstart %post), e o helper se desabilita ao terminar.
+ConditionPathExists=!/var/lib/msbos/firstboot.done
+ConditionPathExists=/etc/msbos/firstboot.conf
+Wants=network-online.target
+After=network-online.target local-fs.target
+Before=greetd.service display-manager.service graphical.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/libexec/msbos-firstboot
+# A instalação completa (dnf + downloads) pode levar dezenas de minutos; o
+# helper tem um teto interno próprio (2 h).
+TimeoutStartSec=infinity
+RemainAfterExit=yes
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

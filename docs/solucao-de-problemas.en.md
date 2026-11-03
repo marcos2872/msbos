@@ -80,8 +80,10 @@ Or use `--yes` on a throwaway VM/CI.
 ### Anaconda/Kickstart: the script does not work in `%post`
 
 `%post` runs in the chroot without systemd as PID 1. msbos needs a booted system
-(`systemctl daemon-reload`, `runuser`, dconf/gsettings). Run the bootstrap after the first boot
-or use `%post` only to install a first-boot service.
+(`systemctl daemon-reload`, `runuser`, dconf/gsettings). Use the bootstrap's `--firstboot` mode
+(see [Unattended install](instalacao.en.md#unattended-install-kickstart--first-boot)) — it
+installs a service that runs the installation on the first boot. Running the bootstrap in a
+normal terminal after the first boot still works as a plan B.
 
 ## Black screen or inverted cursor in a VM
 

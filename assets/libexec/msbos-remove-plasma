@@ -11,10 +11,11 @@
 # Comportamento:
 #   - desativa temporariamente a proteção de pacotes do Fedora KDE
 #     (plasma-desktop é protegido em /etc/dnf/protected.d/) e re-protege
-#     NetworkManager/tuned/tuned-ppd + os pacotes que o msbos mantém para os
-#     apps KDE (plasma-integration, plasma-breeze, plasma-systemsettings,
-#     polkit-kde, xdg-desktop-portal-kde) via --setopt append (o dnf5 soma,
-#     não substitui)
+#     NetworkManager/tuned/tuned-ppd + Discover, seus backends, PackageKit,
+#     plasma-welcome e os pacotes que o msbos mantém para os apps KDE
+#     (plasma-integration, plasma-breeze, plasma-systemsettings, polkit-kde,
+#     xdg-desktop-portal-kde) via --setopt
+#     append (o dnf5 soma, não substitui)
 #   - marca os mantidos como escolha do usuário (dnf mark user): sem eles os
 #     apps Qt perdem o estilo Breeze, o portal KDE e os diálogos de senha
 #   - remove o que ainda estiver instalado numa única transação
@@ -44,6 +45,20 @@ for f in /etc/dnf/protected.d/plasma-desktop.conf /etc/dnf/protected.d/fedora-wo
   [[ -e ${f}.msbos-off ]] && mv -f "${f}.msbos-off" "${f}"
 done
 
+# Backends opcionais também podem ficar órfãos na remoção do shell. Captura
+# todos os plasma-discover* instalados, incluindo o notifier.
+if ! DISCOVER_INSTALLED="$(rpm -qa --qf '%{NAME}\n' 'plasma-discover*' 2>/dev/null)"; then
+  log "falha ao listar pacotes plasma-discover — remoção abortada por segurança"
+  exit 1
+fi
+DISCOVER_PKGS=()
+while IFS= read -r p; do
+  case "${p}" in
+    '') continue ;;
+    plasma-discover*) DISCOVER_PKGS+=("${p}") ;;
+  esac
+done <<< "${DISCOVER_INSTALLED}"
+
 for f in /etc/dnf/protected.d/plasma-desktop.conf /etc/dnf/protected.d/fedora-workstation.conf; do
   [[ -e ${f} ]] || continue
   mv -f "${f}" "${f}.msbos-off"
@@ -51,24 +66,26 @@ for f in /etc/dnf/protected.d/plasma-desktop.conf /etc/dnf/protected.d/fedora-wo
 done
 
 PKGS=()
-for p in plasma-desktop plasma-workspace plasma-login-manager plasma-setup plasma-welcome; do
+for p in plasma-desktop plasma-workspace plasma-login-manager plasma-setup; do
   if rpm -q "$p" >/dev/null 2>&1; then
     PKGS+=("$p")
   fi
 done
 
 # Pacotes que a transação NUNCA pode levar na cascata (clean_requirements_on_remove):
-# NetworkManager/tuned/tuned-ppd são essenciais ao sistema; o Konsole é o
-# terminal do dia a dia (não pode ser removido, pedido explícito); o resto é o
-# que mantém os apps KDE funcionando (estilo Breeze, portal, agente polkit,
-# KIO, miniaturas) e o menu XDG (redhat-menus: sem applications.menu o KSycoca
-# fica sem apps e o Dolphin abre "Abrir com" vazio).
-KEEP_PKGS=(NetworkManager tuned tuned-ppd konsole
+# NetworkManager/tuned/tuned-ppd são essenciais; Discover/notifier, PackageKit,
+# plasma-welcome (se instalado) e Konsole ficam disponíveis. O restante mantém os apps KDE:
+# estilo Breeze, portal, agente polkit, KIO, miniaturas e o menu XDG (redhat-menus: sem
+# applications.menu o KSycoca fica sem apps e o Dolphin abre "Abrir com" vazio).
+KEEP_PKGS=(NetworkManager tuned tuned-ppd konsole PackageKit plasma-welcome
   plasma-integration plasma-breeze plasma-systemsettings polkit-kde
   xdg-desktop-portal-kde pam-kwallet kde-gtk-config kde-cli-tools dconf
   breeze-icon-theme breeze-cursor-theme redhat-menus
   kio-extras kio-admin kdegraphics-thumbnailers ffmpegthumbs
   kglobalacceld kf6-kwallet)
+if ((${#DISCOVER_PKGS[@]} > 0)); then
+  KEEP_PKGS+=("${DISCOVER_PKGS[@]}")
+fi
 # Apps que o 20-stack marca como user-installed; o preflight também os vigia.
 APP_PKGS=(dolphin kwrite okular gwenview ark kcalc spectacle kde-connect
   kfind dragon elisa-player plasma-systemmonitor kinfocenter)

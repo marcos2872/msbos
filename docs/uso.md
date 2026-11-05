@@ -218,12 +218,16 @@ antes do login, via `msbos-remove-plasma.service`. A remoção não acontece na 
 porque os scriptlets do plasmalogin/plasma-* mexem nos serviços systemd e derrubariam a
 sessão no meio da transação do dnf.
 
-O que sai com o shell: `plasma-desktop`, `plasma-workspace`, `plasma-login-manager`, `plasma-setup`
-e `plasma-welcome`. Na curadoria normal (exceto com `--skip-remove`) também sai o Discover inteiro
-(`plasma-discover`, notifier e backends); as atualizações do sistema continuam manuais via DNF. O
-PackageKit segue instalado e marcado como user-installed (para o dnf não tratá-lo como órfão), sem
-consumidor no stack depois que o Discover sai. Os demais apps KDE selecionados
-(Dolphin, Konsole, Kate/KWrite, Okular, Gwenview, Spectacle, Dragon, Elisa…) e os pacotes que
+O shell removido inclui `plasma-desktop`, `plasma-workspace`, `plasma-login-manager` e
+`plasma-setup`; `plasma-welcome`, se já instalado, permanece disponível para abertura manual. A
+configuração `/etc/xdg/plasma-welcomerc` desativa somente a página de novidades pós-update, sem
+desativar o app.
+
+A loja Discover, o notifier e todos os pacotes `plasma-discover*` já instalados são mantidos e
+marcados como user-installed, assim como PackageKit quando presente; o msbos não instala pacotes
+Discover ausentes. Notificações e atualizações via Discover continuam disponíveis. Atualizações
+também podem ser feitas manualmente pelo DNF. Os demais apps KDE
+selecionados (Dolphin, Konsole, Kate/KWrite, Okular, Gwenview, Spectacle, Dragon, Elisa…) e os pacotes que
 mantêm o visual e os portais do KDE funcionando (`plasma-integration`, `plasma-breeze`,
 `plasma-systemsettings`, `polkit-kde`, `xdg-desktop-portal-kde`, `pam-kwallet`, `kde-gtk-config`,
 `konsole`) são mantidos.
@@ -241,15 +245,17 @@ já vai para o greetd/niri.
 
 ## Atualizações
 
-O msbos não instala atualização automática; o `dnf-automatic` é desativado de propósito e o
-Discover/notifier não fazem parte do stack. Atualize manualmente com DNF quando quiser:
+O msbos não instala atualização automática; o `dnf-automatic` é desativado de propósito. A loja,
+o notifier e as notificações do Discover continuam disponíveis; atualize manualmente pelo Discover
+ou pelo DNF quando quiser:
 
 ```bash
 sudo dnf upgrade --refresh
 sudo reboot   # necessário para kernel, driver e initramfs
 ```
 
-Atualização de firmware também é manual agora (o Discover era a interface do `fwupd`):
+Atualizações de firmware também são manuais: se a loja Discover e o suporte do dispositivo
+estiverem disponíveis, use a área de firmware; alternativamente, pela linha de comando, `fwupdmgr`:
 
 ```bash
 sudo fwupdmgr refresh

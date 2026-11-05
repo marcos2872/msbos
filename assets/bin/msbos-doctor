@@ -295,7 +295,7 @@ else
 fi
 
 plasma_presente=()
-for p in plasma-desktop plasma-workspace plasma-login-manager plasma-setup plasma-welcome; do
+for p in plasma-desktop plasma-workspace plasma-login-manager plasma-setup; do
   rpm_has "${p}" && plasma_presente+=("${p}")
 done
 if ((${#plasma_presente[@]} == 0)); then

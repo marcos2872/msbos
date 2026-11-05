@@ -101,9 +101,10 @@ fi
 
 # ─── 3. Daemons dispensáveis num desktop Wayland enxuto ─────────────────────
 # Nota: cups.service sai de cena, mas o cups.socket continua — a impressão
-# segue funcionando sob demanda (socket activation). O PackageKit permanece
-# disponível para outros componentes que dependam dele; as atualizações do
-# sistema seguem manuais via DNF (o Discover sai na curadoria do 20-stack.sh).
+# segue funcionando sob demanda (socket activation). Esta etapa não desativa o
+# PackageKit; 20-stack marca-o como user-installed quando já está instalado.
+# Discover/notifier e notificações continuam disponíveis; atualizações podem
+# ser feitas manualmente via Discover ou DNF.
 off avahi-daemon
 off cups
 off sssd

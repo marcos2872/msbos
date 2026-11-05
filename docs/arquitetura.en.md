@@ -136,15 +136,18 @@ The effective driver only applies after reboot.
   optional `swaybg`, `wlsunset`, `ddcutil`, `pipewire-alsa`.
 - **KDE curation**: removes games (`kmahjongg`, `kmines`, `kpat`), PIM/email (`kmail`,
   `kontact`, `korganizer`, `kaddressbook`, `akregator`), `neochat`, `kmouth`, `kcharselect`,
-  `khelpcenter`, the whole Discover (`plasma-discover`, notifier and backends) and LibreOffice (the
-  project's office suite is ONLYOFFICE). Respects `--skip-remove`; system updates remain manual
-  through DNF.
+  `khelpcenter` and LibreOffice (the project's office suite is ONLYOFFICE). The store, notifier
+  and backends are not removed: all already-installed `plasma-discover*` packages are kept and
+  marked `user-installed`; missing Discover packages are not installed. Discover notifications
+  and updates remain available; updates can also be done manually through DNF. Respects
+  `--skip-remove`.
 - **Theme and guaranteed apps**: installs `plasma-integration`, `plasma-breeze`,
   `breeze-gtk-common`, `pam-kwallet`, `kde-cli-tools`, `dconf`, `kio-extras`, `kio-admin`,
   `kdegraphics-thumbnailers`, `ffmpegthumbs` and `kglobalacceld`, plus the KDE app list
   (Dolphin, Konsole, KWrite, Okular, Gwenview, Ark, Spectacle, Dragon, Elisa, etc.). Marks
-  `CORE`, the theme/KIO support packages and the apps as `user-installed` **before** curation,
-  so dnf's cascade cannot take any of them; disables Baloo.
+  `CORE`, the theme/KIO support packages and the apps as `user-installed` **before** curation;
+  also marks all installed `plasma-discover*` packages, PackageKit and `plasma-welcome` when
+  present, so dnf's cascade cannot take them; disables Baloo.
 - **Terminal**: zsh, autosuggestions, syntax highlighting, fzf, bash-completion and JetBrains
   Mono.
 - **Containers**: `lazydocker` (Fedora repo or release binary with verified sha256) and
@@ -158,7 +161,8 @@ The effective driver only applies after reboot.
 - **Plasma shell**: unless `--skip-remove` is set, simulates the transaction with
   `dnf remove --assumeno` and aborts if any kept app/support package appears in the plan; only
   then asks through `exige_ok` and **schedules** removal for the next boot with
-  `msbos-remove-plasma.service`. It never removes the live session.
+  `msbos-remove-plasma.service`. It never removes the live session. An installed `plasma-welcome`
+  is excluded from shell removal and remains available to open manually.
 - **Malcontent**: if `accounts-daemon` exposes `com.endlessm.ParentalControls`, ensures the
   `malcontent` package (without it every `flatpak run` fails). Otherwise, it installs nothing.
 
@@ -183,9 +187,9 @@ Everything is idempotent: it detects what already exists and skips it.
   `loadkeys` false positive on the session VT.
 - Disables `avahi-daemon`, `cups` (the `cups.socket` stays for on-demand printing), `sssd`,
   `fprintd`, `dnf-automatic` (+ timer, masked), `systemd-pstore`, `plasma-setup` (when present)
-  and `bluetooth` when there is no adapter. PackageKit stays installed and is marked as
-  user-installed so dnf does not sweep it as an orphan on a minimal install; once Discover is
-  gone, nothing in the stack consumes it.
+  and `bluetooth` when there is no adapter. This step does not disable PackageKit; marking it
+  `user-installed`, along with the store and all installed backends, happens in `20-stack.sh`.
+  Discover notifications remain available; updates can be done manually through Discover or DNF.
 - Enables `tuned-ppd` (or `power-profiles-daemon`), `tuned`, `podman.socket` and
   `systemd-oomd`; creates the `/var/run/docker.sock` compatibility symlink and enables the
   rootless Podman socket so `lazydocker` works without sudo.
@@ -206,6 +210,9 @@ Everything is idempotent: it detects what already exists and skips it.
 
 ### `50-configs.sh` — final configuration
 
+- **Plasma Welcome**: installs `/etc/xdg/plasma-welcomerc`, locking only
+  `ShowUpdatePage[$i]=false`; the post-update news page is hidden, but Welcome stays installed
+  and, when installed, can still be opened manually.
 - **niri**: installs `~/.config/niri/config.kdl` once and the `/etc/xdg/niri/config.kdl`
   fallback always (with backup).
 - **Noctalia**: `config.toml` once; `90-greeter-sync.toml` and
@@ -268,7 +275,7 @@ CIL modules installed through `semodule`, not copied files.
 | Type | Examples | Policy |
 |---|---|---|
 | Personal config | `niri/config.kdl`, `noctalia/config.toml`, `.zshrc`, `alacritty.toml`, `zed/*` | `install_file_once` — never overwrites |
-| Project config | `/etc/xdg/niri/config.kdl`, GTK/dconf theme, `profile.d`, wallpapers, helpers | `install_file` — updates with backup |
+| Project config | `/etc/xdg/niri/config.kdl`, `/etc/xdg/plasma-welcomerc`, GTK/dconf theme, `profile.d`, wallpapers, helpers | `install_file` — updates with backup |
 | GUI state | `~/.local/state/noctalia/settings.toml`, plugins | Only installs when absent |
 | Theme palette | `~/.config/noctalia/palettes/macOS.json` | `install_file` with backup; to customize, create another palette |
 | SELinux modules | `assets/selinux/*.cil` | Installed through `semodule` |

@@ -38,6 +38,10 @@ else
 fi
 log "config: configurando para o usuário: ${TU} (${TU_HOME})"
 
+# Se instalado, Plasma Welcome continua disponível para abertura manual. A
+# chave imutável desativa somente a página de novidades pós-update do Plasma.
+install_file "etc/xdg/plasma-welcomerc" "/etc/xdg/plasma-welcomerc"
+
 # ─── 1. niri ────────────────────────────────────────────────────────────────
 # Config do USUÁRIO: só instala se não existir (install_file_once) — o niri
 # substitui TODOS os binds default quando o config define qualquer bind, então

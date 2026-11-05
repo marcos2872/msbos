@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # 20-stack.sh — stack base (niri + Noctalia + greetd + áudio + utilitários)
-# sobre a base Fedora KDE: apps KDE selecionados mantidos (Discover removido na
-# curadoria), tema dark do KDE (Breeze Dark) e apps do usuário.
+# sobre a base Fedora KDE: apps KDE selecionados, Discover/notifier e backends
+# instalados preservados; tema dark do KDE (Breeze Dark) e apps do usuário.
 #
 # Métodos de instalação:
 #   niri/Noctalia/greetd/áudio   → dnf (repos oficiais do Fedora)
@@ -12,9 +12,9 @@
 #   ONLYOFFICE                   → repo oficial RPM da ONLYOFFICE
 #   LocalSend                    → flatpak oficial do Flathub (o Fedora não empacota; a release não tem RPM)
 #
-# A base é o Fedora KDE: os apps KDE selecionados ficam; o Discover e seu
-# notifier saem na curadoria. O shell do Plasma sai de cena com remoção
-# AGENDADA para o próximo boot (seção 8).
+# A base é o Fedora KDE: os apps KDE selecionados e todos os plasma-discover*
+# instalados (incluindo notifier) ficam. O shell do Plasma sai de cena com
+# remoção AGENDADA para o próximo boot (seção 8).
 
 set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/lib/common.sh"
@@ -27,6 +27,22 @@ TU_SHELL="$(getent passwd "${TU}" | cut -d: -f7)"
 log "stack: usuário-alvo: ${TU} (${TU_HOME})"
 
 DNFOPT='--setopt=install_weak_deps=0'
+
+# Captura a loja e todos os pacotes plasma-discover* instalados para marcá-los e protegê-los da
+# remoção do shell. A query não instala pacotes e falha fechada: sem a lista
+# completa, não é seguro continuar e agendar a remoção.
+DISCOVER_INSTALLED=''
+if ! DISCOVER_INSTALLED="$(rpm -qa --qf '%{NAME}\n' 'plasma-discover*' 2>/dev/null)"; then
+  err "stack: não consegui listar os pacotes plasma-discover — abortando por segurança"
+  exit 1
+fi
+DISCOVER_PKGS=()
+while IFS= read -r p; do
+  case "${p}" in
+    '') continue ;;
+    plasma-discover*) DISCOVER_PKGS+=("${p}") ;;
+  esac
+done <<< "${DISCOVER_INSTALLED}"
 
 # install_lazydocker_verified — baixa o binário do lazydocker da última release
 # oficial e só instala se o sha256 do tarball bater com o checksums.txt da MESMA
@@ -204,15 +220,20 @@ if ((${#KDE_INSTALADOS[@]} > 0)); then
   run_cmd dnf -y mark user "${KDE_INSTALADOS[@]}" \
     || warn "kde: falha ao marcar os apps garantidos como user-installed"
 fi
-# PackageKit: daemon da base que o plasma-discover puxa como dependência. Com o
-# Discover fora (2c), numa instalação mínima ele ficaria órfão e a cascata do
-# dnf o levaria. O msbos o mantém (não há outro consumidor no stack) e o marca
-# como user-installed para o dnf não tratá-lo como sobra; o usuário pode
-# removê-lo depois se não quiser o daemon.
-if rpm -q PackageKit >/dev/null 2>&1; then
-  run_cmd dnf -y mark user PackageKit \
-    || warn "stack: falha ao marcar o PackageKit como user-installed"
+# A loja, o notifier e todos os backends plasma-discover* já instalados ficam
+# disponíveis; o Discover não é instalado se estiver ausente. Se já instalado,
+# o Welcome também fica disponível para abertura manual; só sua página de
+# novidades pós-update é desativada em 50-configs.sh.
+KDE_MARK_PKGS=(PackageKit plasma-welcome)
+if ((${#DISCOVER_PKGS[@]} > 0)); then
+  KDE_MARK_PKGS+=("${DISCOVER_PKGS[@]}")
 fi
+for p in "${KDE_MARK_PKGS[@]}"; do
+  if rpm -q "${p}" >/dev/null 2>&1; then
+    run_cmd dnf -y mark user "${p}" \
+      || warn "stack: falha ao marcar '${p}' como user-installed"
+  fi
+done
 # Baloo (indexador do Dolphin): come RAM/CPU — desligado de propósito.
 if command -v balooctl6 >/dev/null 2>&1; then
   run_cmd runuser -u "${TU}" -- env "HOME=${TU_HOME}" balooctl6 disable \
@@ -222,10 +243,11 @@ fi
 # ─── 2c. Curadoria: apps KDE e LibreOffice que o msbos não usa ───────────────
 # A base KDE já traz os apps padrão; o msbos remove só o que não se usa num
 # desktop de dev: jogos, a suíte PIM/e-mail (substituível por webmail), o
-# pacote de ajuda/acessibilidade, o Discover (atualizações seguem manuais
-# via DNF) e o LibreOffice (a suíte de escritório do msbos é o
-# ONLYOFFICE, instalado na seção 7). Remoção ao vivo é segura — são
-# apps, sem scriptlet que derruba a sessão (o SHELL do Plasma sai de cena no
+# pacote de ajuda/acessibilidade e o LibreOffice (a suíte de escritório do
+# msbos é o ONLYOFFICE, instalado na seção 7). Discover, notifier e backends
+# permanecem disponíveis; notificações/atualizações via Discover continuam, e
+# atualizações também podem ser feitas manualmente via DNF. Remoção ao vivo é
+# segura — são apps, sem scriptlet que derruba a sessão (o SHELL do Plasma sai no
 # próximo boot, agendado na seção 8: esse sim derrubaria a sessão). A marcação
 # user-installed da 2b roda antes para a cascata não levar tema/KIO/apps.
 if [[ ${SKIP_REMOVE:-0} == 1 ]]; then
@@ -242,16 +264,6 @@ else
       run_cmd dnf -y "${DNFOPT}" remove "${p}" || warn "manter '${p}': falha na remoção"
     fi
   done
-  # Discover: sai inteiro — app, notifier e os backends exclusivos dele (libs,
-  # packagekit, flatpak, offline-updates), mais o fedora-appstream-metadata pela
-  # cascata. O glob garante os backends mesmo com clean_requirements_on_remove
-  # desligado; o PackageKit em si fica (marcado na 2b). Idempotente: só age se
-  # algum plasma-discover* estiver instalado.
-  DISCOVER_INSTALADOS="$(rpm -qa 'plasma-discover*')"
-  if [[ -n "${DISCOVER_INSTALADOS}" ]]; then
-    log "curadoria: removendo o Discover e o notificador"
-    run_cmd dnf -y "${DNFOPT}" remove 'plasma-discover*' || warn "discover: falha na remoção"
-  fi
   # LibreOffice inteiro (writer/calc/impress... + langpacks): o glob leva junto
   # as dependências exclusivas dele (ex.: java headless) pela cascata padrão do
   # dnf. Idempotente: só age se a suíte estiver instalada.
@@ -438,13 +450,14 @@ fi
 # dnf (o mesmo valia para o gdm). A remoção é agendada via systemd para rodar
 # no próximo boot, ANTES do login (msbos-remove-plasma.service).
 # Sai só o SHELL do Plasma (desktop/workspace/login manager + wizard de
-# primeiro login). Os apps KDE mantidos pela curadoria ficam; o Discover já
-# sai na seção 2c (com notifier e backends).
+# primeiro login). Os apps KDE, o Discover/notifier e seus backends ficam. O
+# plasma-welcome, se instalado, também permanece abrível manualmente;
+# 50-configs desativa só a página de novidades pós-update.
 if [[ ${SKIP_REMOVE:-0} == 1 ]]; then
   log "stack: remoções desativadas (--skip-remove)"
 else
   REMOVE_PKGS=()
-  for heavy in plasma-desktop plasma-workspace plasma-login-manager plasma-setup plasma-welcome; do
+  for heavy in plasma-desktop plasma-workspace plasma-login-manager plasma-setup; do
     if rpm -q "${heavy}" >/dev/null 2>&1; then
       REMOVE_PKGS+=("${heavy}")
     fi
@@ -454,6 +467,7 @@ else
   # de assets/libexec/msbos-remove-plasma.
   KDE_KEEP=(
     NetworkManager tuned tuned-ppd
+    PackageKit plasma-welcome
     dolphin konsole kwrite okular gwenview ark kcalc spectacle
     kde-connect kfind dragon elisa-player plasma-systemmonitor kinfocenter
     plasma-integration plasma-breeze plasma-systemsettings polkit-kde
@@ -462,6 +476,9 @@ else
     kio-extras kio-admin kdegraphics-thumbnailers ffmpegthumbs kglobalacceld
     kf6-kwallet
   )
+  if ((${#DISCOVER_PKGS[@]} > 0)); then
+    KDE_KEEP+=("${DISCOVER_PKGS[@]}")
+  fi
   # preflight_remocao — simula a transação e aborta se um pacote mantido
   # aparecer no plano de remoção. O formato da tabela do dnf não é uma API:
   # o grep exige o nome seguido de espaço (a coluna do nome), o que evita
@@ -513,7 +530,7 @@ else
   }
   if ((${#REMOVE_PKGS[@]} > 0)); then
     if [[ ${DRY_RUN} == 1 ]]; then
-      log "dry-run: simularia a remoção (${REMOVE_PKGS[*]}) e verificaria se algum app KDE sairia junto"
+      log "dry-run: simularia a remoção (${REMOVE_PKGS[*]}) e verificaria se algum pacote mantido sairia junto"
     elif ! preflight_remocao; then
       warn "remoção do shell do Plasma NÃO agendada — corrija os conflitos e rode a etapa de novo"
     elif exige_ok "agendar a remoção do shell do Plasma (${REMOVE_PKGS[*]}) para o próximo boot?"; then

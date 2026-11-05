@@ -213,11 +213,14 @@ before login, through `msbos-remove-plasma.service`. It does not happen in the l
 because the plasmalogin/plasma-* scriptlets touch systemd services and would kill the session
 in the middle of the dnf transaction.
 
-What goes away with the shell: `plasma-desktop`, `plasma-workspace`, `plasma-login-manager`,
-`plasma-setup` and `plasma-welcome`. Normal curation (unless `--skip-remove` is set) also removes
-the whole Discover (`plasma-discover`, notifier and backends); system updates remain manual
-through DNF. PackageKit stays installed and marked as user-installed (so dnf does not sweep it as
-an orphan), with nothing in the stack consuming it once Discover is gone. The other selected KDE
+The shell removal includes `plasma-desktop`, `plasma-workspace`, `plasma-login-manager` and
+`plasma-setup`; an installed `plasma-welcome` stays available and can be opened manually. The
+`/etc/xdg/plasma-welcomerc` config disables only the post-update news page, not the app.
+
+All already-installed `plasma-discover*` packages—including the Discover store, notifier and
+backends—are kept and marked as user-installed, as is PackageKit when present; msbos does not
+install missing Discover packages. Discover notifications and updates remain available. Updates
+can also be done manually through DNF. The other selected KDE
 apps (Dolphin, Konsole, Kate/KWrite, Okular, Gwenview, Spectacle, Dragon, Elisa…) and the packages
 that keep KDE styling and portals working (`plasma-integration`, `plasma-breeze`,
 `plasma-systemsettings`, `polkit-kde`, `xdg-desktop-portal-kde`, `pam-kwallet`, `kde-gtk-config`,
@@ -236,15 +239,17 @@ goes to greetd/niri.
 
 ## Updates
 
-msbos does not install automatic updates; `dnf-automatic` is disabled on purpose, and
-Discover/notifier are not part of the stack. Update manually through DNF when you want:
+msbos does not install automatic updates; `dnf-automatic` is disabled on purpose. The Discover
+store, notifier and notifications remain available. Update manually through Discover or DNF when
+you want:
 
 ```bash
 sudo dnf upgrade --refresh
 sudo reboot   # required for kernel, driver and initramfs
 ```
 
-Firmware updates are manual now too (Discover was the `fwupd` GUI):
+Firmware updates are manual too: if the Discover store and device support are available, use its
+firmware page; alternatively, use `fwupdmgr` from the command line:
 
 ```bash
 sudo fwupdmgr refresh

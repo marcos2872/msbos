@@ -16,6 +16,10 @@ Use esta skill para:
 - conectar um plugin ao niri (`niri msg`, config KDL, ações e eventos);
 - depurar hot reload, IPC, estado compartilhado, lint ou empacotamento.
 
+## Estilo de resposta
+
+Curto e direto: sem preâmbulo, sem repetir o pedido, sem encerramento do tipo "se precisar, estou à disposição". Ao propor uma mudança, **1–2 frases** com o efeito prático; detalhe técnico (arquivo, comando, trecho de código) só se o usuário pedir. Confirmação sempre pela ferramenta `question`.
+
 ## Regra de ouro
 
 1. **Noctalia v5 usa Luau + `plugin.toml`**. A documentação “v4/Quickshell/QML” é legada; não copie aquele modelo.
@@ -23,6 +27,24 @@ Use esta skill para:
 3. Plugins são **código confiável e sem sandbox**: podem ler/escrever arquivos, executar processos e acessar a rede como o usuário. Não instale plugin de origem desconhecida.
 4. Confirme a API installada antes de usar recursos novos; a documentação web pode estar à frente do binário local.
 5. **Cores e espaçamento seguem o sistema por padrão.** Só mude se o usuário pedir explicitamente — e, nesse caso, a mudança vira setting, não um valor fixo no código.
+
+## Root e pacotes
+
+Plugin, settings, `plugin.toml` e config do niri são do usuário: nada disso precisa de root. Se o plugin exigir um pacote, um serviço ou um arquivo em `/etc`:
+
+- **Nunca `sudo`** — nem para consultar (`sudo dnf history`) nem para sondar (`sudo -n true`).
+- Root só por `pkexec /usr/local/libexec/msbos-priv <subcomando>`, com a lista fechada: `dnf-install`, `dnf-simulate-remove`, `dnf-remove`, `dnf-upgrade`, `svc-enable`, `svc-disable`, `svc-restart`.
+- Valide antes, sem privilégio: `/usr/local/libexec/msbos-priv --dry-run <subcomando> ...`.
+- Peça confirmação com `question` antes; se o helper recusar, pare e explique.
+- Nunca instale dependência system-wide por conta própria.
+
+Com `NoNewPrivs=1` (OpenCode Desktop) o `pkexec` direto falha: abra o helper pelo niri, dentro do Alacritty, e foque a janela do polkit.
+
+```bash
+niri msg action spawn -- alacritty -e /usr/bin/pkexec /usr/local/libexec/msbos-priv <subcomando> [argumentos...]
+```
+
+`niri msg action spawn` retorna 0 mesmo falhando: prove com leitura (`rpm -q`, `systemctl status`).
 
 ## Padrão visual obrigatório (cores e gap)
 

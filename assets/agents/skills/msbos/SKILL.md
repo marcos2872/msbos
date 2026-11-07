@@ -71,12 +71,13 @@ O helper **nunca reinicia nem desliga** a máquina. Depois de um upgrade, avise 
 
 ### Ambiente com `NoNewPrivs=1` (OpenCode Desktop)
 
-`pkexec` direto falha. Abra o helper pelo niri, dentro do Alacritty (TTY):
+`pkexec` direto falha. Spawne o helper pelo niri, sem terminal:
 
 ```bash
-niri msg action spawn -- alacritty -e /usr/bin/pkexec /usr/local/libexec/msbos-priv <subcomando> [argumentos...]
+niri msg action spawn -- /usr/bin/pkexec /usr/local/libexec/msbos-priv <subcomando> [argumentos...]
 ```
 
+- A janela "Autenticação necessária" do polkit continua abrindo: ela é a autenticação, não um terminal.
 - Espere 1–2 s, ache `org.kde.polkit-kde-authentication-agent-1` em `niri msg --json windows` e foque com `niri msg action focus-window --id <id>`.
 - Se a janela não existir, **pare** e reporte; não espere 90 s nem conclua que rodou.
 - `niri msg action spawn` retorna 0 mesmo se o filho falhar: **só leitura prova** (`rpm -q`, `systemctl status`, `dnf history list`).
@@ -88,7 +89,7 @@ niri msg action spawn -- alacritty -e /usr/bin/pkexec /usr/local/libexec/msbos-p
 
 1. `/usr/local/libexec/msbos-priv --dry-run dnf-install htop`
 2. `question`: "Vou instalar o htop — mostra o que consome memória e processador. Dá para desinstalar depois. Posso instalar?"
-3. `niri msg action spawn -- alacritty -e /usr/bin/pkexec /usr/local/libexec/msbos-priv dnf-install htop`
+3. `niri msg action spawn -- /usr/bin/pkexec /usr/local/libexec/msbos-priv dnf-install htop`
 4. Focar a janela do polkit.
 5. `rpm -q htop` e resumir em 1–2 frases.
 

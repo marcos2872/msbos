@@ -38,10 +38,10 @@ Plugin, settings, `plugin.toml` e config do niri são do usuário: nada disso pr
 - Peça confirmação com `question` antes; se o helper recusar, pare e explique.
 - Nunca instale dependência system-wide por conta própria.
 
-Com `NoNewPrivs=1` (OpenCode Desktop) o `pkexec` direto falha: abra o helper pelo niri, dentro do Alacritty, e foque a janela do polkit.
+Com `NoNewPrivs=1` (OpenCode Desktop) o `pkexec` direto falha: spawne o helper pelo niri, sem terminal, e foque a janela do polkit.
 
 ```bash
-niri msg action spawn -- alacritty -e /usr/bin/pkexec /usr/local/libexec/msbos-priv <subcomando> [argumentos...]
+niri msg action spawn -- /usr/bin/pkexec /usr/local/libexec/msbos-priv <subcomando> [argumentos...]
 ```
 
 `niri msg action spawn` retorna 0 mesmo falhando: prove com leitura (`rpm -q`, `systemctl status`).

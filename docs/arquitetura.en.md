@@ -129,8 +129,8 @@ The effective driver only applies after reboot.
 ### `20-stack.sh` — stack, apps and curation
 
 - **Core**: `greetd`, `niri`, `noctalia`, `jemalloc`, PipeWire/WirePlumber, portals
-  (`xdg-desktop-portal` + `-gtk`), polkit/polkit-kde, udisks2/gvfs, NetworkManager, tuned, Noto
-  fonts, Breeze icons/cursor and the Plymouth spinner theme.
+  (`xdg-desktop-portal` + `-gtk` + `-gnome`), polkit/polkit-kde, udisks2/gvfs, NetworkManager,
+  tuned, Noto fonts, Breeze icons/cursor and the Plymouth spinner theme.
 - **Power**: uses `tuned-ppd` when present; otherwise installs `power-profiles-daemon`.
 - **Utilities**: alacritty, brightnessctl, playerctl, ntfs-3g, exfatprogs, dosfstools;
   optional `swaybg`, `wlsunset`, `ddcutil`, `pipewire-alsa`.

@@ -111,7 +111,9 @@ install_lazydocker_verified() {
 CORE=(
   greetd niri noctalia jemalloc
   pipewire pipewire-pulse wireplumber
-  xdg-desktop-portal xdg-desktop-portal-gtk
+  # -gnome é o backend do ScreenCast (compartilhar janela/tela) que o niri
+  # recomenda; com install_weak_deps=0 a recomendação não vem sozinha.
+  xdg-desktop-portal xdg-desktop-portal-gtk xdg-desktop-portal-gnome
   polkit polkit-kde udisks2 gvfs gvfs-mtp
   NetworkManager
   tuned

@@ -127,8 +127,8 @@ O driver efetivo só vale depois do reboot.
 ### `20-stack.sh` — stack, apps e curadoria
 
 - **Núcleo**: `greetd`, `niri`, `noctalia`, `jemalloc`, PipeWire/WirePlumber, portais
-  (`xdg-desktop-portal` + `-gtk`), polkit/polkit-kde, udisks2/gvfs, NetworkManager, tuned,
-  fontes Noto, ícones/cursor Breeze e o tema Plymouth spinner.
+  (`xdg-desktop-portal` + `-gtk` + `-gnome`), polkit/polkit-kde, udisks2/gvfs, NetworkManager,
+  tuned, fontes Noto, ícones/cursor Breeze e o tema Plymouth spinner.
 - **Energia**: usa `tuned-ppd` se presente; senão instala `power-profiles-daemon`.
 - **Utilitários**: alacritty, brightnessctl, playerctl, ntfs-3g, exfatprogs, dosfstools;
   opcionais `swaybg`, `wlsunset`, `ddcutil`, `pipewire-alsa`.

@@ -79,6 +79,21 @@ background_opacity = 0.80
 # Notificações críticas forçam um contorno vermelho de pelo menos 3 px;
 # border = false remove o contorno de todos os toasts.
 border = false
+# A "faixa" no topo do toast é a barra de progresso do timeout (3 px). A chave
+# abaixo só existe no Noctalia > 5.4.1: no 5.4.1 ela é ignorada com aviso
+# "unknown setting" e a barra continua aparecendo. Quando o shell atualizar,
+# a barra some sem precisar mexer de novo.
+show_progress_bar = false
+
+# Todas as notificações fecham em 5 s (o default do Noctalia é 6 s), inclusive
+# as persistentes (timeout 0) de qualquer app. O filtro catch-all também vale
+# para os toasts internos (shell/plugins).
+filter_order = ["duracao_5s"]
+
+[notification.filter.duracao_5s]
+enabled = true
+match_content = ".*"
+override_duration = 5000
 
 [shell]
 settings_window_translucent = true

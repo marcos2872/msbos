@@ -38,9 +38,9 @@ layer-rule {
     place-within-backdrop true
 }
 
-// Cantos arredondados (metade do padrão inicial: 20 → 10).
+// Cantos quase retos: 6 px (antes 10; o padrão do niri é 20).
 window-rule {
-    geometry-corner-radius 10
+    geometry-corner-radius 6
     clip-to-geometry true
 }
 

@@ -360,6 +360,196 @@ startRefresh = function()
   end
 end
 
+-- ── persistência no config do Niri ─────────────────────────────────────────
+--
+-- O IPC `niri msg output` é temporário. O botão Persistir grava o estado atual
+-- em ~/.config/niri/msbos-displays.kdl e garante um `include` no fim do
+-- config.kdl (includes do Niri são posicionais: o incluído sobrescreve o que
+-- veio antes). O config é validado com `niri validate` antes do reload; se
+-- falhar, os arquivos anteriores são restaurados.
+
+local CONFIG_FILE = "config.kdl"
+local INCLUDE_FILE = "msbos-displays.kdl"
+local persisting = false
+local startPersist
+
+local function config_dir()
+  local xdg = noctalia.getenv("XDG_CONFIG_HOME")
+  if type(xdg) == "string" and xdg ~= "" then
+    return xdg .. "/niri"
+  end
+  return noctalia.expandPath("~/.config/niri")
+end
+
+local function read_text(path)
+  if not noctalia.fileExists(path) then
+    return nil
+  end
+  local content = noctalia.readFile(path)
+  if type(content) ~= "string" or content == "" then
+    return nil
+  end
+  return content
+end
+
+local function write_atomic(path, content)
+  local tmp = path .. ".tmp"
+  if not noctalia.writeFile(tmp, content) then
+    return false
+  end
+  if type(noctalia.renameFile) == "function" and noctalia.renameFile(tmp, path) then
+    return true
+  end
+  pcall(noctalia.removeFile, tmp)
+  return noctalia.writeFile(path, content)
+end
+
+local function kdl_string(value)
+  return '"' .. tostring(value):gsub("\\", "\\\\"):gsub('"', '\\"') .. '"'
+end
+
+local function display_block(display)
+  local lines = { "output " .. kdl_string(display.port) .. " {" }
+  if display.enabled ~= true then
+    table.insert(lines, "    off")
+  else
+    if (display.width or 0) > 0 and (display.height or 0) > 0 and (display.refresh_rate or 0) > 0 then
+      table.insert(lines, string.format(
+        '    mode "%dx%d@%.3f"',
+        display.width,
+        display.height,
+        display.refresh_rate / 1000
+      ))
+    end
+    if (display.scale or 0) > 0 then
+      table.insert(lines, "    scale " .. formatScale(display.scale))
+    end
+    if type(display.transform) == "string" and display.transform ~= "" then
+      table.insert(lines, "    transform " .. kdl_string(display.transform))
+    end
+    table.insert(lines, string.format(
+      "    position x=%d y=%d",
+      math.floor((display.x or 0) + 0.5),
+      math.floor((display.y or 0) + 0.5)
+    ))
+  end
+  table.insert(lines, "}")
+  return table.concat(lines, "\n")
+end
+
+local function managed_content(displays)
+  local parts = {
+    "// Gerado pelo painel niri-displays do Noctalia (msbos).",
+    "// Alterações manuais aqui são substituídas na próxima persistência.",
+    "",
+  }
+  for _, display in ipairs(displays) do
+    table.insert(parts, display_block(display))
+    table.insert(parts, "")
+  end
+  return table.concat(parts, "\n")
+end
+
+local function has_include(content)
+  return content:find('include%s+"[^"]*msbos%-displays%.kdl"') ~= nil
+end
+
+local function finish_persist(ok, message)
+  persisting = false
+  noctalia.log("niri-displays: persist " .. (ok and "ok" or "failed") .. " — " .. tostring(message))
+  noctalia.state.set("persist_result", { ok = ok, message = message })
+end
+
+local function restore_files(config_path, config, include_path, previous_include)
+  if previous_include ~= nil then
+    write_atomic(include_path, previous_include)
+  else
+    pcall(noctalia.removeFile, include_path)
+  end
+  write_atomic(config_path, config)
+end
+
+startPersist = function()
+  if persisting then
+    return
+  end
+
+  local snapshot = noctalia.state.get(STATE_KEY)
+  local displays = type(snapshot) == "table" and snapshot.displays or nil
+  if type(displays) ~= "table" or #displays == 0 then
+    finish_persist(false, tr("persist.no_displays"))
+    return
+  end
+
+  local dir = config_dir()
+  local config_path = dir .. "/" .. CONFIG_FILE
+  local include_path = dir .. "/" .. INCLUDE_FILE
+  local config = read_text(config_path)
+  if config == nil then
+    finish_persist(false, tr("persist.no_config"))
+    return
+  end
+  local previous_include = read_text(include_path)
+
+  persisting = true
+
+  if not write_atomic(include_path, managed_content(displays)) then
+    finish_persist(false, tr("persist.write_failed"))
+    return
+  end
+
+  if not has_include(config) then
+    local backup_path = config_path .. ".msbos-bak"
+    if not noctalia.fileExists(backup_path) then
+      noctalia.writeFile(backup_path, config)
+    end
+
+    local updated = config
+    if updated:sub(-1) ~= "\n" then
+      updated = updated .. "\n"
+    end
+    updated = updated .. '\ninclude "' .. INCLUDE_FILE .. '"\n'
+
+    if not write_atomic(config_path, updated) then
+      restore_files(config_path, config, include_path, previous_include)
+      finish_persist(false, tr("persist.write_failed"))
+      return
+    end
+  end
+
+  local validate_command = "niri validate -c " .. quoteShellArgument(config_path)
+  noctalia.log("niri-displays: " .. validate_command)
+  local validate_started = noctalia.runAsync(validate_command, function(result)
+    if result.exitCode ~= 0 then
+      restore_files(config_path, config, include_path, previous_include)
+      local message = noctalia.string.trim(result.stderr or ""):match("^[^\r\n]*") or ""
+      finish_persist(false, tr("persist.invalid", { error = message }))
+      return
+    end
+
+    noctalia.log("niri-displays: config valid, reloading")
+    local reload_started = noctalia.runAsync("niri msg action load-config-file", function(reload)
+      noctalia.log("niri-displays: reload exit " .. tostring(reload.exitCode))
+      if reload.exitCode ~= 0 then
+        local message = noctalia.string.trim(reload.stderr or ""):match("^[^\r\n]*") or ""
+        finish_persist(false, tr("persist.reload_failed", { error = message }))
+        return
+      end
+      finish_persist(true, tr("persist.ok"))
+      startRefresh()
+    end, COMMAND_TIMEOUT_MS)
+
+    if not reload_started then
+      finish_persist(false, tr("persist.reload_failed", { error = "" }))
+    end
+  end, COMMAND_TIMEOUT_MS)
+
+  if not validate_started then
+    restore_files(config_path, config, include_path, previous_include)
+    finish_persist(false, tr("persist.write_failed"))
+  end
+end
+
 noctalia.setUpdateInterval(FOCUS_CHECK_INTERVAL_MS)
 
 noctalia.state.watch("refresh_requested", function(value)
@@ -367,6 +557,16 @@ noctalia.state.watch("refresh_requested", function(value)
   if nonce ~= lastRefreshNonce then
     lastRefreshNonce = nonce
     startRefresh()
+  end
+end)
+
+local lastPersistNonce = noctalia.state.get("persist_requested") or 0
+
+noctalia.state.watch("persist_requested", function(value)
+  local nonce = tonumber(value) or 0
+  if nonce ~= lastPersistNonce then
+    lastPersistNonce = nonce
+    startPersist()
   end
 end)
 
@@ -396,6 +596,8 @@ end
 function onIpc(event, _payload)
   if event == "refresh" then
     startRefresh()
+  elseif event == "persist" then
+    startPersist()
   elseif event == "dump" then
     local snapshot = noctalia.state.get(STATE_KEY)
     noctalia.log("niri-displays: " .. (noctalia.json.encode(snapshot) or "?"))

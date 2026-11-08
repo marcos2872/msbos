@@ -1,6 +1,7 @@
 --!nonstrict
--- Interactive Niri output controls. Niri's `msg output` API is intentionally
--- temporary: this plugin never edits the user's compositor configuration.
+-- Interactive Niri output controls. Most changes use Niri's temporary `msg output`
+-- IPC; the Persist button writes the current output state to the managed Niri
+-- config so it survives a restart.
 
 local MAX_DISPLAYS = 12
 local COMMAND_TIMEOUT_MS = 8000
@@ -26,6 +27,9 @@ local snapshot = noctalia.state.get("display_snapshot") or {
 local isOpen = false
 local actionPending = false
 local actionError = ""
+local persistPending = false
+local persistMessage = ""
+local persistError = false
 local scaleDraft = {}
 local scaleEditing = {}
 local positionDraft = {}
@@ -963,6 +967,16 @@ render = function()
   end
 
   table.insert(children, body())
+
+  if persistMessage ~= "" then
+    table.insert(children, ui.label({
+      text = persistMessage,
+      color = persistError and "error" or "primary",
+      fontSize = 11,
+      maxLines = 3,
+    }))
+  end
+
   table.insert(children, ui.row({
     gap = 8,
     align = "center",
@@ -975,6 +989,19 @@ render = function()
   }, {
     ui.glyph({ name = "info-circle", size = 13, color = "on_surface_variant" }),
     ui.label({ text = tr("panel.temporary_note"), fontSize = 10, color = "on_surface_variant", flexGrow = 1, maxLines = 2 }),
+    ui.button({
+      text = tr("panel.persist"),
+      glyph = "device-floppy",
+      variant = "primary",
+      enabled = not actionPending and not persistPending and #snapshot.displays > 0,
+      onClick = function()
+        persistMessage = ""
+        persistError = false
+        persistPending = true
+        noctalia.state.set("persist_requested", (noctalia.state.get("persist_requested") or 0) + 1)
+        render()
+      end,
+    }),
   }))
 
   panel.render(ui.column({ flexGrow = 1, gap = 5, align = "stretch" }, children))
@@ -982,6 +1009,15 @@ end
 
 noctalia.state.watch("display_snapshot", function()
   syncFromState()
+  render()
+end)
+
+noctalia.state.watch("persist_result", function(value)
+  if type(value) == "table" then
+    persistMessage = type(value.message) == "string" and value.message or ""
+    persistError = value.ok ~= true
+  end
+  persistPending = false
   render()
 end)
 

@@ -28,8 +28,9 @@
     "rotation": "Rotation",
     "scale": "Scale",
     "subtitle": "Configure your display outputs in Niri",
-    "temporary_note": "Changes use Niri's temporary output IPC and are not written to your Niri config.",
-    "updated": "Updated {time}"
+    "temporary_note": "Changes use Niri's temporary output IPC until you press Persist.",
+    "updated": "Updated {time}",
+    "persist": "Persist"
   },
   "settings": {
     "glyph": {
@@ -48,5 +49,13 @@
       "label": "Show display details"
     }
   },
-  "title": "Niri Displays"
+  "title": "Niri Displays",
+  "persist": {
+    "ok": "Saved to the Niri config and reloaded.",
+    "no_displays": "No displays to save.",
+    "no_config": "Niri's config.kdl was not found.",
+    "write_failed": "Could not write the Niri config.",
+    "invalid": "Niri rejected the config; previous files were restored. {error}",
+    "reload_failed": "Config saved, but the reload failed: {error}"
+  }
 }

@@ -10,3 +10,4 @@ Terminal=false
 Categories=Settings;
 Keywords=usuário;usuários;conta;senha;users;account;password;
 StartupNotify=true
+StartupWMClass=kcm_users

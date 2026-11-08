@@ -296,6 +296,28 @@ dbus-send --session --type=method_call --dest=org.freedesktop.DBus / org.freedes
 Reopen the app and, if `secret-tool` is available, test with `secret-tool store`/`secret-tool
 lookup`. `msbos-doctor` also reports when the service is missing.
 
+## Open/save dialogs do not appear (portal FileChooser)
+
+Symptom: the **open/save** dialog never appears — downloading a file in the browser, Save As,
+opening a folder in Zed. In the journal:
+
+```bash
+journalctl --user -u xdg-desktop-portal-gnome -b | grep -i 'FileChooser'
+# Delegated FileChooser call failed: The name is not activatable
+```
+
+Cause: `niri-portals.conf` uses `default=gnome;gtk`; once `xdg-desktop-portal-gnome` is
+installed (ScreenCast), it takes over `FileChooser` and delegates to **Nautilus**, which msbos
+does not install.
+
+Fix: msbos installs `~/.config/xdg-desktop-portal/niri-portals.conf` pinning
+`org.freedesktop.impl.portal.FileChooser=gtk;`. If the file is missing, run
+`sudo bash scripts/50-configs.sh` and restart the portal (open apps must be reopened):
+
+```bash
+systemctl --user restart xdg-desktop-portal.service
+```
+
 ## Terminal without transparency or blur
 
 Alacritty's blur uses `background-effect`, a **niri 26.04+** feature. On an older version the

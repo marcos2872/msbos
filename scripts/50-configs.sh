@@ -51,6 +51,12 @@ install_file_once "niri/config.kdl" "${TU_HOME}/.config/niri/config.kdl"
 # Fallback de sistema: o msbos é dono dele, pode ser sempre atualizado.
 install_file "niri/config.kdl" "/etc/xdg/niri/config.kdl"
 
+# ─── 1a. Portal do niri: seletor de arquivos no GTK ─────────────────────────
+# O niri usa default=gnome;gtk para o ScreenCast; o FileChooser do backend
+# GNOME delega ao Nautilus, que o msbos não instala. O GTK tem seletor próprio.
+install_file "xdg-desktop-portal/niri-portals.conf" \
+  "${TU_HOME}/.config/xdg-desktop-portal/niri-portals.conf"
+
 # ─── 2. Noctalia (esqueleto; padrões da instalação já funcionam) ────────────
 install_file_once "noctalia/config.toml" "${TU_HOME}/.config/noctalia/config.toml"
 # Auto-Sync do Greeter em arquivo separado: o Noctalia lê todos os .toml de
@@ -601,6 +607,7 @@ fi
 
 # ─── 9. Permissões dos arquivos do usuário ──────────────────────────────────
 run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.config/niri" "${TU_HOME}/.config/noctalia" "${TU_HOME}/.config/alacritty" "${TU_HOME}/.config/autostart" "${TU_HOME}/.config/gtk-3.0" "${TU_HOME}/.config/gtk-4.0" "${TU_HOME}/.local/state/noctalia" "${TU_HOME}/.local/share/noctalia"
+run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.config/xdg-desktop-portal"
 run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.config/zed" "${TU_HOME}/.local/share/jupyter"
 run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.local/share/msbos"
 run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.local/share/applications"

@@ -215,6 +215,9 @@ Tudo é idempotente: detecta o que já existe e pula.
   o Welcome permanece disponível e pode ser aberto manualmente.
 - **niri**: instala `~/.config/niri/config.kdl` uma única vez e o fallback
   `/etc/xdg/niri/config.kdl` sempre (com backup).
+- **Portal do niri**: `~/.config/xdg-desktop-portal/niri-portals.conf` fixa o
+  `FileChooser` no backend GTK; o GNOME fica como padrão para o `ScreenCast` (o
+  `FileChooser` do GNOME delega ao Nautilus, que o msbos não instala).
 - **Noctalia**: `config.toml` uma vez; `90-greeter-sync.toml` e
   `91-widget-control-center.toml` são atualizados; paletas com backup; `settings.toml` e
   plugins só se ausentes.
@@ -273,7 +276,7 @@ CIL instalados via `semodule`, não arquivos copiados.
 | Tipo | Exemplos | Política |
 |---|---|---|
 | Config pessoal | `niri/config.kdl`, `noctalia/config.toml`, `.zshrc`, `alacritty.toml`, `zed/*` | `install_file_once` — nunca sobrescreve |
-| Config do projeto | `/etc/xdg/niri/config.kdl`, `/etc/xdg/plasma-welcomerc`, tema GTK/dconf, `profile.d`, wallpapers, helpers, `applications/msbos-usuarios.desktop` | `install_file` — atualiza com backup |
+| Config do projeto | `/etc/xdg/niri/config.kdl`, `/etc/xdg/plasma-welcomerc`, tema GTK/dconf, `profile.d`, wallpapers, helpers, `applications/msbos-usuarios.desktop`, `xdg-desktop-portal/niri-portals.conf` | `install_file` — atualiza com backup |
 | Estado da GUI | `~/.local/state/noctalia/settings.toml`, plugins | Só instala se ausente |
 | Paleta do tema | `~/.config/noctalia/palettes/macOS.json` | `install_file` com backup; para customizar, crie outra paleta |
 | Módulos SELinux | `assets/selinux/*.cil` | Instalados via `semodule` |

@@ -194,10 +194,14 @@ SUPORTE=(
 # Konsole, o Kate/KWrite etc. são os apps do dia a dia; numa instalação mínima
 # eles completam o desktop). Sem haruna/strawberry/ksystemlog: os equivalentes
 # padrão do KDE são dragon/elisa/kjournald.
+# plasma-workspace-libs: traz o kcm_users (System Settings → Usuários); o shell
+# do Plasma é removido, mas as libs ficam para o módulo (a remoção usa
+# --no-autoremove para não levar as dependências).
 KDE_APPS=(dolphin dolphin-plugins konsole kwrite okular gwenview ark kcalc
   kamoso spectacle skanpage krdc krfb kolourpaint kde-connect kfind
   keditbookmarks kwalletmanager5 kjournald dragon elisa-player filelight
-  kde-partitionmanager plasma-systemmonitor plasma-systemsettings kinfocenter)
+  kde-partitionmanager plasma-systemmonitor plasma-systemsettings kinfocenter
+  plasma-workspace-libs)
 # Instala tudo numa lista só e guarda o que não existir no repo para um resumo
 # no fim (o warn individual sumiria no meio de dezenas de pacotes).
 FALHAS_KDE=()
@@ -466,13 +470,14 @@ else
   done
   # Pacotes que a remoção NUNCA pode levar na cascata
   # (clean_requirements_on_remove). Manter em sincronia com KEEP_PKGS + APP_PKGS
-  # de assets/libexec/msbos-remove-plasma.
+  # de assets/libexec/msbos-remove-plasma. A remoção real usa --no-autoremove
+  # para manter as dependências, como plasma-workspace-libs (kcm_users).
   KDE_KEEP=(
     NetworkManager tuned tuned-ppd
     PackageKit plasma-welcome
     dolphin konsole kwrite okular gwenview ark kcalc spectacle
     kde-connect kfind dragon elisa-player plasma-systemmonitor kinfocenter
-    plasma-integration plasma-breeze plasma-systemsettings polkit-kde
+    plasma-integration plasma-breeze plasma-systemsettings plasma-workspace-libs polkit-kde
     xdg-desktop-portal-kde pam-kwallet kde-gtk-config kde-cli-tools dconf
     breeze-icon-theme breeze-cursor-theme redhat-menus
     kio-extras kio-admin kdegraphics-thumbnailers ffmpegthumbs kglobalacceld
@@ -510,7 +515,7 @@ else
         mv -f "${f}" "${f}.msbos-off" && moved+=("${f}") \
           || warn "preflight: não consegui afastar ${f} — a simulação pode falhar"
       done
-      LC_ALL=C dnf remove --assumeno "${REMOVE_PKGS[@]}" 2>&1
+      LC_ALL=C dnf remove --no-autoremove --assumeno "${REMOVE_PKGS[@]}" 2>&1
     )" || pf_rc=$?
     if ((pf_rc == 130)); then
       err "preflight interrompido (Ctrl+C) — instalação abortada"

@@ -143,7 +143,8 @@ The effective driver only applies after reboot.
   `--skip-remove`.
 - **Theme and guaranteed apps**: installs `plasma-integration`, `plasma-breeze`,
   `breeze-gtk-common`, `pam-kwallet`, `kde-cli-tools`, `dconf`, `kio-extras`, `kio-admin`,
-  `kdegraphics-thumbnailers`, `ffmpegthumbs` and `kglobalacceld`, plus the KDE app list
+  `kdegraphics-thumbnailers`, `ffmpegthumbs`, `kglobalacceld` and `plasma-workspace-libs`
+  (System Settings **Users** module), plus the KDE app list
   (Dolphin, Konsole, KWrite, Okular, Gwenview, Ark, Spectacle, Dragon, Elisa, etc.). Marks
   `CORE`, the theme/KIO support packages and the apps as `user-installed` **before** curation;
   also marks all installed `plasma-discover*` packages, PackageKit and `plasma-welcome` when
@@ -275,7 +276,7 @@ CIL modules installed through `semodule`, not copied files.
 | Type | Examples | Policy |
 |---|---|---|
 | Personal config | `niri/config.kdl`, `noctalia/config.toml`, `.zshrc`, `alacritty.toml`, `zed/*` | `install_file_once` — never overwrites |
-| Project config | `/etc/xdg/niri/config.kdl`, `/etc/xdg/plasma-welcomerc`, GTK/dconf theme, `profile.d`, wallpapers, helpers | `install_file` — updates with backup |
+| Project config | `/etc/xdg/niri/config.kdl`, `/etc/xdg/plasma-welcomerc`, GTK/dconf theme, `profile.d`, wallpapers, helpers, `applications/msbos-usuarios.desktop` | `install_file` — updates with backup |
 | GUI state | `~/.local/state/noctalia/settings.toml`, plugins | Only installs when absent |
 | Theme palette | `~/.config/noctalia/palettes/macOS.json` | `install_file` with backup; to customize, create another palette |
 | SELinux modules | `assets/selinux/*.cil` | Installed through `semodule` |
@@ -302,7 +303,9 @@ CIL modules installed through `semodule`, not copied files.
   would kill the session in the middle of the dnf transaction. That is why removal is done by
   `msbos-remove-plasma.service`, before login. The script temporarily moves the dnf
   protection aside, simulates the transaction and aborts if a kept package would be removed,
-  protects the packages that keep KDE apps working and, if it fails, retries on the next boot.
+  protects the packages that keep KDE apps working — including `plasma-workspace-libs` (Users
+  module) — and, if it fails, retries on the next boot. Removal uses `--no-autoremove` to keep
+  the shell's dependencies.
 - **PAM**: `/etc/pam.d/greetd` needs `pam_selinux`; without it, the session's `systemctl --user`
   is denied and niri returns to the login screen. The installer preserves the package file and
   only restores the project version when it detects an old file without `pam_selinux`.

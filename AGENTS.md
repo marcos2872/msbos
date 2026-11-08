@@ -152,7 +152,8 @@ Fluxo: `install.sh` (orquestrador) → `lib/common.sh` (helpers) → `scripts/NN
   `dbus-1/services/` (→ `~/.local/share/dbus-1/services/`), `profile.d/`, `sysctl.d/`,
   `oomd.conf`, `zram-generator.conf`, `yum.repos.d/terra.repo`,
   `wallpapers/` (→ `/usr/share/msbos-walls/`), `plugins-local/`
-  (→ `~/.local/share/noctalia/plugins/`), `autostart/` (→ `~/.config/autostart/`).
+  (→ `~/.local/share/noctalia/plugins/`), `autostart/` (→ `~/.config/autostart/`),
+  `applications/` (→ `~/.local/share/applications/`).
   `assets/bin/` e `assets/libexec/` trazem helpers (`msbos-wallpaper`, `msbos-cpu-governor`,
   `msbos-seapplet` — cópia do applet do setroubleshoot com patch do GLib.GError —,
   `msbos-doctor` — diagnóstico somente-leitura do sistema instalado —,

@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Usuários
+Name[en]=Users
+Comment=Gerenciar contas de usuário (nome, senha, foto)
+Comment[en]=Manage user accounts (name, password, picture)
+Exec=kcmshell6 kcm_users
+Icon=system-users
+Terminal=false
+Categories=Settings;
+Keywords=usuário;usuários;conta;senha;users;account;password;
+StartupNotify=true

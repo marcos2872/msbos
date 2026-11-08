@@ -141,7 +141,8 @@ O driver efetivo só vale depois do reboot.
   `--skip-remove`.
 - **Tema e apps garantidos**: instala `plasma-integration`, `plasma-breeze`,
   `breeze-gtk-common`, `pam-kwallet`, `kde-cli-tools`, `dconf`, `kio-extras`, `kio-admin`,
-  `kdegraphics-thumbnailers`, `ffmpegthumbs` e `kglobalacceld`, além da lista de apps KDE
+  `kdegraphics-thumbnailers`, `ffmpegthumbs`, `kglobalacceld` e `plasma-workspace-libs`
+  (módulo **Usuários** do System Settings), além da lista de apps KDE
   (Dolphin, Konsole, KWrite, Okular, Gwenview, Ark, Spectacle, Dragon, Elisa, etc.). Marca
   `CORE`, o suporte de tema/KIO e os apps como `user-installed` **antes** da curadoria; marca
   também todos os pacotes instalados `plasma-discover*`, PackageKit e `plasma-welcome` quando
@@ -272,7 +273,7 @@ CIL instalados via `semodule`, não arquivos copiados.
 | Tipo | Exemplos | Política |
 |---|---|---|
 | Config pessoal | `niri/config.kdl`, `noctalia/config.toml`, `.zshrc`, `alacritty.toml`, `zed/*` | `install_file_once` — nunca sobrescreve |
-| Config do projeto | `/etc/xdg/niri/config.kdl`, `/etc/xdg/plasma-welcomerc`, tema GTK/dconf, `profile.d`, wallpapers, helpers | `install_file` — atualiza com backup |
+| Config do projeto | `/etc/xdg/niri/config.kdl`, `/etc/xdg/plasma-welcomerc`, tema GTK/dconf, `profile.d`, wallpapers, helpers, `applications/msbos-usuarios.desktop` | `install_file` — atualiza com backup |
 | Estado da GUI | `~/.local/state/noctalia/settings.toml`, plugins | Só instala se ausente |
 | Paleta do tema | `~/.config/noctalia/palettes/macOS.json` | `install_file` com backup; para customizar, crie outra paleta |
 | Módulos SELinux | `assets/selinux/*.cil` | Instalados via `semodule` |
@@ -299,7 +300,9 @@ CIL instalados via `semodule`, não arquivos copiados.
   derrubaria a sessão no meio da transação dnf. Por isso a remoção é feita pelo
   `msbos-remove-plasma.service`, antes do login. O script move temporariamente a proteção
   do dnf, simula a transação e aborta se um pacote mantido for sair junto, protege os pacotes
-  que mantêm os apps KDE funcionais e, se falhar, tenta de novo no boot seguinte.
+  que mantêm os apps KDE funcionais — inclusive `plasma-workspace-libs` (módulo Usuários) — e,
+  se falhar, tenta de novo no boot seguinte. A remoção usa `--no-autoremove` para manter as
+  dependências do shell.
 - **PAM**: o `/etc/pam.d/greetd` precisa de `pam_selinux`; sem ele o `systemctl --user` da
   sessão é negado e o niri volta para o login. O instalador preserva o arquivo do pacote e só
   restaura a versão do projeto se detectar uma versão antiga sem `pam_selinux`.

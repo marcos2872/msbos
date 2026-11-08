@@ -230,7 +230,10 @@ também podem ser feitas manualmente pelo DNF. Os demais apps KDE
 selecionados (Dolphin, Konsole, Kate/KWrite, Okular, Gwenview, Spectacle, Dragon, Elisa…) e os pacotes que
 mantêm o visual e os portais do KDE funcionando (`plasma-integration`, `plasma-breeze`,
 `plasma-systemsettings`, `polkit-kde`, `xdg-desktop-portal-kde`, `pam-kwallet`, `kde-gtk-config`,
-`konsole`) são mantidos.
+`konsole`) são mantidos. A remoção usa `--no-autoremove` para manter as dependências do shell;
+em especial `plasma-workspace-libs`, que traz o módulo **Usuários** do System Settings
+(`kcm_users`). O msbos instala o atalho **Usuários** no launcher
+(`~/.local/share/applications/msbos-usuarios.desktop`) para abrir o módulo direto.
 
 Para acompanhar:
 

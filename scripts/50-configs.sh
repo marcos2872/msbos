@@ -520,6 +520,13 @@ if [[ -f /usr/share/applications/org.kde.elisa.desktop ]] || [[ ${DRY_RUN} == 1 
   ok "Elisa definido como player de áudio padrão"
 fi
 
+# ─── 6c. Atalho para o módulo Usuários do System Settings ───────────────────
+# kcm_users vem de plasma-workspace-libs (instalado no 20-stack); o shell do
+# Plasma é removido, mas o módulo continua disponível. O atalho evita abrir o
+# System Settings inteiro.
+install_file "applications/msbos-usuarios.desktop" \
+  "${TU_HOME}/.local/share/applications/msbos-usuarios.desktop"
+
 # ─── 7. Terminal: tema do alacritty + zsh com autocomplete ──────────────────
 # Também install_file_once: .zshrc e alacritty.toml são configs pessoais.
 install_file_once "alacritty/alacritty.toml" "${TU_HOME}/.config/alacritty/alacritty.toml"
@@ -596,6 +603,7 @@ fi
 run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.config/niri" "${TU_HOME}/.config/noctalia" "${TU_HOME}/.config/alacritty" "${TU_HOME}/.config/autostart" "${TU_HOME}/.config/gtk-3.0" "${TU_HOME}/.config/gtk-4.0" "${TU_HOME}/.local/state/noctalia" "${TU_HOME}/.local/share/noctalia"
 run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.config/zed" "${TU_HOME}/.local/share/jupyter"
 run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.local/share/msbos"
+run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.local/share/applications"
 if [[ -d ${TU_HOME}/.local/share/dbus-1 || ${DRY_RUN} == 1 ]]; then
   run_cmd chown -R "${TU}:${TU}" "${TU_HOME}/.local/share/dbus-1"
 fi

@@ -119,6 +119,8 @@ PROTEGIDOS_BASE=(
   # suporte que mantém os apps KDE funcionando (estilo, portal, KIO, miniaturas,
   # menu XDG, agente polkit)
   'plasma-integration' 'plasma-breeze(-.*)?' 'plasma-systemsettings' 'polkit-kde'
+  # plasma-workspace-libs: contém o kcm_users (System Settings → Usuários).
+  'plasma-workspace-libs'
   'breeze-(icon-theme|cursor-theme|gtk(-.*)?)'
   'kde-cli-tools' 'redhat-menus' 'kio-extras' 'kio-admin' 'kdegraphics-thumbnailers'
   'ffmpegthumbs' 'kwallet(-.*)?' 'pam-kwallet' 'kf6-kwallet(-.*)?' 'kglobalacceld'

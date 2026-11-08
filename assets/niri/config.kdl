@@ -108,6 +108,15 @@ window-rule {
     default-window-height { fixed 920; }
 }
 
+// Seletores do portal (arquivos no GTK e compartilhamento de tela no GNOME):
+// abrem flutuantes e centralizados, fora do tiling, num tamanho padrão.
+window-rule {
+    match app-id=r#"^xdg-desktop-portal-(gtk|gnome)$"#
+    open-floating true
+    default-column-width { fixed 900; }
+    default-window-height { fixed 600; }
+}
+
 // Permite ações de notificação e ativação de janela vindas do Noctalia
 debug {
     honor-xdg-activation-with-invalid-serial

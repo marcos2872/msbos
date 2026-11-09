@@ -103,11 +103,13 @@ Contract between `install.sh`, `bootstrap.sh` and the steps:
 The bootstrap adds `MSBOS_REF`, `MSBOS_REPO`, `MSBOS_URL` and `MSBOS_KEEP`.
 Steps also read `FEDORA_VERSION`, exported by `require_fedora`.
 
-## The seven steps + migration
+## The seven base steps + the opt-in zoom + migration
 
-Besides the seven steps below, `install.sh` runs `00-migrate-names.sh` (prepares an old
-installation without deleting anything) and `99-cleanup-legacy.sh` (removes old artifacts
-after the new ones exist). On a fresh installation both are no-ops.
+Besides the seven base steps below, `install.sh` runs `55-niri-zoom.sh` when called with
+`--with-niri-zoom` (builds the per-output zoom fork; a no-op without the flag),
+`00-migrate-names.sh` (prepares an old installation without deleting anything) and
+`99-cleanup-legacy.sh` (removes old artifacts after the new ones exist). On a fresh
+installation the two migration steps are no-ops.
 
 ### `10-gpu.sh` — detection and drivers
 
@@ -248,6 +250,18 @@ Everything is idempotent: it detects what already exists and skips it.
   first login (marker in `~/.local/state/msbos/greeter-sync.done`).
 - **Permissions**: adjusts ownership of the user's files and, when a Noctalia session exists,
   triggers the final greeter sync.
+
+### `55-niri-zoom.sh` — per-output zoom (opt-in)
+
+Only runs with `--with-niri-zoom` (`WITH_NIRI_ZOOM=1`); without the flag it is a no-op. It
+builds the pinned commit of PR niri-wm/niri#3246 plus the local patch
+(`assets/niri-zoom/niri-zoom-anchored.patch`) in a Fedora 44 container and installs
+`/usr/local/bin/niri` (the package's `/usr/bin/niri` stays intact), with a version marker for
+idempotency. It installs `~/.config/niri/zoom.kdl` (`movement-mode "anchored"` +
+`pan-modifier "super"`, `Mod+Alt+scroll`, reset and lock) and appends `include "zoom.kdl"` to
+the user's config with a backup and validation; if the config becomes invalid, it restores
+the backup. It also installs the `msbos-zoom-reset` and `msbos-niri-zoom-remove` helpers.
+Under `--dry-run` it does not access the network, call podman or build anything.
 
 ### `60-agent-skill.sh` — privileged helper and agent skill
 

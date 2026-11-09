@@ -58,8 +58,10 @@ conf_get() {
 TARGET_USER="$(conf_get TARGET_USER)"
 MSBOS_REF="$(conf_get MSBOS_REF)"
 MSBOS_REPO="$(conf_get MSBOS_REPO)"
+WITH_NIRI_ZOOM="$(conf_get WITH_NIRI_ZOOM)"
 MSBOS_REF="${MSBOS_REF:-main}"
 MSBOS_REPO="${MSBOS_REPO:-marcos2872/msbos}"
+WITH_NIRI_ZOOM="${WITH_NIRI_ZOOM:-0}"
 
 [[ -n ${TARGET_USER} ]] || die "TARGET_USER não definido em ${CONF}"
 getent passwd "${TARGET_USER}" >/dev/null 2>&1 \
@@ -96,8 +98,10 @@ curl -fsSL --retry 3 --retry-delay 2 "${url}" -o "${tmp}/bootstrap.sh" \
   || die "falha ao baixar ${url} (rede? ref ou repositório errado?)"
 
 rc=0
+args=(--yes --user "${TARGET_USER}")
+[[ ${WITH_NIRI_ZOOM} == 1 ]] && args+=(--with-niri-zoom)
 MSBOS_REF="${MSBOS_REF}" MSBOS_REPO="${MSBOS_REPO}" \
-  timeout "${LIMITE_SEGUNDOS}" bash "${tmp}/bootstrap.sh" --yes --user "${TARGET_USER}" || rc=$?
+  timeout "${LIMITE_SEGUNDOS}" bash "${tmp}/bootstrap.sh" "${args[@]}" || rc=$?
 
 if ((rc != 0)); then
   if ((rc == 124)); then

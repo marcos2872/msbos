@@ -23,7 +23,7 @@ problemas e créditos.
 |---|---|
 | [Instalação](instalacao.md) | Base recomendada, downloads, VM com 3D, bootstrap, opções do `install.sh`, Anaconda e primeiros passos |
 | [Uso diário](uso.md) | Atalhos do niri/Noctalia, wallpapers, apps padrão, Breeze Dark, configs pessoais, greeter e atualizações |
-| [Arquitetura e etapas](arquitetura.md) | Fluxo de execução, `lib/common.sh`, as 7 etapas + migração, assets, estado, verificação e desenvolvimento |
+| [Arquitetura e etapas](arquitetura.md) | Fluxo de execução, `lib/common.sh`, as 7 etapas base + migração (e o zoom opt-in), assets, estado, verificação e desenvolvimento |
 | [Solução de problemas](solucao-de-problemas.md) | Falhas de dnf, VM/GPU, flatpak, Noctalia, greeter, Plasma e recuperação |
 | [Migração para o msbos](migracao-msbos.md) | Como sair de uma instalação anterior sem reinstalar o Fedora |
 | [Histórico de nomes](historico.md) | As gerações anteriores do nome do projeto |

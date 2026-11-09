@@ -72,6 +72,29 @@ file, your choices are preserved when the installer runs again.
 Everything else (mouse wheel with `Super`, resizing, etc.) follows niri's defaults. The full
 compositor reference is at <https://github.com/YaLTeR/niri/wiki>.
 
+## Niri zoom (optional)
+
+If msbos was installed with `--with-niri-zoom`, the compositor gets per-monitor accessibility
+zoom:
+
+| Shortcut | Action |
+|---|---|
+| `Super+Alt+scroll` | Adjusts zoom on the focused monitor |
+| `Super+Alt+=` / `Super+Alt+-` | Zoom in/out with the keyboard |
+| `Super+Alt+0` | Unlocks and resets to 1.0 |
+| `Super+Alt+Z` | Locks/unlocks the focal point |
+
+The viewport anchors at the cursor and does **not** follow the mouse by itself. Hold `Super`
+and move the mouse to pan; when you release it, the zoom stays at the last point. Since
+`Super+Alt+scroll` also holds `Super`, the zoom follows the cursor during the gesture and
+stops when you let go.
+
+To remove the fork and return to the package's niri:
+
+```bash
+sudo msbos-niri-zoom-remove
+```
+
 ## Noctalia v5
 
 Noctalia is the desktop shell: bar, launcher, notifications, OSD, control center, lock screen

@@ -16,8 +16,9 @@
 #                  2 = erro de uso (opção inválida, usuário/home não encontrado).
 #
 # Verificações: base Fedora, etapas concluídas, greetd/PAM/greeter, niri/Noctalia,
-# apps KDE, menu XDG (redhat-menus), remoção do shell do Plasma, tema Breeze Dark,
-# zram/sysctl/governor, RAM em idle, SELinux, Podman rootless e GPU NVIDIA.
+# zoom do niri (opt-in), apps KDE, menu XDG (redhat-menus), remoção do shell do
+# Plasma, tema Breeze Dark, zram/sysctl/governor, RAM em idle, SELinux, Podman
+# rootless e GPU NVIDIA.
 
 set -euo pipefail
 
@@ -251,6 +252,70 @@ if [[ -n ${niri_cfg} ]]; then
   ok "config do niri: ${niri_cfg}"
 else
   er 'config do niri ausente (usuário e sistema)'
+fi
+
+# ─── 3a. zoom do niri (opt-in) ─────────────────────────────────────────────
+section 'Zoom do niri (opt-in)'
+zoom_bin='/usr/local/bin/niri'
+zoom_marker='/usr/local/share/msbos/niri-zoom.commit'
+zoom_cfg="${TU_HOME}/.config/niri/zoom.kdl"
+zoom_include=0
+if [[ -n ${niri_cfg} ]] && grep -qE '^[[:space:]]*include[[:space:]]+"zoom\.kdl"' "${niri_cfg}" 2>/dev/null; then
+  zoom_include=1
+fi
+
+if [[ -f ${zoom_marker} ]]; then
+  if [[ -x ${zoom_bin} ]]; then
+    ok 'niri patchado instalado (/usr/local/bin/niri)'
+  else
+    er 'marcador do zoom presente, mas /usr/local/bin/niri não existe'
+  fi
+  if [[ "$(command -v niri 2>/dev/null || true)" == "${zoom_bin}" ]]; then
+    ok 'o PATH resolve o niri patchado'
+  else
+    av "o PATH resolve '$(command -v niri 2>/dev/null || echo nenhum)'; a sessão pode estar no niri da distro"
+  fi
+  if [[ -f ${zoom_cfg} && ${zoom_include} == 1 ]]; then
+    ok 'config do zoom presente e incluído'
+  else
+    av 'config do zoom incompleto (zoom.kdl ou include ausente)'
+  fi
+  if [[ -x ${zoom_bin} && -x /usr/bin/niri ]]; then
+    v_patch="$("${zoom_bin}" --version 2>/dev/null | head -n1 || true)"
+    v_distro="$(/usr/bin/niri --version 2>/dev/null | head -n1 || true)"
+    if [[ -n ${v_patch} && -n ${v_distro} && ${v_patch} != "${v_distro}" ]]; then
+      av "fork (${v_patch}) não acompanha o pacote (${v_distro})"
+    fi
+  fi
+  shopt -s nullglob
+  socks=(/run/user/"${TU_UID}"/niri.wayland-*.sock)
+  shopt -u nullglob
+  if ((${#socks[@]} > 0)); then
+    sock="$(ls -t "${socks[@]}" | head -n1)"
+    zoom_runtime_ok=0
+    if [[ ${EUID} -eq 0 ]] && have runuser; then
+      runuser -u "${TU}" -- \
+        env "NIRI_SOCKET=${sock}" "XDG_RUNTIME_DIR=/run/user/${TU_UID}" \
+        "${zoom_bin}" msg --json zoom-state >/dev/null 2>&1 && zoom_runtime_ok=1
+    elif [[ ${EUID} -ne 0 ]]; then
+      NIRI_SOCKET="${sock}" "${zoom_bin}" msg --json zoom-state >/dev/null 2>&1 && zoom_runtime_ok=1
+    fi
+    if [[ ${zoom_runtime_ok} == 1 ]]; then
+      ok 'zoom respondendo na sessão atual'
+    elif [[ ${EUID} -eq 0 ]] && ! have runuser; then
+      skip 'runtime do zoom não avaliado (runuser indisponível)'
+    else
+      av 'zoom não respondeu (a sessão atual pode estar no niri da distro; relogue)'
+    fi
+  else
+    skip 'sem sessão niri ativa — runtime do zoom não avaliado'
+  fi
+else
+  if [[ ${zoom_include} == 1 ]]; then
+    av 'include "zoom.kdl" presente sem o niri patchado — remova ou rode --with-niri-zoom'
+  else
+    skip 'zoom do niri não instalado (opt-in --with-niri-zoom)'
+  fi
 fi
 
 if rpm_has noctalia || have noctalia; then

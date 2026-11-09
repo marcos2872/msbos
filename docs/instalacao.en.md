@@ -3,9 +3,9 @@
 [Português](instalacao.md) · [English](instalacao.en.md)
 
 msbos is installed **on top of an existing Fedora** (route C): there is no custom ISO.
-`install.sh` runs seven idempotent steps (+ two migration steps, no-ops on a fresh install),
-installs packages, configures services and applies the tuning. Replacing the Plasma shell with
-niri/Noctalia only takes effect after a reboot.
+`install.sh` runs seven base idempotent steps (+ the opt-in zoom step and two migration steps,
+no-ops on a fresh install), installs packages, configures services and applies the tuning.
+Replacing the Plasma shell with niri/Noctalia only takes effect after a reboot.
 
 ## Before you start
 
@@ -117,6 +117,7 @@ preserving the installation variables.
 | `--user NAME` | Target user for the configuration (default: whoever invoked sudo) |
 | `--gpu-profile P` | Forces `auto`, `intel`, `amd`, `nvidia`, `hybrid` or `none` |
 | `--skip-remove` | Never removes packages; only installs and adjusts services |
+| `--with-niri-zoom` | Installs niri with per-output zoom (opt-in fork of PR niri#3246; builds in podman and uses `/usr/local/bin/niri`) |
 | `-h`, `--help` | Shows the help extracted from the `install.sh` header |
 
 The same options work with the bootstrap, for example

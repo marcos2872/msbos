@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+# msbos-niri-zoom-remove — remove o niri patchado (zoom por output) e o
+# include do zoom, voltando ao niri do pacote (/usr/bin/niri).
+#
+# Uso:
+#   sudo msbos-niri-zoom-remove [--user NOME] [--purge] [--force]
+#
+#   --user NOME  usuário cujo config.kdl será limpo (padrão: quem chamou o sudo)
+#   --purge      arquiva ~/.config/niri/zoom.kdl em ~/.local/state/msbos
+#   --force      remove /usr/local/bin/niri mesmo sem o marcador do msbos
+#
+# O /usr/bin/niri do pacote nunca é tocado. Depois de rodar, saia e entre de
+# novo: o próximo login volta a usar o compositor da distro.
+set -euo pipefail
+
+usage() { awk 'NR==1{next} /^#/{sub(/^# ?/,""); print; next} {exit}' "${BASH_SOURCE[0]}"; }
+
+if [[ ${EUID} -ne 0 ]]; then
+  echo "erro: rode com sudo (o binário fica em /usr/local/bin)" >&2
+  exit 1
+fi
+
+ALVO=''
+PURGE=0
+FORCE=0
+while (($#)); do
+  case "$1" in
+    --user) shift; ALVO="${1:?--user requer um nome}" ;;
+    --purge) PURGE=1 ;;
+    --force) FORCE=1 ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "opção desconhecida: $1" >&2; usage >&2; exit 2 ;;
+  esac
+  shift
+done
+
+if [[ -n ${ALVO} ]]; then
+  id "${ALVO}" >/dev/null 2>&1 || { echo "erro: usuário '${ALVO}' não existe" >&2; exit 1; }
+  TU="${ALVO}"
+elif [[ -n ${SUDO_USER:-} && ${SUDO_USER} != root ]]; then
+  TU="${SUDO_USER}"
+else
+  TU="$(awk -F: '$3>=1000 && $3<65000 {print $1; exit}' /etc/passwd)" || TU=''
+  if [[ -z ${TU} ]]; then
+    echo "erro: nenhum usuário normal encontrado; use --user NOME" >&2
+    exit 1
+  fi
+fi
+
+TU_HOME="$(getent passwd "${TU}" | cut -d: -f6)"
+TU_GROUP="$(id -gn "${TU}")"
+CFG="${TU_HOME}/.config/niri/config.kdl"
+ZOOM_CFG="${TU_HOME}/.config/niri/zoom.kdl"
+MARKER='/usr/local/share/msbos/niri-zoom.commit'
+BIN='/usr/local/bin/niri'
+
+if [[ ! -f ${MARKER} && ${FORCE} != 1 ]]; then
+  echo "aviso: ${MARKER} não existe — não parece instalado pelo msbos." >&2
+  echo "       use --force para remover ${BIN} e o include mesmo assim." >&2
+  exit 1
+fi
+
+rm -f "${BIN}" "${MARKER}" /usr/local/bin/msbos-zoom-reset
+rmdir /usr/local/share/msbos 2>/dev/null || true
+echo "removido: ${BIN}, ${MARKER}, /usr/local/bin/msbos-zoom-reset"
+
+if [[ -f ${CFG} ]]; then
+  real="${CFG}"
+  [[ -L ${CFG} ]] && real="$(readlink -f "${CFG}")"
+  if grep -qE '^[[:space:]]*include[[:space:]]+"zoom\.kdl"' "${real}"; then
+    [[ -f ${real}.msbos-bak ]] || cp -a "${real}" "${real}.msbos-bak" 2>/dev/null || true
+    tmp="$(mktemp)"
+    grep -v -E '^[[:space:]]*(// msbos: zoom do niri|include "zoom\.kdl")[[:space:]]*$' "${real}" > "${tmp}" || true
+    install -m "$(stat -c %a "${real}")" "${tmp}" "${real}"
+    chown "${TU}:${TU_GROUP}" "${real}"
+    rm -f "${tmp}"
+    echo "removido: include \"zoom.kdl\" de ${real} (backup .msbos-bak)"
+  fi
+fi
+
+if ((PURGE)); then
+  if [[ -f ${ZOOM_CFG} ]]; then
+    dest="${TU_HOME}/.local/state/msbos/niri-zoom-backups"
+    install -d -m 0755 -o "${TU}" -g "${TU_GROUP}" "${dest}"
+    mv "${ZOOM_CFG}" "${dest}/zoom.kdl.$(date +%Y%m%d-%H%M%S)"
+    echo "arquivado: ${ZOOM_CFG} → ${dest}"
+  fi
+else
+  [[ -f ${ZOOM_CFG} ]] && echo "mantido: ${ZOOM_CFG} (use --purge para arquivar)"
+fi
+
+echo "pronto. Saia e entre de novo; o próximo login usa /usr/bin/niri."

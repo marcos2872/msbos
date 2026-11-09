@@ -22,7 +22,7 @@ jobs:
         run: |
           # assets/bin/msbos-seapplet é Python; validar só quem tem shebang shell.
           scripts=()
-          for f in install.sh bootstrap.sh pessoal-pc.sh lib/common.sh scripts/*.sh assets/bin/* assets/libexec/* tests/*.sh tests/agent-skill/*.sh; do
+          for f in install.sh bootstrap.sh pessoal-pc.sh lib/common.sh scripts/*.sh assets/bin/* assets/libexec/* assets/niri-zoom/*.sh tests/*.sh tests/agent-skill/*.sh; do
             first="$(head -n1 "$f")"
             case "$first" in
               *bash*|*'/sh'*|*dash*|*ksh*) scripts+=("$f") ;;
@@ -47,7 +47,7 @@ jobs:
         run: |
           # O applet é Python; shellcheck só recebe os arquivos com shebang shell.
           scripts=()
-          for f in install.sh bootstrap.sh pessoal-pc.sh lib/common.sh scripts/*.sh assets/bin/* assets/libexec/* tests/*.sh tests/agent-skill/*.sh; do
+          for f in install.sh bootstrap.sh pessoal-pc.sh lib/common.sh scripts/*.sh assets/bin/* assets/libexec/* assets/niri-zoom/*.sh tests/*.sh tests/agent-skill/*.sh; do
             first="$(head -n1 "$f")"
             case "$first" in
               *bash*|*'/sh'*|*dash*|*ksh*) scripts+=("$f") ;;
@@ -71,6 +71,10 @@ jobs:
           useradd -m -u 1000 ci
       - name: ./install.sh --dry-run --user ci
         run: ./install.sh --dry-run --user ci
+      # A flag opt-in também precisa passar pelo dry-run: a etapa 55 valida
+      # assets/hashes sem acessar rede, podman ou compilar.
+      - name: ./install.sh --dry-run --with-niri-zoom --user ci
+        run: ./install.sh --dry-run --with-niri-zoom --user ci
 
   rebranding:
     name: rebranding (nome antigo)

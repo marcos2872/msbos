@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+# msbos-zoom-reset — destrava e volta o zoom do niri para 1.0.
+#
+# Uso:
+#   msbos-zoom-reset [OUTPUT]   reseta o output indicado (ou o focado)
+#   msbos-zoom-reset --all      reseta todos os outputs
+#
+# O niri patchado trava o nível de zoom enquanto o ponto focal está travado;
+# por isso o reset destrava antes de aplicar 1.0. Funciona com o niri
+# instalado por --with-niri-zoom (niri msg zoom-state).
+set -euo pipefail
+
+usage() { awk 'NR==1{next} /^#/{sub(/^# ?/,""); print; next} {exit}' "${BASH_SOURCE[0]}"; }
+
+niri_bin="${NIRI_BIN:-}"
+if [[ -z ${niri_bin} ]]; then
+  if [[ -x /usr/local/bin/niri ]]; then
+    niri_bin=/usr/local/bin/niri
+  elif command -v niri >/dev/null 2>&1; then
+    niri_bin="$(command -v niri)"
+  else
+    echo "erro: niri não encontrado (instale com --with-niri-zoom)" >&2
+    exit 1
+  fi
+fi
+
+if ! command -v jq >/dev/null 2>&1; then
+  echo "erro: jq não encontrado; instale com: sudo dnf install jq" >&2
+  exit 1
+fi
+
+all=0
+alvo=''
+while (($#)); do
+  case "$1" in
+    --all) all=1 ;;
+    -h|--help) usage; exit 0 ;;
+    -*) echo "opção desconhecida: $1" >&2; usage >&2; exit 2 ;;
+    *) alvo="$1" ;;
+  esac
+  shift
+done
+
+# O niri define NIRI_SOCKET para os filhos. Se o comando for rodado de um shell
+# fora da sessão, tenta o socket mais recente do usuário.
+if [[ -z ${NIRI_SOCKET:-} ]]; then
+  shopt -s nullglob
+  socks=(/run/user/"$(id -u)"/niri.wayland-*.sock)
+  shopt -u nullglob
+  if ((${#socks[@]} > 0)); then
+    NIRI_SOCKET="$(ls -t "${socks[@]}" | head -n1)"
+    export NIRI_SOCKET
+  fi
+fi
+
+if ! state="$("${niri_bin}" msg --json zoom-state 2>/dev/null)"; then
+  echo "erro: o niri em execução não tem zoom (ou não está acessível)." >&2
+  echo "      instale com --with-niri-zoom e saia/entre na sessão." >&2
+  exit 1
+fi
+
+if ((all)); then
+  mapfile -t outputs < <(jq -r 'keys[]' <<<"${state}")
+elif [[ -n ${alvo} ]]; then
+  if ! jq -e --arg o "${alvo}" 'has($o)' <<<"${state}" >/dev/null; then
+    echo "erro: output '${alvo}' não encontrado" >&2
+    exit 1
+  fi
+  outputs=("${alvo}")
+else
+  focado="$("${niri_bin}" msg --json focused-output 2>/dev/null | jq -r '.name // empty')"
+  if [[ -z ${focado} ]]; then
+    echo "erro: não consegui determinar o output focado" >&2
+    exit 1
+  fi
+  outputs=("${focado}")
+fi
+
+for out in "${outputs[@]}"; do
+  locked="$(jq -r --arg o "${out}" '.[$o].is_locked' <<<"${state}")"
+  if [[ ${locked} == true ]]; then
+    "${niri_bin}" msg action toggle-zoom-lock "${out}" >/dev/null
+  fi
+  "${niri_bin}" msg action set-zoom-level 1.0 "${out}" >/dev/null
+  echo "zoom: ${out} → 1.0"
+done

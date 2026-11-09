@@ -1,0 +1,30 @@
+// msbos — zoom de acessibilidade do niri (opt-in --with-niri-zoom).
+//
+// O viewport ancora no cursor e NÃO segue o mouse sozinho. Segure Super
+// (o Mod do niri no TTY) e mova o mouse para fazer o pan; ao soltar, o zoom
+// fica parado no último ponto.
+//
+// Atalhos (Mod = Super no TTY):
+//   Mod+Alt+scroll            ajusta o zoom no monitor focado
+//   Mod+Alt+= / Mod+Alt+-     zoom in/out pelo teclado
+//   Mod+Alt+0                 destrava e volta para 1.0
+//   Mod+Alt+Z                 trava/destrava o ponto focal
+zoom {
+    movement-mode "anchored"
+    increment-type "exponential"
+    max-zoom 6.0
+    pan-modifier "super"
+}
+
+cursor {
+    scale-with-zoom
+}
+
+binds {
+    Mod+Alt+WheelScrollUp   { set-zoom-level "+0.2"; }
+    Mod+Alt+WheelScrollDown { set-zoom-level "-0.2"; }
+    Mod+Alt+Equal           { set-zoom-level "+0.2"; }
+    Mod+Alt+Minus           { set-zoom-level "-0.2"; }
+    Mod+Alt+0               { spawn "msbos-zoom-reset"; }
+    Mod+Alt+Z               { toggle-zoom-lock; }
+}

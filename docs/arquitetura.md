@@ -102,11 +102,13 @@ Contrato entre `install.sh`, `bootstrap.sh` e as etapas:
 O bootstrap acrescenta `MSBOS_REF`, `MSBOS_REPO`, `MSBOS_URL` e `MSBOS_KEEP`.
 As etapas também leem `FEDORA_VERSION`, exportada por `require_fedora`.
 
-## As sete etapas + migração
+## As sete etapas base + a opt-in de zoom + migração
 
-Além das sete etapas abaixo, o `install.sh` roda `00-migrate-names.sh` (prepara uma instalação
+Além das sete etapas base abaixo, o `install.sh` roda `55-niri-zoom.sh` quando chamado com
+`--with-niri-zoom` (compila o fork do niri com zoom por output; sem a flag é no-op),
+`00-migrate-names.sh` (prepara uma instalação
 antiga, sem apagar nada) e `99-cleanup-legacy.sh` (remove os artefatos antigos depois que os
-novos já existem). Em uma instalação nova, as duas são no-op.
+novos já existem). Em uma instalação nova, as duas de migração são no-op.
 
 ### `10-gpu.sh` — detecção e drivers
 
@@ -246,6 +248,17 @@ Tudo é idempotente: detecta o que já existe e pula.
   login (marcador em `~/.local/state/msbos/greeter-sync.done`).
 - **Permissões**: ajusta o dono dos arquivos do usuário e, se houver sessão Noctalia, dispara
   o sync final do greeter.
+
+### `55-niri-zoom.sh` — zoom por output (opt-in)
+
+Só roda com `--with-niri-zoom` (`WITH_NIRI_ZOOM=1`); sem a flag é no-op. Compila o commit
+fixado do PR niri-wm/niri#3246 + o patch local (`assets/niri-zoom/niri-zoom-anchored.patch`)
+em um container Fedora 44 e instala `/usr/local/bin/niri` (o `/usr/bin/niri` do pacote fica
+intacto), com marcador de versão para idempotência. Instala `~/.config/niri/zoom.kdl`
+(`movement-mode "anchored"` + `pan-modifier "super"`, `Mod+Alt+scroll`, reset e trava) e
+adiciona `include "zoom.kdl"` ao config do usuário com backup e validação; se o config ficar
+inválido, restaura o backup. Também instala os helpers `msbos-zoom-reset` e
+`msbos-niri-zoom-remove`. Em `--dry-run` não acessa a rede, não chama podman e não compila.
 
 ### `60-agent-skill.sh` — helper privilegiado e skill de agentes
 

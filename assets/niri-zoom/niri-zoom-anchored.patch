@@ -1,0 +1,238 @@
+diff --git a/docs/wiki/Configuration:-Miscellaneous.md b/docs/wiki/Configuration:-Miscellaneous.md
+index 33ab8c8d..77659023 100644
+--- a/docs/wiki/Configuration:-Miscellaneous.md
++++ b/docs/wiki/Configuration:-Miscellaneous.md
+@@ -425,6 +425,7 @@ zoom {
+     increment-type "linear"
+     movement-mode "cursor-follow"
+     zoom-filter-threshold 2.0
++    // pan-modifier "super"
+ }
+ ```
+ 
+@@ -475,6 +476,9 @@ Controls how the zoom viewport tracks the cursor position while zoomed in.
+ - `"on-edge"`: the viewport only moves when the cursor reaches the edge of the
+   current viewport. Similar to strategy games where scrolling happens at screen
+   edges.
++- `"anchored"`: the viewport stays anchored where the zoom gesture started.
++  Moving the cursor does not move the viewport. Hold `pan-modifier` while
++  moving the cursor to temporarily pan the view.
+ 
+ ```kdl
+ zoom {
+@@ -482,6 +486,20 @@ zoom {
+ }
+ ```
+ 
++#### `pan-modifier`
++
++A single modifier key (`"ctrl"`, `"shift"`, `"alt"` or `"super"`) that
++temporarily makes the viewport follow the cursor while held. This is useful with
++`movement-mode "anchored"`: the zoom anchors at the cursor and stays there, and
++holding the pan modifier lets you move the magnified view around.
++
++```kdl
++zoom {
++    movement-mode "anchored"
++    pan-modifier "super"
++}
++```
++
+ #### `zoom-filter-threshold`
+ 
+ Controls the texture filtering mode used when rendering zoomed content.
+diff --git a/docs/wiki/Configuration:-Zoom.md b/docs/wiki/Configuration:-Zoom.md
+index 8bfd766d..1acb01a5 100644
+--- a/docs/wiki/Configuration:-Zoom.md
++++ b/docs/wiki/Configuration:-Zoom.md
+@@ -22,6 +22,11 @@ Zoom can also be animated. See the [`animation {}` settings](./Configuration:-An
+ 
+ The cursor can optionally scale with zoom via the [`scale-with-zoom`](./Configuration:-Miscellaneous.md#cursor) cursor setting.
+ 
++By default the viewport follows the cursor (`movement-mode "cursor-follow"`). With
++`movement-mode "anchored"`, the viewport anchors where the zoom gesture starts and
++stays put while the cursor moves; holding the configured `pan-modifier` makes it
++follow the cursor again, so you can pan only when you want to.
++
+ ### IPC
+ 
+ #### State Query
+diff --git a/niri-config/src/lib.rs b/niri-config/src/lib.rs
+index e51d6803..2b7e1f24 100644
+--- a/niri-config/src/lib.rs
++++ b/niri-config/src/lib.rs
+@@ -2457,6 +2457,7 @@ mod tests {
+                 pinch_sensitivity: 1.0,
+                 max_zoom: 10.0,
+                 zoom_filter_threshold: 2.0,
++                pan_modifier: None,
+             },
+         }
+         "#);
+diff --git a/niri-config/src/misc.rs b/niri-config/src/misc.rs
+index e09bfa52..d178e907 100644
+--- a/niri-config/src/misc.rs
++++ b/niri-config/src/misc.rs
+@@ -20,6 +20,18 @@ pub enum ZoomMovementMode {
+     CursorFollow,
+     Centered,
+     OnEdge,
++    /// Anchor the viewport at the cursor when zooming, but do not move it
++    /// when the cursor moves. Holding `pan-modifier` temporarily makes it
++    /// follow the cursor again.
++    Anchored,
++}
++
++#[derive(knuffel::DecodeScalar, Copy, Clone, Debug, PartialEq)]
++pub enum ZoomPanModifier {
++    Ctrl,
++    Shift,
++    Alt,
++    Super,
+ }
+ 
+ #[derive(Clone, Copy, Debug, Default, PartialEq, knuffel::DecodeScalar)]
+@@ -36,6 +48,7 @@ pub struct Zoom {
+     pub pinch_sensitivity: f64,
+     pub max_zoom: f64,
+     pub zoom_filter_threshold: f64,
++    pub pan_modifier: Option<ZoomPanModifier>,
+ }
+ 
+ impl Default for Zoom {
+@@ -46,6 +59,7 @@ impl Default for Zoom {
+             pinch_sensitivity: 1.0,
+             max_zoom: 10.0,
+             zoom_filter_threshold: 2.0,
++            pan_modifier: None,
+         }
+     }
+ }
+@@ -62,6 +76,8 @@ pub struct ZoomPart {
+     pub max_zoom: Option<f64>,
+     #[knuffel(child, unwrap(argument))]
+     pub zoom_filter_threshold: Option<f64>,
++    #[knuffel(child, unwrap(argument))]
++    pub pan_modifier: Option<ZoomPanModifier>,
+ }
+ 
+ impl MergeWith<ZoomPart> for Zoom {
+@@ -74,6 +90,7 @@ impl MergeWith<ZoomPart> for Zoom {
+             max_zoom,
+             zoom_filter_threshold
+         );
++        merge_clone_opt!((self, part), pan_modifier);
+     }
+ }
+ 
+diff --git a/src/input/mod.rs b/src/input/mod.rs
+index 42dfdc43..38a834c7 100644
+--- a/src/input/mod.rs
++++ b/src/input/mod.rs
+@@ -2455,10 +2455,6 @@ impl State {
+             }
+             Action::SetZoomLevel(level, output) => {
+                 if let Some(output) = self.active_zoom_output(output.as_deref()) {
+-                    if self.niri.layout.zoom_locked_for_output(&output) {
+-                        return;
+-                    }
+-
+                     let current_level = self.niri.layout.zoom_level_for_output(&output);
+                     let max_zoom = self.niri.layout.zoom_max_for_output(&output);
+                     let increment_type = self.niri.config.borrow().zoom.increment_type;
+@@ -2516,7 +2512,7 @@ impl State {
+                         let cursor_local = cursor_pos - output_geo.loc;
+                         let movement_mode = self.niri.config.borrow().zoom.movement_mode;
+                         match movement_mode {
+-                            ZoomMovementMode::OnEdge => (),
++                            ZoomMovementMode::OnEdge | ZoomMovementMode::Anchored => (),
+                             _ => {
+                                 self.niri.layout.animate_zoom_unlock(
+                                     &output,
+diff --git a/src/niri.rs b/src/niri.rs
+index 71ae83bf..e60d9cbf 100644
+--- a/src/niri.rs
++++ b/src/niri.rs
+@@ -17,7 +17,7 @@ use niri_config::debug::PreviewRender;
+ use niri_config::output::MaxBpc;
+ use niri_config::{
+     Config, FloatOrInt, Key, Modifiers, OutputName, TrackLayout, WarpMouseToFocusMode,
+-    WorkspaceReference, Xkb,
++    WorkspaceReference, Xkb, ZoomMovementMode, ZoomPanModifier,
+ };
+ use smithay::backend::allocator::Fourcc;
+ use smithay::backend::input::Keycode;
+@@ -4413,7 +4413,22 @@ impl Niri {
+         else {
+             return;
+         };
+-        let movement_mode = self.config.borrow().zoom.movement_mode;
++
++        // In Anchored mode the viewport stays where it was when the zoom
++        // gesture ended. Holding the configured pan modifier temporarily
++        // switches to CursorFollow so the view can be panned with the mouse.
++        let pan_held = self.zoom_pan_modifier_held();
++        let movement_mode = if pan_held {
++            ZoomMovementMode::CursorFollow
++        } else {
++            self.config.borrow().zoom.movement_mode
++        };
++        tracing::debug!(
++            "zoom: update focal output={:?} pan_held={} mode={:?}",
++            output.name(),
++            pan_held,
++            movement_mode
++        );
+         self.layout.update_zoom_base_focal(
+             output,
+             output_geo,
+@@ -4424,6 +4439,24 @@ impl Niri {
+         );
+     }
+ 
++    /// Whether the configured zoom pan modifier is currently held.
++    ///
++    /// Returns false when no pan modifier is configured.
++    fn zoom_pan_modifier_held(&self) -> bool {
++        let Some(pan_modifier) = self.config.borrow().zoom.pan_modifier else {
++            return false;
++        };
++
++        let keyboard = self.seat.get_keyboard().unwrap();
++        let mods = keyboard.modifier_state();
++        match pan_modifier {
++            ZoomPanModifier::Ctrl => mods.ctrl,
++            ZoomPanModifier::Shift => mods.shift,
++            ZoomPanModifier::Alt => mods.alt,
++            ZoomPanModifier::Super => mods.logo,
++        }
++    }
++
+     /// Applies the zoom transform to the pointer/cursor render element by wrapping it in a
+     /// hotspot-centered zoom transform, to keep it aligned with the pointer position.
+     fn zoomed_pointer<R: NiriRenderer>(
+diff --git a/src/utils/zoom.rs b/src/utils/zoom.rs
+index 5b320aac..dd9d921f 100644
+--- a/src/utils/zoom.rs
++++ b/src/utils/zoom.rs
+@@ -64,7 +64,7 @@ pub fn compute_focal_for_cursor(
+     }
+ 
+     match movement_mode {
+-        ZoomMovementMode::CursorFollow => cursor_local,
++        ZoomMovementMode::CursorFollow | ZoomMovementMode::Anchored => cursor_local,
+         // OnEdge uses the same static focal as Centered; it only differs in
+         // how it updates the focal as the cursor moves relative to the viewport.
+         ZoomMovementMode::Centered | ZoomMovementMode::OnEdge => {
+@@ -92,6 +92,11 @@ pub fn compute_zoom_base_focal_update(
+ ) -> Option<Point<f64, Logical>> {
+     match movement_mode {
+         ZoomMovementMode::CursorFollow => Some(cursor_position),
++        // Anchored keeps the focal point where it was when the zoom gesture
++        // started. Pointer motion only moves the cursor inside the magnified
++        // view; holding the configured pan modifier switches to CursorFollow
++        // at the call site.
++        ZoomMovementMode::Anchored => None,
+         ZoomMovementMode::Centered => Some(compute_focal_for_cursor(
+             cursor_position,
+             zoom_factor,

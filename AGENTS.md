@@ -28,7 +28,7 @@ sintaxe, lint, `--dry-run` e os checks pós-instalação.
 
 ```bash
 ./install.sh --help        # ajuda (extraída do cabeçalho do próprio install.sh)
-./install.sh --dry-run     # simula tudo, sem alterar nada (7 etapas + migração; 1ª verificação recomendada)
+./install.sh --dry-run     # simula tudo, sem alterar nada (7 etapas base + migração; a 55-niri-zoom.sh é opt-in; 1ª verificação recomendada)
 ./install.sh               # instala de verdade (reexecuta com sudo; pergunta antes de remover o shell do Plasma)
 ./install.sh --yes         # sem perguntas (VMs descartáveis / CI)
 ```
@@ -41,6 +41,7 @@ sintaxe, lint, `--dry-run` e os checks pós-instalação.
 | `--user NOME` | Usuário-alvo da configuração (padrão: quem chamou o sudo) |
 | `--gpu-profile P` | Força `auto\|intel\|amd\|nvidia\|hybrid\|none` |
 | `--skip-remove` | Nunca remove pacotes (só instala e ajusta serviços) |
+| `--with-niri-zoom` | Instala o niri com zoom por output (fork opt-in do PR niri#3246; compila em podman e usa `/usr/local/bin/niri`) |
 
 Rodar uma etapa isolada (as etapas leem as mesmas variáveis de ambiente do `install.sh`):
 
@@ -54,7 +55,7 @@ Verificação local (os jobs de sintaxe/lint da CI rodam os mesmos comandos):
 ```bash
 # assets/bin/msbos-seapplet é Python: filtre só arquivos com shebang shell.
 scripts=()
-for f in install.sh bootstrap.sh pessoal-pc.sh lib/common.sh scripts/*.sh assets/bin/* assets/libexec/*; do
+for f in install.sh bootstrap.sh pessoal-pc.sh lib/common.sh scripts/*.sh assets/bin/* assets/libexec/* assets/niri-zoom/*.sh; do
   first="$(head -n1 "$f")"
   case "$first" in
     *bash*|*'/sh'*|*dash*|*ksh*) scripts+=("$f") ;;
@@ -135,6 +136,12 @@ Fluxo: `install.sh` (orquestrador) → `lib/common.sh` (helpers) → `scripts/NN
     (XwaylandVideoBridge desligado, seapplet com patch e sync do greeter no primeiro login),
     Secret Service do KWallet no D-Bus,
     Zed e agents-config do OpenCode.
+  - `55-niri-zoom.sh` — **opt-in** (`--with-niri-zoom`): compila o commit fixado do PR
+    niri-wm/niri#3246 + patch local (`assets/niri-zoom/niri-zoom-anchored.patch`) em um
+    container Fedora 44 e instala `/usr/local/bin/niri` (o `/usr/bin/niri` do pacote fica
+    intacto). Instala `assets/niri/zoom.kdl` e o include no config do usuário, além dos
+    helpers `msbos-zoom-reset`/`msbos-niri-zoom-remove`. Sem a flag é no-op; em `--dry-run`
+    não acessa rede nem compila.
   - `60-agent-skill.sh` — helper privilegiado `/usr/local/libexec/msbos-priv`
     (root, `bin_t`), política polkit `org.msbos.priv.policy`, listas de root em
     `/etc/msbos/`, trilha em `/var/log/msbos/actions.log` e a skill `msbos`
@@ -147,7 +154,8 @@ Fluxo: `install.sh` (orquestrador) → `lib/common.sh` (helpers) → `scripts/NN
   instalação. O README é enxuto (o que é + instalação básica + créditos); os detalhes ficam em
   `docs/`.
 - `assets/` espelha os caminhos de destino e é instalado via `install_file`/`render_file`:
-  `niri/`, `greetd/`, `pam.d/` (não sobrescrever o pam_selinux do pacote!), `alacritty/`, `zsh/`,
+  `niri/` (config.kdl + zoom.kdl), `greetd/`, `pam.d/` (não sobrescrever o pam_selinux do pacote!),
+  `alacritty/`, `zsh/`,
   `gtk-3.0/` + `gtk-4.0/` (settings.ini com Breeze), `dconf/db/local.d/00-msbos-dark`,
   `dbus-1/services/` (→ `~/.local/share/dbus-1/services/`), `profile.d/`, `sysctl.d/`,
   `oomd.conf`, `zram-generator.conf`, `yum.repos.d/terra.repo`,
@@ -155,6 +163,8 @@ Fluxo: `install.sh` (orquestrador) → `lib/common.sh` (helpers) → `scripts/NN
   (→ `~/.local/share/noctalia/plugins/`), `autostart/` (→ `~/.config/autostart/`),
   `applications/` (→ `~/.local/share/applications/`),
   `xdg-desktop-portal/` (→ `~/.config/xdg-desktop-portal/`).
+  `assets/niri-zoom/` não é copiado para o sistema: guarda o patch do fork e o
+  `build-in-container.sh` usados só pela etapa `55-niri-zoom.sh`.
   `assets/bin/` e `assets/libexec/` trazem helpers (`msbos-wallpaper`, `msbos-cpu-governor`,
   `msbos-seapplet` — cópia do applet do setroubleshoot com patch do GLib.GError —,
   `msbos-doctor` — diagnóstico somente-leitura do sistema instalado —,

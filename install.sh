@@ -12,6 +12,8 @@
 #   --user NOME            Usuário-alvo da configuração (padrão: quem chamou o sudo)
 #   --gpu-profile PERFIL   Força: auto|intel|amd|nvidia|hybrid|none (padrão: auto)
 #   --skip-remove          Nunca remove pacotes (apenas instala e ajusta serviços)
+#   --with-niri-zoom       Instala o niri com zoom por output (fork opt-in do PR
+#                          niri#3246; compila em podman e usa /usr/local/bin/niri)
 #   -h, --help             Esta ajuda
 #
 # Imagem base:
@@ -41,6 +43,7 @@ MSBOS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 : "${TARGET_USER:=}"
 : "${GPU_PROFILE:=auto}"
 : "${SKIP_REMOVE:=0}"
+: "${WITH_NIRI_ZOOM:=0}"
 
 usage() { awk 'NR==1{next} !/^#/{exit} {sub(/^# ?/,""); print}' "${MSBOS_ROOT}/install.sh"; }
 
@@ -52,13 +55,14 @@ while (($#)); do
     --user)         shift; TARGET_USER="${1:?--user requer um nome}" ;;
     --gpu-profile)  shift; GPU_PROFILE="${1:?--gpu-profile requer um valor}" ;;
     --skip-remove)  SKIP_REMOVE=1 ;;
+    --with-niri-zoom) WITH_NIRI_ZOOM=1 ;;
     -h|--help)      usage; exit 0 ;;
     *) echo "opção desconhecida: $1" >&2; usage; exit 1 ;;
   esac
   shift
 done
 
-export DRY_RUN YES NO_GREETER TARGET_USER GPU_PROFILE SKIP_REMOVE
+export DRY_RUN YES NO_GREETER TARGET_USER GPU_PROFILE SKIP_REMOVE WITH_NIRI_ZOOM
 
 # Reexecuta com privilégios (mantendo as variáveis acima)
 if [[ ${EUID} -ne 0 && ${DRY_RUN} -eq 0 ]]; then
@@ -66,6 +70,7 @@ if [[ ${EUID} -ne 0 && ${DRY_RUN} -eq 0 ]]; then
   exec sudo env \
     "DRY_RUN=${DRY_RUN}" "YES=${YES}" "NO_GREETER=${NO_GREETER}" \
     "TARGET_USER=${TARGET_USER}" "GPU_PROFILE=${GPU_PROFILE}" "SKIP_REMOVE=${SKIP_REMOVE}" \
+    "WITH_NIRI_ZOOM=${WITH_NIRI_ZOOM}" \
     bash "${MSBOS_ROOT}/install.sh"
 fi
 

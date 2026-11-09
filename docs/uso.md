@@ -73,6 +73,28 @@ arquivo, suas escolhas são preservadas nas reexecuções do instalador.
 O restante (scroll do mouse com `Super`, redimensionamento, etc.) segue os defaults do niri.
 A referência completa do compositor está em <https://github.com/YaLTeR/niri/wiki>.
 
+## Zoom do niri (opcional)
+
+Se o msbos foi instalado com `--with-niri-zoom`, o compositor ganha zoom de acessibilidade por
+monitor:
+
+| Atalho | Ação |
+|---|---|
+| `Super+Alt+scroll` | Ajusta o zoom no monitor focado |
+| `Super+Alt+=` / `Super+Alt+-` | Zoom in/out pelo teclado |
+| `Super+Alt+0` | Destrava e volta para 1.0 |
+| `Super+Alt+Z` | Trava/destrava o ponto focal |
+
+O viewport ancora no cursor e **não** segue o mouse sozinho. Segure `Super` e mova o mouse para
+fazer o pan; ao soltar, o zoom fica parado no último ponto. O `Super+Alt+scroll` também segura o
+`Super`, então o zoom acompanha o cursor durante o gesto e para quando você solta.
+
+Para remover o fork e voltar ao niri do pacote:
+
+```bash
+sudo msbos-niri-zoom-remove
+```
+
 ## Noctalia v5
 
 O Noctalia é o shell do desktop: barra, launcher, notificações, OSD, control center, lock

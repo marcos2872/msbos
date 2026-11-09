@@ -23,7 +23,7 @@ troubleshooting and credits.
 |---|---|
 | [Installation](instalacao.en.md) | Recommended base, downloads, VM with 3D, bootstrap, `install.sh` options, Anaconda and first steps |
 | [Daily use](uso.en.md) | niri/Noctalia shortcuts, wallpapers, default apps, Breeze Dark, personal configs, greeter and updates |
-| [Architecture and steps](arquitetura.en.md) | Execution flow, `lib/common.sh`, the 7 steps + migration, assets, state, verification and development |
+| [Architecture and steps](arquitetura.en.md) | Execution flow, `lib/common.sh`, the 7 base steps + migration (and the opt-in zoom), assets, state, verification and development |
 | [Troubleshooting](solucao-de-problemas.en.md) | dnf failures, VM/GPU, flatpak, Noctalia, greeter, Plasma and recovery |
 | [Migration to msbos](migracao-msbos.en.md) | Moving from a previous install without reinstalling Fedora |
 | [Name history](historico.en.md) | The previous generations of the project name |

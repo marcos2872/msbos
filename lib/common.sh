@@ -9,11 +9,13 @@
 #   TARGET_USER usuário-alvo para configuração (opcional)
 #   GPU_PROFILE auto|intel|amd|nvidia|hybrid|none
 #   SKIP_REMOVE 1 = nunca remove pacotes
+#   WITH_NIRI_ZOOM 1 = instala o niri com zoom por output (fork opt-in)
 
 : "${DRY_RUN:=0}"
 : "${YES:=0}"
 : "${NO_GREETER:=0}"
 : "${GPU_PROFILE:=auto}"
+: "${WITH_NIRI_ZOOM:=0}"
 
 # Cores (apenas se stdout for tty)
 if [[ -t 1 ]]; then

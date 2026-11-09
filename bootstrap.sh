@@ -35,11 +35,13 @@ TARBALL="${TMP}/repo.tar.gz"
 # 1). A instalação de verdade acontece no primeiro boot; veja
 # kickstart/msbos-firstboot.ks. As demais opções seguem para o install.sh.
 FIRSTBOOT=0
+WITH_NIRI_ZOOM=0
 ALVO_USUARIO=""
 ARGS=()
 while (($# > 0)); do
   case "$1" in
     --firstboot) FIRSTBOOT=1 ;;
+    --with-niri-zoom) WITH_NIRI_ZOOM=1; ARGS+=("$1") ;;
     --user)
       ALVO_USUARIO="${2:-}"
       ARGS+=("$1")
@@ -132,6 +134,7 @@ if ((FIRSTBOOT == 1)); then
       echo "# Ref e repositório de onde baixar o instalador (padrão: main e ${REPO})."
       echo "MSBOS_REF=${REF}"
       echo "MSBOS_REPO=${REPO}"
+      echo "WITH_NIRI_ZOOM=${WITH_NIRI_ZOOM}"
     } >/etc/msbos/firstboot.conf
     chmod 0644 /etc/msbos/firstboot.conf
   else

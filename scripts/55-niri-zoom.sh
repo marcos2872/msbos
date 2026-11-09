@@ -171,17 +171,24 @@ build_niri() {
     return 1
   fi
 
-  if ldd "${WORK_DIR}/src/niri-built" 2>/dev/null | grep -q 'not found'; then
-    err "o binário compilado tem bibliotecas faltando no host:"
-    ldd "${WORK_DIR}/src/niri-built" 2>/dev/null | grep 'not found' >&2 || true
+  # O build-in-container.sh grava em /work/niri-built (= ${WORK_DIR}/niri-built).
+  local bin="${WORK_DIR}/niri-built"
+  if [[ ! -x ${bin} ]]; then
+    err "o binário compilado não foi encontrado em ${bin}"
     return 1
   fi
-  if ! "${WORK_DIR}/src/niri-built" --version >/dev/null 2>&1; then
+
+  if ldd "${bin}" 2>/dev/null | grep -q 'not found'; then
+    err "o binário compilado tem bibliotecas faltando no host:"
+    ldd "${bin}" 2>/dev/null | grep 'not found' >&2 || true
+    return 1
+  fi
+  if ! "${bin}" --version >/dev/null 2>&1; then
     err "o binário compilado não executa no host"
     return 1
   fi
 
-  install -m 0755 "${WORK_DIR}/src/niri-built" "${ZOOM_BIN}.new"
+  install -m 0755 "${bin}" "${ZOOM_BIN}.new"
   mv -f "${ZOOM_BIN}.new" "${ZOOM_BIN}"
 
   if command -v restorecon >/dev/null 2>&1; then

@@ -147,6 +147,54 @@ transaction.
 Each completed step leaves a marker in `/var/lib/msbos/steps/`. If a step fails, the
 installer prints the error code, the history and how to resume.
 
+## Niri zoom (optional)
+
+The Fedora niri has no zoom. msbos ships an optional fork with per-output accessibility zoom,
+**off by default**: the `55-niri-zoom.sh` step only runs when the install is called with
+`--with-niri-zoom`.
+
+```bash
+sudo bash /tmp/msbos.sh --with-niri-zoom   # installing through the bootstrap
+./install.sh --with-niri-zoom              # installing from a clone
+```
+
+On a system that already runs msbos you can run just this step, without repeating the others:
+
+```bash
+sudo env WITH_NIRI_ZOOM=1 bash scripts/55-niri-zoom.sh
+```
+
+The step:
+
+- builds the pinned commit of PR [niri#3246](https://github.com/niri-wm/niri/pull/3246) + the
+  local msbos patch in a Fedora 44 container — it needs `podman` and network, and takes a few
+  minutes;
+- installs the binary at `/usr/local/bin/niri`; the package's `/usr/bin/niri` stays untouched;
+- creates `~/.config/niri/zoom.kdl` and appends `include "zoom.kdl"` to the user's
+  `config.kdl`, with a backup and validation (if the config becomes invalid, the backup is
+  restored);
+- installs the `msbos-zoom-reset` and `msbos-niri-zoom-remove` helpers.
+
+The step is idempotent: the `/usr/local/share/msbos/niri-zoom.commit` marker records the
+commit, the patch and the binary sha256, so re-running the install with the same commit does
+not rebuild. Under `--dry-run` none of that happens — the step simulates without network, podman
+or compilation.
+
+**It takes effect on the next login.** The running session stays on the old niri; log out and
+back in (or reboot). To confirm the new binary is in place:
+
+```bash
+command -v niri                 # should print /usr/local/bin/niri
+cat /usr/local/share/msbos/niri-zoom.commit
+```
+
+The shortcuts are in [Daily use](uso.en.md#niri-zoom-optional). To remove the fork and go back to
+the package's niri:
+
+```bash
+sudo msbos-niri-zoom-remove
+```
+
 ## Unattended install (kickstart + first boot)
 
 **Do not run `install.sh` directly from `%post`.** `%post` runs inside the installed system's

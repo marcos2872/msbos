@@ -77,6 +77,11 @@ cd msbos
 sudo reboot
 ```
 
+O zoom por output do niri é **opcional**: sem `--with-niri-zoom` o msbos instala o niri do
+pacote, que não tem zoom. Para compilar o fork com zoom por monitor, rode a instalação com
+`--with-niri-zoom` — passo a passo, requisitos e como remover depois em
+[instalação](docs/instalacao.md#zoom-do-niri-opcional).
+
 O instalador avisa antes de agendar a remoção do shell do Plasma; nada é parado na sessão
 atual. A troca para o greetd/niri vale no **próximo boot**. **Não** rode o `install.sh` no
 `%post` do Anaconda — veja [instalação](docs/instalacao.md).

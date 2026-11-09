@@ -74,8 +74,9 @@ compositor reference is at <https://github.com/YaLTeR/niri/wiki>.
 
 ## Niri zoom (optional)
 
-If msbos was installed with `--with-niri-zoom`, the compositor gets per-monitor accessibility
-zoom:
+With the install done using `--with-niri-zoom`, the compositor gets per-monitor accessibility
+zoom. To install it later on a system that already runs msbos, the step by step is in
+[installation](instalacao.en.md#niri-zoom-optional).
 
 | Shortcut | Action |
 |---|---|

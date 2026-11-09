@@ -144,6 +144,52 @@ shell do Plasma é agendada para o próximo boot, antes do login, via
 Cada etapa concluída deixa um marcador em `/var/lib/msbos/steps/`. Se uma etapa falhar,
 o instalador mostra o código de erro, o histórico e como retomar.
 
+## Zoom do niri (opcional)
+
+O niri do Fedora não tem zoom. O msbos traz um fork opcional com zoom de acessibilidade por
+output, **desligado por padrão**: a etapa `55-niri-zoom.sh` só roda quando a instalação é
+chamada com `--with-niri-zoom`.
+
+```bash
+sudo bash /tmp/msbos.sh --with-niri-zoom   # instalando pelo bootstrap
+./install.sh --with-niri-zoom              # instalando pelo clone
+```
+
+Num sistema que já tem o msbos dá para rodar só essa etapa, sem repetir as outras:
+
+```bash
+sudo env WITH_NIRI_ZOOM=1 bash scripts/55-niri-zoom.sh
+```
+
+A etapa:
+
+- compila o commit fixado do PR [niri#3246](https://github.com/niri-wm/niri/pull/3246) + o
+  patch local do msbos num container Fedora 44 — precisa de `podman` e de rede, e leva alguns
+  minutos;
+- instala o binário em `/usr/local/bin/niri`; o `/usr/bin/niri` do pacote fica intacto;
+- cria `~/.config/niri/zoom.kdl` e acrescenta `include "zoom.kdl"` ao `config.kdl` do usuário,
+  com backup e validação (se o config ficar inválido, o backup volta);
+- instala os helpers `msbos-zoom-reset` e `msbos-niri-zoom-remove`.
+
+A etapa é idempotente: o marcador `/usr/local/share/msbos/niri-zoom.commit` guarda o commit, o
+patch e o sha256 do binário, então repetir a instalação com o mesmo commit não recompila. Em
+`--dry-run` nada disso acontece — a etapa simula sem rede, sem podman e sem compilar.
+
+**Vale no próximo login.** A sessão em execução continua no niri antigo; saia e entre de novo
+(ou reinicie). Para conferir que o binário novo está no lugar:
+
+```bash
+command -v niri                 # deve responder /usr/local/bin/niri
+cat /usr/local/share/msbos/niri-zoom.commit
+```
+
+Os atalhos estão em [Uso diário](uso.md#zoom-do-niri-opcional). Para remover o fork e voltar ao
+niri do pacote:
+
+```bash
+sudo msbos-niri-zoom-remove
+```
+
 ## Instalação desatendida (kickstart + primeiro boot)
 
 **Não execute o `install.sh` diretamente no `%post`.** O `%post` roda no chroot do sistema

@@ -75,8 +75,9 @@ A referência completa do compositor está em <https://github.com/YaLTeR/niri/wi
 
 ## Zoom do niri (opcional)
 
-Se o msbos foi instalado com `--with-niri-zoom`, o compositor ganha zoom de acessibilidade por
-monitor:
+Com a instalação feita com `--with-niri-zoom`, o compositor ganha zoom de acessibilidade por
+monitor. Para instalar depois num sistema que já tem o msbos, o passo a passo está em
+[instalação](instalacao.md#zoom-do-niri-opcional).
 
 | Atalho | Ação |
 |---|---|

@@ -1,0 +1,58 @@
+id = "msbos/agent-usage"
+name = "Agent Usage"
+version = "0.2.0"
+plugin_api = 24
+author = "msbos"
+license = "MIT"
+icon = "gauge"
+description = "Uso dos agentes de IA (OpenCode Go e GitHub Copilot), com abas por provider."
+tags = ["bar", "panel", "service", "opencode", "copilot", "usage"]
+dependencies = ["opencode", "sqlite3"]
+
+[[setting]]
+key = "refresh"
+type = "int"
+label_key = "settings.refresh.label"
+description_key = "settings.refresh.description"
+default = 300
+min = 60
+max = 900
+
+# Fundo do painel: o msbos-ai-chat usa preto fixo com alfa (o texto passa a
+# tons claros). "theme" devolve o fundo e as cores ao tema do sistema.
+[[setting]]
+key = "background_mode"
+type = "select"
+label_key = "settings.background_mode.label"
+description_key = "settings.background_mode.description"
+default = "dark"
+options = [
+  { value = "dark", label_key = "settings.background_mode.dark" },
+  { value = "theme", label_key = "settings.background_mode.theme" },
+]
+
+[[setting]]
+key = "background_opacity"
+type = "int"
+label_key = "settings.background_opacity.label"
+description_key = "settings.background_opacity.description"
+default = 45
+min = 0
+max = 100
+
+[[widget]]
+id = "status"
+entry = "bar.luau"
+
+[[panel]]
+id = "panel"
+entry = "panel.luau"
+width = 380
+height = 460
+placement = "attached"
+open_near_click = true
+dismiss_on_outside_click = true
+
+[[service]]
+id = "poll"
+entry = "service.luau"

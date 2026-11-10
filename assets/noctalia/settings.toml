@@ -22,7 +22,7 @@ config_version = 15
 center = [ "clock", "media" ]
 end = [
     "tray",
-    "msbos/opencode-go:status",
+    "msbos/agent-usage:status",
     "group:g1",
     "notifications",
     "clipboard",
@@ -51,7 +51,7 @@ start = [ "control-center", "workspaces" ]
     padding = 6.0
 
 [plugins]
-enabled = [ "tmelik/system-monitor", "raycursive/niri-displays", "msbos/opencode-go" ]
+enabled = [ "tmelik/system-monitor", "raycursive/niri-displays", "msbos/agent-usage" ]
 
 [shell]
 app_icon_color = "secondary"

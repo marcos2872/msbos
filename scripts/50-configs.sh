@@ -128,6 +128,41 @@ else
   done
 fi
 
+# Migração do plugin local: 'opencode-go' virou 'agent-usage' (mesma função,
+# agora com abas por provider). O copia_plugin só cria diretórios ausentes,
+# então a versão antiga continuaria instalada e o Noctalia carregaria os dois
+# plugins. O diretório antigo é arquivado FORA de plugins/ — um diretório com
+# plugin.toml lá dentro seria descoberto de novo.
+legacy_plugin="${TU_HOME}/.local/share/noctalia/plugins/opencode-go"
+if [[ -d ${legacy_plugin} ]]; then
+  if [[ ${DRY_RUN} == 1 ]]; then
+    log "dry-run: arquivaria o plugin antigo 'opencode-go' (substituído por 'agent-usage')"
+  else
+    run_cmd mkdir -p "${TU_HOME}/.local/share/noctalia/plugin-archives"
+    run_cmd mv "${legacy_plugin}" \
+      "${TU_HOME}/.local/share/noctalia/plugin-archives/opencode-go-$(date +%Y%m%d%H%M%S)"
+    log "noctalia: plugin antigo 'opencode-go' arquivado (substituído por 'agent-usage')"
+  fi
+fi
+
+# O id do plugin também aparece no settings.toml do usuário (widget da barra e
+# lista de plugins habilitados). Renomeia só esse id, com backup; o resto da
+# personalização fica intacto. A segunda expressão colapsa a duplicata na
+# lista `enabled` quando o usuário já tinha habilitado o plugin novo.
+NOCT_SETTINGS="${NOCT_STATE}/settings.toml"
+if [[ -f ${NOCT_SETTINGS} ]] && grep -q 'msbos/opencode-go' "${NOCT_SETTINGS}"; then
+  if [[ ${DRY_RUN} == 1 ]]; then
+    log "dry-run: renomearia 'msbos/opencode-go' → 'msbos/agent-usage' em settings.toml"
+  else
+    run_cmd cp -a "${NOCT_SETTINGS}" "${NOCT_SETTINGS}.msbos-bak"
+    run_cmd runuser -u "${TU}" -- sed -i \
+      -e 's#msbos/opencode-go#msbos/agent-usage#g' \
+      -e 's#"msbos/agent-usage", "msbos/agent-usage"#"msbos/agent-usage"#g' \
+      "${NOCT_SETTINGS}"
+    log "noctalia: settings.toml migrado para 'msbos/agent-usage'"
+  fi
+fi
+
 # ─── 2c. Tema dark dos apps: Breeze Dark (o dark padrão do KDE) ─────────────
 # O msbos não entrega tema próprio: os apps usam o "Breeze Dark" do KDE. O
 # shell (Noctalia) segue com o visual próprio dele — ele não é KDE/GTK/Qt.

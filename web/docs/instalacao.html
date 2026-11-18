@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Instalação · msbos</title>
+<meta name="description" content="Base, ISOs, VM com 3D, bootstrap, opções e kickstart.">
+<meta name="color-scheme" content="dark">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Instalação · msbos">
+<meta property="og:description" content="Base, ISOs, VM com 3D, bootstrap, opções e kickstart.">
+<meta property="og:image" content="https://marcos2872.github.io/msbos/assets/img/msbos-logo.png">
+<meta property="og:url" content="https://marcos2872.github.io/msbos/docs/instalacao.html">
+<link rel="icon" href="../assets/img/favicon.png" type="image/png">
+<link rel="stylesheet" href="../assets/css/site.css">
+</head>
+<body>
+<a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+<header class="site-header" data-header>
+  <div class="container container--wide">
+    <div class="header-inner">
+      <a class="brand" href="../index.html">
+        <img src="../assets/img/msbos-logo.png" alt="" width="30" height="30">
+        <span class="brand-word">msbos<small>niri + Noctalia</small></span>
+      </a>
+      <nav class="nav" id="menu" aria-label="Navegação principal">
+        <a href="../index.html">Início</a><a href="instalacao.html" aria-current="page">Instalação</a><a href="uso.html">Uso</a><a href="arquitetura.html">Arquitetura</a><a href="solucao-de-problemas.html">Problemas</a><a href="tecnico.html">Técnico</a>
+      </nav>
+      <div class="header-tools">
+        <span class="lang-switch" role="group" aria-label="Idioma"><span aria-current="true">PT</span><a href="../en/docs/instalacao.html" hreflang="en" lang="en">EN</a></span>
+        <a class="icon-link" href="https://github.com/marcos2872/msbos" rel="noopener" aria-label="Repositório no GitHub" title="Repositório no GitHub"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg></a>
+        <button class="menu-btn" type="button" data-menu aria-expanded="false" aria-controls="menu" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+      </div>
+    </div>
+  </div>
+</header>
+<main id="conteudo">
+<div class="container container--wide">
+  <div class="doc-shell">
+    <nav class="doc-side" aria-label="Documentação">
+      <h2>Todos os documentos</h2>
+      <ul><li><a href="index.html">Índice</a></li><li><a href="instalacao.html" aria-current="page">Instalação</a></li><li><a href="uso.html">Uso diário</a></li><li><a href="arquitetura.html">Arquitetura</a></li><li><a href="solucao-de-problemas.html">Solução de problemas</a></li><li><a href="migracao-msbos.html">Migração</a></li><li><a href="historico.html">Histórico de nomes</a></li><li><a href="creditos.html">Créditos</a></li><li><a href="tecnico.html">Técnico</a></li><li><a href="tecnico-configuracoes.html">Técnico · assets</a></li></ul>
+    </nav>
+    <article class="doc-main">
+      <header class="doc-head">
+        <span class="eyebrow eyebrow--accent">msbos · Instalação</span>
+        <h1>Instalação</h1>
+        <p>Base, ISOs, VM com 3D, bootstrap, opções e kickstart.</p>
+        <div class="doc-meta"><span>7 min de leitura</span><a href="https://github.com/marcos2872/msbos/blob/main/docs/instalacao.md" rel="noopener">Ver no GitHub</a></div>
+      </header>
+      <div class="prose">
+
+<p>O msbos é instalado <strong>sobre um Fedora já existente</strong> (rota C): não há ISO própria. O <code>install.sh</code> roda sete etapas base idempotentes (+ a etapa opt-in de zoom e duas de migração, no-op em instalação nova), instala os pacotes, configura os serviços e aplica os ajustes. A troca do shell do Plasma pelo niri/Noctalia só vale depois do reboot.</p>
+<h2 id="antes-de-começar">Antes de começar</h2>
+<ul><li><strong>Fedora 44 ou 45</strong>, x86_64, já instalado e com a rede funcionando.</li><li>Acesso a <code>sudo</code> e o usuário que vai receber a configuração (padrão: quem chamou o sudo).</li><li>Espaço em disco e tempo proporcionais à quantidade de pacotes (a primeira instalação baixa bastante coisa; as etapas seguintes são incrementais).</li><li>Faça backup do que importa. O instalador cria backups <code>.msbos-bak</code> dos arquivos que sobrescreve, mas isso não substitui um backup seu.</li></ul>
+<p>A base recomendada é o <strong>Fedora KDE</strong>: o script remove apenas o <em>shell</em> do Plasma (desktop, workspace e Plasma Login Manager) e <strong>mantém os apps do KDE</strong>. Uma instalação <strong>mínima</strong> do Fedora também funciona e gera um sistema ainda mais enxuto; nesse caso o script adiciona o stack e os apps KDE que faltarem.</p>
+<h2 id="escolha-a-base">Escolha a base</h2>
+<div class="table-wrap"><table><thead><tr><th>Imagem</th><th>Para quê</th><th>Onde baixar</th></tr></thead><tbody><tr><td><strong>Fedora KDE</strong> (Live ISO)</td><td>Base recomendada; já traz os apps KDE</td><td><a href="https://fedoraproject.org/kde/download" rel="noopener">https://fedoraproject.org/kde/download</a></td></tr><tr><td><strong>Fedora Everything</strong> (netinstall)</td><td>Instalação mínima — escolha <strong>“Minimal Install”</strong> no Anaconda</td><td><a href="https://fedoraproject.org/misc" rel="noopener">https://fedoraproject.org/misc</a></td></tr></tbody></table></div>
+<p>Espelhos diretos (troque <code>44</code> pela versão desejada; a lista completa está em <a href="https://mirrors.fedoraproject.org" rel="noopener">https://mirrors.fedoraproject.org</a>):</p>
+<ul><li>KDE: <a href="https://download.fedoraproject.org/pub/fedora/linux/releases/44/KDE/x86_64/iso/" rel="noopener">https://download.fedoraproject.org/pub/fedora/linux/releases/44/KDE/x86_64/iso/</a></li><li>Everything: <a href="https://download.fedoraproject.org/pub/fedora/linux/releases/44/Everything/x86_64/iso/" rel="noopener">https://download.fedoraproject.org/pub/fedora/linux/releases/44/Everything/x86_64/iso/</a></li></ul>
+<p>Confira o checksum com os arquivos <code>-CHECKSUM</code> e, se possível, a assinatura OpenPGP do Fedora antes de instalar.</p>
+<h2 id="testar-em-uma-vm">Testar em uma VM</h2>
+<p>O <strong>niri rejeita renderização por software</strong> (llvmpipe) por design. Uma VM precisa de <strong>virtio-gpu com aceleração 3D</strong> e <strong>GL no Spice</strong>; sem isso a sessão fica em tela preta. O <code>qxl</code>, muito comum em VMs, não funciona com o niri.</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>virt-install --name msbos --memory 4096 --vcpus 3 --disk size=25 \
+  --cdrom /caminho/Fedora-KDE-Desktop-Live-44.x86_64.iso \
+  --os-variant fedora-unknown \
+  --graphics spice,gl=on --video virtio,accel3d=yes</code></pre></div>
+<p>Se a VM já existe, veja <a href="solucao-de-problemas.html#vm-com-tela-preta-ou-cursor-invertido">VM com tela preta</a> para corrigir vídeo/GL e os contornos de artefatos do QEMU.</p>
+<h2 id="instalar-sem-clonar-o-repositório">Instalar sem clonar o repositório</h2>
+<p>O <code>bootstrap.sh</code> baixa o repositório como <code>.tar.gz</code>, extrai em um diretório temporário e chama o <code>install.sh</code>. Não precisa de <code>git</code>.</p>
+<p>Salve o bootstrap em um arquivo antes de executar: assim os prompts interativos do <code>install.sh</code> continuam lendo o terminal.</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>curl -fsSL https://raw.githubusercontent.com/marcos2872/msbos/main/bootstrap.sh -o /tmp/msbos.sh
+
+sudo bash /tmp/msbos.sh --dry-run   # simula tudo (recomendado na 1ª vez)
+sudo bash /tmp/msbos.sh             # instala de verdade</code></pre></div>
+<p>Para fixar uma branch, tag ou commit:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>sudo env MSBOS_REF=SEU_TAG_OU_COMMIT bash /tmp/msbos.sh --yes</code></pre></div>
+<p>Instalação não interativa (VM descartável/CI):</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>curl -fsSL https://raw.githubusercontent.com/marcos2872/msbos/main/bootstrap.sh \
+  | sudo bash -s -- --yes</code></pre></div>
+<p>Variáveis aceitas pelo bootstrap:</p>
+<div class="table-wrap"><table><thead><tr><th>Variável</th><th>Padrão</th><th>Efeito</th></tr></thead><tbody><tr><td><code>MSBOS_REF</code></td><td><code>main</code></td><td>Branch, tag ou commit a baixar</td></tr><tr><td><code>MSBOS_REPO</code></td><td><code>marcos2872/msbos</code></td><td>Repositório alternativo (<code>owner/repo</code>)</td></tr><tr><td><code>MSBOS_URL</code></td><td>—</td><td>URL completa do <code>.tar.gz</code>; sobrepõe <code>REPO</code>/<code>REF</code></td></tr><tr><td><code>MSBOS_KEEP</code></td><td><code>0</code></td><td><code>1</code> mantém o diretório temporário para depuração</td></tr></tbody></table></div>
+<p>O bootstrap aceita todas as opções do <code>install.sh</code> e repassa os argumentos.</p>
+<h2 id="instalar-com-clone-desenvolvimento">Instalar com clone (desenvolvimento)</h2>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>git clone https://github.com/marcos2872/msbos.git
+cd msbos
+
+./install.sh --dry-run   # simula tudo, sem alterar nada
+./install.sh             # instala de verdade</code></pre></div>
+<p>Ao rodar sem root e sem <code>--dry-run</code>, o <code>install.sh</code> se reexecuta com <code>sudo</code>, preservando as variáveis da instalação.</p>
+<h2 id="opções-do-installsh">Opções do <code>install.sh</code></h2>
+<div class="table-wrap"><table><thead><tr><th>Opção</th><th>Efeito</th></tr></thead><tbody><tr><td><code>--dry-run</code></td><td>Simula tudo: não instala, não remove, não escreve e não acessa a rede</td></tr><tr><td><code>--yes</code>, <code>-y</code></td><td>Autoriza operações destrutivas (remoção do shell do Plasma e limpeza de artefatos antigos) sem perguntar</td></tr><tr><td><code>--no-greeter</code></td><td>Não adiciona o repositório Terra; usa o greeter padrão do greetd</td></tr><tr><td><code>--user NOME</code></td><td>Usuário-alvo da configuração (padrão: quem chamou o sudo)</td></tr><tr><td><code>--gpu-profile P</code></td><td>Força <code>auto</code>, <code>intel</code>, <code>amd</code>, <code>nvidia</code>, <code>hybrid</code> ou <code>none</code></td></tr><tr><td><code>--skip-remove</code></td><td>Nunca remove pacotes; apenas instala e ajusta serviços</td></tr><tr><td><code>--with-niri-zoom</code></td><td>Instala o niri com zoom por output (fork opt-in do PR niri#3246; compila em podman e usa <code>/usr/local/bin/niri</code>)</td></tr><tr><td><code>-h</code>, <code>--help</code></td><td>Mostra a ajuda extraída do cabeçalho do <code>install.sh</code></td></tr></tbody></table></div>
+<p>As mesmas opções valem para o bootstrap, por exemplo <code>sudo bash /tmp/msbos.sh --gpu-profile nvidia</code>.</p>
+<h2 id="o-que-acontece-durante-a-instalação">O que acontece durante a instalação</h2>
+<p>O <code>install.sh</code> descobre <code>scripts/[0-9][0-9]-*.sh</code> em ordem e executa:</p>
+<div class="table-wrap"><table><thead><tr><th>Etapa</th><th>Resumo</th></tr></thead><tbody><tr><td><code>10-gpu.sh</code></td><td>Detecta Intel/AMD/NVIDIA (inclusive híbridos) e instala o driver adequado</td></tr><tr><td><code>20-stack.sh</code></td><td>Instala niri, Noctalia, greetd, áudio, utilitários, apps e agenda a remoção do shell do Plasma</td></tr><tr><td><code>25-devtools.sh</code></td><td>gcc/make, Rust, Node via nvm, pnpm/yarn e virtualização (KVM/libvirt)</td></tr><tr><td><code>30-services.sh</code></td><td>Coloca o greetd no boot, mascara outros DMs e desativa daemons dispensáveis</td></tr><tr><td><code>40-tuning.sh</code></td><td>zram, sysctl de memória, compressão btrfs, governor e oomd</td></tr><tr><td><code>50-configs.sh</code></td><td>Configura niri, Noctalia, Breeze Dark, greetd/PAM, wallpapers, Zed, zsh e apps padrão</td></tr><tr><td><code>60-agent-skill.sh</code></td><td>Instala o helper privilegiado (polkit), as listas de root e a skill <code>msbos</code> para agentes de IA</td></tr></tbody></table></div>
+<p>Detalhes de cada etapa: <a href="arquitetura.html">Arquitetura e etapas</a>.</p>
+<p><strong>Nada é parado na sessão atual.</strong> O Plasma continua funcionando até o reboot; a remoção do shell do Plasma é agendada para o próximo boot, antes do login, via <code>msbos-remove-plasma.service</code>. Isso evita derrubar a sessão no meio da transação do dnf.</p>
+<p>Cada etapa concluída deixa um marcador em <code>/var/lib/msbos/steps/</code>. Se uma etapa falhar, o instalador mostra o código de erro, o histórico e como retomar.</p>
+<h2 id="zoom-do-niri-opcional">Zoom do niri (opcional)</h2>
+<p>O niri do Fedora não tem zoom. O msbos traz um fork opcional com zoom de acessibilidade por output, <strong>desligado por padrão</strong>: a etapa <code>55-niri-zoom.sh</code> só roda quando a instalação é chamada com <code>--with-niri-zoom</code>.</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>sudo bash /tmp/msbos.sh --with-niri-zoom   # instalando pelo bootstrap
+./install.sh --with-niri-zoom              # instalando pelo clone</code></pre></div>
+<p>Num sistema que já tem o msbos dá para rodar só essa etapa, sem repetir as outras:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>sudo env WITH_NIRI_ZOOM=1 bash scripts/55-niri-zoom.sh</code></pre></div>
+<p>A etapa:</p>
+<ul><li>compila o commit fixado do PR <a href="https://github.com/niri-wm/niri/pull/3246">niri#3246</a> + o patch local do msbos num container Fedora 44 — precisa de <code>podman</code> e de rede, e leva alguns minutos;</li><li>instala o binário em <code>/usr/local/bin/niri</code>; o <code>/usr/bin/niri</code> do pacote fica intacto;</li><li>cria <code>~/.config/niri/zoom.kdl</code> e acrescenta <code>include "zoom.kdl"</code> ao <code>config.kdl</code> do usuário, com backup e validação (se o config ficar inválido, o backup volta);</li><li>instala os helpers <code>msbos-zoom-reset</code> e <code>msbos-niri-zoom-remove</code>.</li></ul>
+<p>A etapa é idempotente: o marcador <code>/usr/local/share/msbos/niri-zoom.commit</code> guarda o commit, o patch e o sha256 do binário, então repetir a instalação com o mesmo commit não recompila. Em <code>--dry-run</code> nada disso acontece — a etapa simula sem rede, sem podman e sem compilar.</p>
+<p><strong>Vale no próximo login.</strong> A sessão em execução continua no niri antigo; saia e entre de novo (ou reinicie). Para conferir que o binário novo está no lugar:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>command -v niri                 # deve responder /usr/local/bin/niri
+cat /usr/local/share/msbos/niri-zoom.commit</code></pre></div>
+<p>Os atalhos estão em <a href="uso.html#zoom-do-niri-opcional">Uso diário</a>. Para remover o fork e voltar ao niri do pacote:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>sudo msbos-niri-zoom-remove</code></pre></div>
+<h2 id="instalação-desatendida-kickstart--primeiro-boot">Instalação desatendida (kickstart + primeiro boot)</h2>
+<p><strong>Não execute o <code>install.sh</code> diretamente no <code>%post</code>.</strong> O <code>%post</code> roda no chroot do sistema instalado, sem systemd como PID 1, e o msbos precisa de um sistema já inicializado (<code>systemctl daemon-reload</code>, <code>runuser</code>, dconf/gsettings). O caminho certo é um serviço de primeiro boot que rode o bootstrap depois que o sistema subir — é o que o modo <code>--firstboot</code> prepara (no <code>%post</code>, como root):</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>bash bootstrap.sh --firstboot --user NOME</code></pre></div>
+<p>Esse comando instala três arquivos e <strong>não</strong> instala o desktop agora:</p>
+<div class="table-wrap"><table><thead><tr><th>Arquivo</th><th>Papel</th></tr></thead><tbody><tr><td><code>/usr/local/libexec/msbos-firstboot</code></td><td>helper que roda o bootstrap com <code>--yes --user NOME</code></td></tr><tr><td><code>/etc/systemd/system/msbos-firstboot.service</code></td><td>oneshot habilitada para o primeiro boot</td></tr><tr><td><code>/etc/msbos/firstboot.conf</code></td><td><code>TARGET_USER</code> (obrigatório), <code>MSBOS_REF</code> e <code>MSBOS_REPO</code> (opcionais)</td></tr></tbody></table></div>
+<p>No primeiro boot a unit baixa e executa o <code>install.sh</code> (teto de 2 h). Se der certo, grava o marcador <code>/var/lib/msbos/firstboot.done</code> e se desabilita — o login seguinte já é o desktop do msbos, com a remoção do shell do Plasma agendada como sempre. Se falhar, ela tenta de novo nos próximos boots e desiste depois de 3 tentativas (contador em <code>/var/lib/msbos/firstboot.attempts</code>). Ela <strong>nunca reinicia</strong> a máquina.</p>
+<p>Acompanhe e confira:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>journalctl -u msbos-firstboot -b        # esta tentativa
+journalctl -u msbos-firstboot -b -1     # tentativa anterior, se a atual falhou
+ls /var/lib/msbos/steps/                # etapas concluídas pelo install.sh</code></pre></div>
+<p><code>kickstart/msbos-firstboot.ks</code> traz um <code>%post</code> pronto para colar no seu kickstart (ajuste o usuário). Em instalação normal, com o sistema já no ar, não use <code>--firstboot</code>: rode o bootstrap com <code>--yes</code> como sempre.</p>
+<h2 id="depois-de-instalar">Depois de instalar</h2>
+<p>Reinicie:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>sudo reboot</code></pre></div>
+<p>No próximo boot, a tela do <strong>greetd</strong> deve aparecer com a sessão <strong>niri</strong> disponível. No primeiro login, o autostart <code>msbos-greeter-sync</code> sincroniza a aparência com a tela de login; o wallpaper aparece no próximo logout/reboot.</p>
+<p>Verificações úteis no sistema instalado:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>msbos-doctor                 # diagnóstico completo (somente leitura)
+systemctl status greetd          # display manager
+journalctl -u greetd -n 30       # log do login
+free -h ; zramctl                # swap comprimido ativo
+ps aux --sort=-rss | head -12    # maiores consumidores de RAM</code></pre></div>
+<p>O shell padrão passa a ser o <strong>zsh</strong>; o grupo <code>libvirt</code> só vale no próximo login. Se precisar repetir o sync da aparência com a tela de login depois de entrar:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>noctalia msg greeter-sync</code></pre></div>
+<p>Wallpapers, atalhos, apps padrão e personalização: <a href="uso.html">Uso diário</a>.</p>
+<h2 id="reexecutar-ou-retomar">Reexecutar ou retomar</h2>
+<p>As etapas são idempotentes; rodar de novo é seguro:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>sudo ./install.sh              # tudo, desde o início
+sudo bash scripts/50-configs.sh  # só uma etapa
+DRY_RUN=1 bash scripts/40-tuning.sh  # simular uma etapa sem root</code></pre></div>
+<p>O histórico fica em:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>ls /var/lib/msbos/steps/</code></pre></div>
+<p>Para restaurar um arquivo sobrescrito, procure o backup <code>.msbos-bak</code> ao lado do original. Configurações pessoais instaladas com <code>install_file_once</code> não são sobrescritas em uma reexecução; para voltar ao padrão, apague o arquivo e rode a etapa correspondente.</p>
+<h2 id="próximos-passos">Próximos passos</h2>
+<ul><li><a href="uso.html">Uso diário</a> — atalhos, Noctalia, tema e configs.</li><li><a href="arquitetura.html">Arquitetura e etapas</a> — como o instalador funciona por dentro.</li><li><a href="solucao-de-problemas.html">Solução de problemas</a> — se algo falhar.</li></ul>
+      </div>
+      <nav class="doc-pager" aria-label="Paginação"><a href="index.html" class="prev"><span>Anterior</span>Índice</a><a href="uso.html" class="next"><span>Próximo</span>Uso diário</a></nav>
+    </article>
+    <aside class="toc" aria-label="Nesta página"><h2>Nesta página</h2><ul><li class="depth-2"><a href="#antes-de-começar">Antes de começar</a></li><li class="depth-2"><a href="#escolha-a-base">Escolha a base</a></li><li class="depth-2"><a href="#testar-em-uma-vm">Testar em uma VM</a></li><li class="depth-2"><a href="#instalar-sem-clonar-o-repositório">Instalar sem clonar o repositório</a></li><li class="depth-2"><a href="#instalar-com-clone-desenvolvimento">Instalar com clone (desenvolvimento)</a></li><li class="depth-2"><a href="#opções-do-installsh">Opções do install.sh</a></li><li class="depth-2"><a href="#o-que-acontece-durante-a-instalação">O que acontece durante a instalação</a></li><li class="depth-2"><a href="#zoom-do-niri-opcional">Zoom do niri (opcional)</a></li><li class="depth-2"><a href="#instalação-desatendida-kickstart--primeiro-boot">Instalação desatendida (kickstart + primeiro boot)</a></li><li class="depth-2"><a href="#depois-de-instalar">Depois de instalar</a></li><li class="depth-2"><a href="#reexecutar-ou-retomar">Reexecutar ou retomar</a></li><li class="depth-2"><a href="#próximos-passos">Próximos passos</a></li></ul></aside>
+  </div>
+</div>
+</main>
+<footer class="site-footer">
+  <div class="container container--wide">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a class="brand" href="../index.html">
+          <img src="../assets/img/msbos-logo.png" alt="" width="30" height="30">
+          <span class="brand-word">msbos</span>
+        </a>
+        <p>Distro pessoal baseada no Fedora, com niri e Noctalia v5. Projeto pessoal · licença MIT.</p>
+      </div>
+      <div class="footer-col"><h4>Documentação</h4><ul><li><a href="index.html">Índice da documentação</a></li><li><a href="instalacao.html">Instalação</a></li><li><a href="uso.html">Uso diário</a></li><li><a href="arquitetura.html">Arquitetura</a></li><li><a href="solucao-de-problemas.html">Solução de problemas</a></li><li><a href="tecnico.html">Documentação técnica</a></li></ul></div>
+      <div class="footer-col"><h4>Projeto</h4><ul><li><a href="https://github.com/marcos2872/msbos" rel="noopener">GitHub</a></li><li><a href="https://github.com/marcos2872/msbos/issues" rel="noopener">Issues</a></li><li><a href="https://github.com/marcos2872/msbos/blob/main/LICENSE" rel="noopener">Licença MIT</a></li><li><a href="creditos.html">Créditos</a></li><li><a href="historico.html">Histórico de nomes</a></li><li><a href="migracao-msbos.html">Migração</a></li></ul></div>
+      <div class="footer-col"><h4>Upstream</h4><ul><li><a href="https://fedoraproject.org" rel="noopener">Fedora Project</a></li><li><a href="https://kde.org" rel="noopener">KDE</a></li><li><a href="https://github.com/YaLTeR/niri" rel="noopener">niri</a></li><li><a href="https://noctalia.dev" rel="noopener">Noctalia</a></li><li><a href="https://github.com/kennylevinsen/greetd" rel="noopener">greetd</a></li></ul></div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 msbos</span>
+      <p class="disclaimer">Projeto pessoal e não oficial. Fedora, KDE, niri, Noctalia e greetd pertencem aos seus respectivos projetos; o msbos não é afiliado, endossado ou mantido por eles.</p>
+    </div>
+  </div>
+</footer>
+<script src="../assets/js/site.js" defer></script>
+</body>
+</html>

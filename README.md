@@ -9,6 +9,7 @@
 <p align="center">
   <strong>Minha distro pessoal baseada no Fedora, com niri + Noctalia v5.</strong><br>
   <a href="README.en.md">English</a> ·
+  <a href="https://marcos2872.github.io/msbos/">Site</a> ·
   <a href="docs/index.md">Documentação</a> ·
   <a href="docs/solucao-de-problemas.md">Solução de problemas</a>
 </p>
@@ -104,6 +105,21 @@ próximo logout/reboot (para repetir: `noctalia msg greeter-sync`). Atalhos bás
 
 Toda a documentação tem versão em inglês com sufixo `.en.md` (por exemplo,
 [README.en.md](README.en.md) e [docs/index.en.md](docs/index.en.md)).
+
+## Site
+
+**<https://marcos2872.github.io/msbos/>** — apresentação do projeto e documentação em HTML, em
+português e inglês, publicada pelo GitHub Pages a cada push na `main`.
+
+A pasta [`web/`](web/) é a fonte do site; ele é **gerado** a partir dos Markdown de `docs/`,
+que continuam sendo a fonte do texto, sem CDN e sem dependência externa:
+
+```bash
+python3 web/build.py       # regenera as páginas em web/
+```
+
+Abra `web/index.html` no navegador. Edite o `.md` (ou `web/assets/css/site.css` para o visual)
+e rode o build de novo; não edite os `.html` gerados à mão.
 
 ## Licença
 

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Migração para o msbos · msbos</title>
+<meta name="description" content="Sair de uma instalação anterior sem reinstalar o Fedora.">
+<meta name="color-scheme" content="dark">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Migração para o msbos · msbos">
+<meta property="og:description" content="Sair de uma instalação anterior sem reinstalar o Fedora.">
+<meta property="og:image" content="https://marcos2872.github.io/msbos/assets/img/msbos-logo.png">
+<meta property="og:url" content="https://marcos2872.github.io/msbos/docs/migracao-msbos.html">
+<link rel="icon" href="../assets/img/favicon.png" type="image/png">
+<link rel="stylesheet" href="../assets/css/site.css">
+</head>
+<body>
+<a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+<header class="site-header" data-header>
+  <div class="container container--wide">
+    <div class="header-inner">
+      <a class="brand" href="../index.html">
+        <img src="../assets/img/msbos-logo.png" alt="" width="30" height="30">
+        <span class="brand-word">msbos<small>niri + Noctalia</small></span>
+      </a>
+      <nav class="nav" id="menu" aria-label="Navegação principal">
+        <a href="../index.html">Início</a><a href="instalacao.html">Instalação</a><a href="uso.html">Uso</a><a href="arquitetura.html">Arquitetura</a><a href="solucao-de-problemas.html">Problemas</a><a href="tecnico.html">Técnico</a>
+      </nav>
+      <div class="header-tools">
+        <span class="lang-switch" role="group" aria-label="Idioma"><span aria-current="true">PT</span><a href="../en/docs/migracao-msbos.html" hreflang="en" lang="en">EN</a></span>
+        <a class="icon-link" href="https://github.com/marcos2872/msbos" rel="noopener" aria-label="Repositório no GitHub" title="Repositório no GitHub"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg></a>
+        <button class="menu-btn" type="button" data-menu aria-expanded="false" aria-controls="menu" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+      </div>
+    </div>
+  </div>
+</header>
+<main id="conteudo">
+<div class="container container--wide">
+  <div class="doc-shell">
+    <nav class="doc-side" aria-label="Documentação">
+      <h2>Todos os documentos</h2>
+      <ul><li><a href="index.html">Índice</a></li><li><a href="instalacao.html">Instalação</a></li><li><a href="uso.html">Uso diário</a></li><li><a href="arquitetura.html">Arquitetura</a></li><li><a href="solucao-de-problemas.html">Solução de problemas</a></li><li><a href="migracao-msbos.html" aria-current="page">Migração</a></li><li><a href="historico.html">Histórico de nomes</a></li><li><a href="creditos.html">Créditos</a></li><li><a href="tecnico.html">Técnico</a></li><li><a href="tecnico-configuracoes.html">Técnico · assets</a></li></ul>
+    </nav>
+    <article class="doc-main">
+      <header class="doc-head">
+        <span class="eyebrow eyebrow--accent">msbos · Migração</span>
+        <h1>Migração para o msbos</h1>
+        <p>Sair de uma instalação anterior sem reinstalar o Fedora.</p>
+        <div class="doc-meta"><span>1 min de leitura</span><a href="https://github.com/marcos2872/msbos/blob/main/docs/migracao-msbos.md" rel="noopener">Ver no GitHub</a></div>
+      </header>
+      <div class="prose">
+
+<p>Este documento vale para quem já tem uma instalação chamada <strong>omyfedora</strong> ou <strong>MyOS</strong> e quer passá-la para o <strong>msbos</strong> sem reinstalar o Fedora.</p>
+<h2 id="o-que-acontece">O que acontece</h2>
+<p>O <code>install.sh</code> ganhou duas etapas de migração:</p>
+<ul><li><code>scripts/00-migrate-names.sh</code> — roda antes de tudo. Desabilita units antigas (sem parar a sessão), move estados e configurações que o instalador não sobrescreve e ajusta caminhos em arquivos do usuário. Nada é apagado.</li><li><code>scripts/99-cleanup-legacy.sh</code> — roda no fim, depois que os arquivos novos já existem. Remove os binários, units, políticas, tema Plymouth e diretórios antigos. Os backups são movidos para <code>/var/backups/msbos-migration/legacy-*</code> ou <code>~/.local/state/msbos/migration-backups/legacy-*</code>.</li></ul>
+<p>Em uma instalação nova as duas etapas não fazem nada.</p>
+<h2 id="como-migrar">Como migrar</h2>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code># 1. simule e leia a saída
+./install.sh --dry-run
+
+# 2. aplique; --yes autoriza a limpeza dos artefatos antigos
+sudo ./install.sh --yes
+
+# 3. reinicie para valer greetd, Plymouth e as units
+sudo reboot
+
+# 4. confira
+msbos-doctor --strict</code></pre></div>
+<p>Sem <code>--yes</code>, a instalação nova é aplicada, mas a limpeza dos nomes antigos fica pendente; rode de novo com <code>--yes</code> quando quiser concluir.</p>
+<h2 id="o-que-é-preservado">O que é preservado</h2>
+<ul><li><code>/etc/msbos/allowed-units.list</code> e <code>protected.list</code>;</li><li><code>/var/log/msbos/actions.log</code> (a trilha antiga é anexada);</li><li>wallpapers em <code>~/.config/msbos-walls/</code> e <code>/usr/share/msbos-walls/</code>;</li><li><code>~/.config/niri/config.kdl</code>, <code>~/.config/noctalia/config.toml</code> e <code>~/.local/state/noctalia/settings.toml</code> (paths são ajustados, personalizações ficam);</li><li><code>~/.agents/skills/msbos/references/local.md</code> e o histórico <code>~/.local/state/msbos/agent-changes.log</code>;</li><li>backups existentes, arquivados no diretório de migração.</li></ul>
+<h2 id="rollback">Rollback</h2>
+<p>Antes de migrar, tire um snapshot do sistema (btrfs/snapper) ou copie <code>/etc</code>, <code>/usr/local</code>, <code>/usr/share/omyfedora*</code> e as configurações do usuário. A migração registra cada movimento; para voltar, restaure o snapshot ou os backups. Se precisar reinstalar o código antigo, use a tag <code>v0.2.0</code> em um clone separado.</p>
+<h2 id="plugin-ai-chat">Plugin AI Chat</h2>
+<p>O plugin <code>msbos/ai-chat</code> é um projeto separado (<code>marcos2872/msbos-ai-chat</code>). A versão 0.2.0 já migra o workspace, o agente e o ID antigo no Noctalia; isso não afeta o sistema nem o helper privilegiado.</p>
+      </div>
+      <nav class="doc-pager" aria-label="Paginação"><a href="solucao-de-problemas.html" class="prev"><span>Anterior</span>Solução de problemas</a><a href="historico.html" class="next"><span>Próximo</span>Histórico de nomes</a></nav>
+    </article>
+    <aside class="toc" aria-label="Nesta página"><h2>Nesta página</h2><ul><li class="depth-2"><a href="#o-que-acontece">O que acontece</a></li><li class="depth-2"><a href="#como-migrar">Como migrar</a></li><li class="depth-2"><a href="#o-que-é-preservado">O que é preservado</a></li><li class="depth-2"><a href="#rollback">Rollback</a></li><li class="depth-2"><a href="#plugin-ai-chat">Plugin AI Chat</a></li></ul></aside>
+  </div>
+</div>
+</main>
+<footer class="site-footer">
+  <div class="container container--wide">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a class="brand" href="../index.html">
+          <img src="../assets/img/msbos-logo.png" alt="" width="30" height="30">
+          <span class="brand-word">msbos</span>
+        </a>
+        <p>Distro pessoal baseada no Fedora, com niri e Noctalia v5. Projeto pessoal · licença MIT.</p>
+      </div>
+      <div class="footer-col"><h4>Documentação</h4><ul><li><a href="index.html">Índice da documentação</a></li><li><a href="instalacao.html">Instalação</a></li><li><a href="uso.html">Uso diário</a></li><li><a href="arquitetura.html">Arquitetura</a></li><li><a href="solucao-de-problemas.html">Solução de problemas</a></li><li><a href="tecnico.html">Documentação técnica</a></li></ul></div>
+      <div class="footer-col"><h4>Projeto</h4><ul><li><a href="https://github.com/marcos2872/msbos" rel="noopener">GitHub</a></li><li><a href="https://github.com/marcos2872/msbos/issues" rel="noopener">Issues</a></li><li><a href="https://github.com/marcos2872/msbos/blob/main/LICENSE" rel="noopener">Licença MIT</a></li><li><a href="creditos.html">Créditos</a></li><li><a href="historico.html">Histórico de nomes</a></li><li><a href="migracao-msbos.html">Migração</a></li></ul></div>
+      <div class="footer-col"><h4>Upstream</h4><ul><li><a href="https://fedoraproject.org" rel="noopener">Fedora Project</a></li><li><a href="https://kde.org" rel="noopener">KDE</a></li><li><a href="https://github.com/YaLTeR/niri" rel="noopener">niri</a></li><li><a href="https://noctalia.dev" rel="noopener">Noctalia</a></li><li><a href="https://github.com/kennylevinsen/greetd" rel="noopener">greetd</a></li></ul></div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 msbos</span>
+      <p class="disclaimer">Projeto pessoal e não oficial. Fedora, KDE, niri, Noctalia e greetd pertencem aos seus respectivos projetos; o msbos não é afiliado, endossado ou mantido por eles.</p>
+    </div>
+  </div>
+</footer>
+<script src="../assets/js/site.js" defer></script>
+</body>
+</html>

@@ -8,7 +8,10 @@ set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
 # Caminhos que podem citar os nomes antigos de propósito.
-ALLOW_RE='^(scripts/(00-migrate-names|99-cleanup-legacy|40-tuning|50-configs)\.sh|assets/bin/msbos-doctor|tests/rename-guard\.sh|docs/(historico|migracao-msbos)(\.en)?\.md|\.github/release-notes/v[0-9]+\.[0-9]+\.[0-9]+\.md)$'
+# O site em web/ é gerado a partir dos .md (web/build.py): as páginas de
+# histórico/migração e a documentação técnica de implementação reproduzem o
+# contexto legado, então entram na allowlist junto com as fontes.
+ALLOW_RE='^(scripts/(00-migrate-names|99-cleanup-legacy|40-tuning|50-configs)\.sh|assets/bin/msbos-doctor|tests/rename-guard\.sh|docs/(historico|migracao-msbos)(\.en)?\.md|docs/msbos/.*|web/(docs|en/docs)/(historico|migracao-msbos|tecnico|tecnico-configuracoes)\.html|\.github/release-notes/v[0-9]+\.[0-9]+\.[0-9]+\.md)$'
 
 fail=0
 

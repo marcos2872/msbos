@@ -9,6 +9,7 @@
 <p align="center">
   <strong>My personal Fedora-based distro, with niri + Noctalia v5.</strong><br>
   <a href="README.md">Português</a> ·
+  <a href="https://marcos2872.github.io/msbos/en/">Website</a> ·
   <a href="docs/index.en.md">Documentation</a> ·
   <a href="docs/solucao-de-problemas.en.md">Troubleshooting</a>
 </p>
@@ -104,6 +105,21 @@ the next logout/reboot (to repeat: `noctalia msg greeter-sync`). Basic shortcuts
 
 Every document has a Portuguese version without the `.en.md` suffix (for example,
 [README.md](README.md) and [docs/index.md](docs/index.md)).
+
+## Site
+
+**<https://marcos2872.github.io/msbos/en/>** — project presentation and documentation as HTML,
+in Portuguese and English, published by GitHub Pages on every push to `main`.
+
+The [`web/`](web/) folder is the site's source; it is **generated** from the Markdown in
+`docs/`, which stays the source of the text — no CDN, no external dependencies:
+
+```bash
+python3 web/build.py       # regenerate the pages in web/
+```
+
+Open `web/index.html` in a browser. Edit the `.md` files (or `web/assets/css/site.css` for the
+visuals) and run the build again; do not hand-edit the generated `.html`.
 
 ## License
 

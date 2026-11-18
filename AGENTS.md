@@ -22,9 +22,10 @@ e em `docs/` (PT), com versões em inglês `*.en.md`.
 ## Comandos
 
 Não existe `package.json` nem `Makefile`. O ponto de entrada é o `install.sh`, que descobre e roda
-`scripts/NN-*.sh` em ordem; o CI em `.github/workflows/ci.yml` roda três jobs em `fedora:44`
-(bash -n, shellcheck e dry-run). Não há suíte de testes unitários — a verificação disponível é
-sintaxe, lint, `--dry-run` e os checks pós-instalação.
+`scripts/NN-*.sh` em ordem; o CI em `.github/workflows/ci.yml` roda seis jobs (bash -n,
+shellcheck, dry-run e a skill de agentes em `fedora:44`; rebranding e build do site no runner).
+Não há suíte de testes unitários — a verificação disponível é sintaxe, lint, `--dry-run`, o
+rename-guard, o build do site e os checks pós-instalação.
 
 ```bash
 ./install.sh --help        # ajuda (extraída do cabeçalho do próprio install.sh)

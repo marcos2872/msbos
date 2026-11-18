@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Solução de problemas · msbos</title>
+<meta name="description" content="dnf, VM/GPU, flatpak, Noctalia, greeter e recuperação.">
+<meta name="color-scheme" content="dark">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Solução de problemas · msbos">
+<meta property="og:description" content="dnf, VM/GPU, flatpak, Noctalia, greeter e recuperação.">
+<meta property="og:image" content="https://marcos2872.github.io/msbos/assets/img/msbos-logo.png">
+<meta property="og:url" content="https://marcos2872.github.io/msbos/docs/solucao-de-problemas.html">
+<link rel="icon" href="../assets/img/favicon.png" type="image/png">
+<link rel="stylesheet" href="../assets/css/site.css">
+</head>
+<body>
+<a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+<header class="site-header" data-header>
+  <div class="container container--wide">
+    <div class="header-inner">
+      <a class="brand" href="../index.html">
+        <img src="../assets/img/msbos-logo.png" alt="" width="30" height="30">
+        <span class="brand-word">msbos<small>niri + Noctalia</small></span>
+      </a>
+      <nav class="nav" id="menu" aria-label="Navegação principal">
+        <a href="../index.html">Início</a><a href="instalacao.html">Instalação</a><a href="uso.html">Uso</a><a href="arquitetura.html">Arquitetura</a><a href="solucao-de-problemas.html" aria-current="page">Problemas</a><a href="tecnico.html">Técnico</a>
+      </nav>
+      <div class="header-tools">
+        <span class="lang-switch" role="group" aria-label="Idioma"><span aria-current="true">PT</span><a href="../en/docs/solucao-de-problemas.html" hreflang="en" lang="en">EN</a></span>
+        <a class="icon-link" href="https://github.com/marcos2872/msbos" rel="noopener" aria-label="Repositório no GitHub" title="Repositório no GitHub"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg></a>
+        <button class="menu-btn" type="button" data-menu aria-expanded="false" aria-controls="menu" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+      </div>
+    </div>
+  </div>
+</header>
+<main id="conteudo">
+<div class="container container--wide">
+  <div class="doc-shell">
+    <nav class="doc-side" aria-label="Documentação">
+      <h2>Todos os documentos</h2>
+      <ul><li><a href="index.html">Índice</a></li><li><a href="instalacao.html">Instalação</a></li><li><a href="uso.html">Uso diário</a></li><li><a href="arquitetura.html">Arquitetura</a></li><li><a href="solucao-de-problemas.html" aria-current="page">Solução de problemas</a></li><li><a href="migracao-msbos.html">Migração</a></li><li><a href="historico.html">Histórico de nomes</a></li><li><a href="creditos.html">Créditos</a></li><li><a href="tecnico.html">Técnico</a></li><li><a href="tecnico-configuracoes.html">Técnico · assets</a></li></ul>
+    </nav>
+    <article class="doc-main">
+      <header class="doc-head">
+        <span class="eyebrow eyebrow--accent">msbos · Solução de problemas</span>
+        <h1>Solução de problemas</h1>
+        <p>dnf, VM/GPU, flatpak, Noctalia, greeter e recuperação.</p>
+        <div class="doc-meta"><span>9 min de leitura</span><a href="https://github.com/marcos2872/msbos/blob/main/docs/solucao-de-problemas.md" rel="noopener">Ver no GitHub</a></div>
+      </header>
+      <div class="prose">
+
+<p>Esta página cobre os problemas mais comuns do msbos. Comece pelo diagnóstico rápido e depois vá para a seção correspondente.</p>
+<h2 id="diagnóstico-rápido">Diagnóstico rápido</h2>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code># Diagnóstico do projeto (somente leitura): erros, avisos e o que reparar
+msbos-doctor
+
+# Versão da base e estado geral
+cat /etc/fedora-release
+systemctl --failed
+
+# Login e sessão
+systemctl status greetd
+journalctl -u greetd -n 50
+
+# Memória e swap comprimido
+free -h
+zramctl
+swapon --show
+
+# Etapas concluídas e logs do boot
+ls /var/lib/msbos/steps/
+journalctl -b -p warning</code></pre></div>
+<h2 id="a-instalação-falhou">A instalação falhou</h2>
+<p>O <code>install.sh</code> mostra o código de erro, até onde chegou e como retomar. As etapas são idempotentes; rodar de novo é seguro:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>sudo ./install.sh              # tudo, desde o início
+sudo bash scripts/50-configs.sh  # só a etapa que falhou</code></pre></div>
+<p>O histórico fica em <code>/var/lib/msbos/steps/</code>.</p>
+<h3 id="dnf-checksum-doesnt-match-ou-404-de-repodata">dnf: “checksum doesn't match” ou 404 de repodata</h3>
+<p>É o <strong>espelho do Fedora fora de sincronia</strong> (transitório; aconteceria com qualquer <code>dnf</code>, não é do msbos). Limpe o cache e tente de novo:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>sudo dnf clean all
+sudo ./install.sh</code></pre></div>
+<p>Se persistir por muitos minutos, troque de espelho. A lista está em <a href="https://mirrors.fedoraproject.org" rel="noopener">https://mirrors.fedoraproject.org</a>. O <code>20-stack.sh</code> já tenta uma segunda vez automaticamente para falhas transitórias do núcleo.</p>
+<h3 id="sem-espaço-em-disco">Sem espaço em disco</h3>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>df -h /
+sudo dnf clean all</code></pre></div>
+<p>A primeira instalação baixa muitos pacotes (navegador, ONLYOFFICE, ferramentas de desenvolvimento e virtualização). Libere espaço antes de continuar.</p>
+<h3 id="o-prompt-não-aparece--instalação-não-interativa">O prompt não aparece / instalação não interativa</h3>
+<p>O <code>install.sh</code> precisa de um terminal para perguntar sobre a remoção do shell do Plasma. Se você usou <code>curl | sudo bash</code>, o stdin não é um TTY. Salve o bootstrap em arquivo e execute:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>curl -fsSL https://raw.githubusercontent.com/marcos2872/msbos/main/bootstrap.sh -o /tmp/msbos.sh
+sudo bash /tmp/msbos.sh</code></pre></div>
+<p>Ou use <code>--yes</code> em uma VM descartável/CI.</p>
+<h3 id="anacondakickstart-o-script-não-funciona-no-post">Anaconda/Kickstart: o script não funciona no <code>%post</code></h3>
+<p>O <code>%post</code> roda no chroot, sem systemd como PID 1. O msbos precisa de um sistema já inicializado (<code>systemctl daemon-reload</code>, <code>runuser</code>, dconf/gsettings). Use o modo <code>--firstboot</code> do bootstrap (veja <a href="instalacao.html#instalação-desatendida-kickstart--primeiro-boot">Instalação desatendida</a>) — ele instala um serviço que roda a instalação no primeiro boot. Rodar o bootstrap num terminal normal, depois do primeiro boot, continua valendo como plano B.</p>
+<h2 id="vm-com-tela-preta-ou-cursor-invertido">VM com tela preta ou cursor invertido</h2>
+<p>O <strong>niri rejeita renderização por software</strong> (llvmpipe) por design. A VM precisa de <strong>virtio-gpu com aceleração 3D</strong> e <strong>GL no Spice</strong>. O <code>qxl</code> não funciona com o niri.</p>
+<p>Com a VM <strong>desligada</strong>, ajuste:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>virt-xml --connect qemu:///system NOME_DA_VM --edit \
+  --video model.type=virtio,model.acceleration.accel3d=yes
+virt-xml --connect qemu:///system NOME_DA_VM --edit --graphics gl.enable=yes</code></pre></div>
+<p>No virt-manager: <strong>Vídeo → modelo Virtio + Aceleração 3D</strong> e <strong>Display Spice → GL habilitado</strong>.</p>
+<p>Se a sessão abrir, mas aparecerem <strong>artefatos de tela</strong> ou o <strong>cursor de cabeça para baixo</strong> (bugs de driver do QEMU/virgl — qemu#2315), descomente as três linhas do bloco de VM dentro do <code>debug { }</code> em <code>~/.config/niri/config.kdl</code>:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">kdl</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>disable-cursor-plane
+disable-direct-scanout
+wait-for-frame-completion-before-queueing</code></pre></div>
+<p>Aplique com <code>niri msg action load-config-file</code> (ou relogue). O bloco já vem comentado com essas linhas; não remova o <code>debug { }</code>.</p>
+<h2 id="o-login-não-aparece-ou-volta-para-o-greeter">O login não aparece ou volta para o greeter</h2>
+<ol><li><p>Veja o estado e o log:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>systemctl status greetd
+journalctl -u greetd -n 80</code></pre></div></li><li><p>Confirme que o PAM tem <code>pam_selinux</code> (obrigatório para o <code>systemctl --user</code> da sessão):</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>grep pam_selinux /etc/pam.d/greetd</code></pre></div>
+<p>Se faltar, rode <code>sudo bash scripts/50-configs.sh</code> para restaurar a versão correta.</p></li><li><p>Confirme a sessão configurada:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>cat /etc/greetd/config.toml
+niri --version</code></pre></div>
+<p>O comando deve terminar com <code>--session niri</code> (ou o greeter padrão, sem Noctalia Greeter).</p></li><li>Se o Noctalia Greeter não estiver instalado, o greetd usa o greeter de texto. Para instalar o Noctalia Greeter, rode <code>sudo bash scripts/20-stack.sh</code> sem <code>--no-greeter</code> (o repo Terra é necessário).</li><li><p>Se a sessão volta para o login com erro de SELinux, procure AVCs:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>journalctl -b | grep -i avc</code></pre></div>
+<p>O contexto do home do greeter é ajustado por <code>30-services.sh</code>; uma reexecução da etapa reaplica <code>semanage</code>/<code>restorecon</code>.</p></li></ol>
+<h2 id="o-shell-do-plasma-continua-instalado">O shell do Plasma continua instalado</h2>
+<p>A remoção é <strong>agendada para o próximo boot</strong>, não feita na sessão viva. Verifique:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>systemctl status msbos-remove-plasma
+journalctl -u msbos-remove-plasma -n 80
+rpm -q plasma-desktop plasma-workspace plasma-login-manager</code></pre></div>
+<p>Se o serviço falhou (por exemplo, sem rede no boot), ele continua habilitado e tenta de novo no próximo boot. Você também pode executá-lo manualmente <strong>de dentro da sessão niri</strong>:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>sudo systemctl start msbos-remove-plasma</code></pre></div>
+<p>Se você usou <code>--skip-remove</code>, a remoção não foi agendada de propósito; o shell do Plasma permanece instalado, mas o login já usa o greetd/niri.</p>
+<a id="wallpaper-nao-aparece-na-tela-de-login"></a>
+<h2 id="wallpaper-não-aparece-na-tela-de-login">Wallpaper não aparece na tela de login</h2>
+<p>O wallpaper do login é sincronizado pelo <strong>Noctalia Greeter</strong> (Auto-Sync). Numa instalação limpa, o autostart <code>msbos-greeter-sync</code> faz o primeiro sync no login. Se o wallpaper não aparecer, rode manualmente dentro da sessão:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>noctalia msg greeter-sync</code></pre></div>
+<p>Para forçar um novo sync no próximo login, apague o marcador:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>rm -f ~/.local/state/msbos/greeter-sync.done</code></pre></div>
+<p>Depois confira:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>sudo grep -A3 '\[appearance\.wallpaper\]' /var/lib/noctalia-greeter/sync.toml</code></pre></div>
+<ul><li>Se o arquivo não existir ou não tiver wallpaper, rode <code>sudo bash scripts/50-configs.sh</code> e autentique o sync quando pedido.</li><li><p>O <code>pkexec</code> exige que o <strong>shell da sessão</strong> esteja listado em <code>/etc/shells</code>. Confira:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>getent passwd "$USER" | cut -d: -f7
+grep -F "$(getent passwd "$USER" | cut -d: -f7)" /etc/shells</code></pre></div>
+<p>O <code>50-configs.sh</code> garante o <code>/usr/bin/zsh</code> e o shell antigo; se você trocou de shell depois, adicione o caminho manualmente.</p></li><li>O sync sem prompt usa uma regra Polkit restrita à ação do greeter. Se ela não estiver habilitada, o comando pede autenticação; isso é esperado.</li></ul>
+<h2 id="uma-configuração-do-noctalia-não-pega">Uma configuração do Noctalia “não pega”</h2>
+<p>O Noctalia v5 lê <code>~/.config/noctalia/config.toml</code> (estilo) e depois <code>~/.local/state/noctalia/settings.toml</code> (estado escrito pela GUI). O segundo <strong>vence chave a chave</strong>. Se uma mudança de aparência não aparece:</p>
+<ol><li><p>Procure a mesma chave nos dois arquivos:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>grep -n 'nome_da_chave' ~/.config/noctalia/config.toml \
+  ~/.local/state/noctalia/settings.toml</code></pre></div></li><li>Ajuste a aparência pela <strong>GUI do Noctalia</strong> (que reescreve o <code>settings.toml</code>) ou edite o <code>config.toml</code> e remova/alinhe a chave duplicada no <code>settings.toml</code>. Não edite o <code>settings.toml</code> à mão sem necessidade.</li><li>Saia e entre novamente para recarregar o shell.</li></ol>
+<p>Lembrete: <code>~/.config/noctalia/config.toml</code> é instalado <strong>uma vez</strong>; edições suas são preservadas. Já os arquivos <code>90-greeter-sync.toml</code>, <code>91-widget-control-center.toml</code> e a paleta <code>macOS.json</code> são atualizados pelo instalador (com backup).</p>
+<h2 id="apps-claros-ou-sem-o-breeze-dark">Apps claros ou sem o Breeze Dark</h2>
+<ol><li><p>Confira o <code>kdeglobals</code>:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>kreadconfig6 --file kdeglobals --group General --key ColorScheme
+kreadconfig6 --file kdeglobals --group Icons --key Theme</code></pre></div>
+<p>O esperado é <code>BreezeDark</code> e <code>breeze-dark</code>.</p></li><li><p>Confira o platform theme Qt (vale após novo login):</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>echo "$QT_QPA_PLATFORMTHEME"   # esperado: kde</code></pre></div></li><li><p>Confira o GTK/dconf:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>gsettings get org.gnome.desktop.interface color-scheme
+gsettings get org.gnome.desktop.interface gtk-theme</code></pre></div>
+<p>O esperado é <code>'prefer-dark'</code> e <code>'Breeze'</code>.</p></li><li>Feche e abra o app (apps Qt/GTK leem o tema no start). Se você trocou o tema pelo <strong>System Settings</strong>, essa escolha vence — o msbos só preenche chaves vazias e não regride.</li></ol>
+<p>Se o <code>kwriteconfig6</code> não existir, instale <code>kde-cli-tools</code> e rode <code>sudo bash scripts/50-configs.sh</code>.</p>
+<h2 id="app-electrontauri-não-lê-o-keychain-secret-service">App Electron/Tauri não lê o keychain (Secret Service)</h2>
+<p>Sintoma: <strong>“Couldn't read your saved credentials from the keychain”</strong> ao abrir o Delta, VS Code ou outro app Electron/Tauri. A causa é a ausência de um provedor de <code>org.freedesktop.secrets</code> na sessão: no niri não há Plasma para publicar o serviço, e o <code>ksecretd</code> iniciado pelo <code>pam_kwallet</code> no greetd fica vivo sem dono do nome no D-Bus.</p>
+<p>Confira:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>busctl --user list | grep org.freedesktop.secrets</code></pre></div>
+<p>O nome deve aparecer com dono (<code>ksecretd</code>) ou como <code>(activatable)</code>. Se não aparecer:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>ls ~/.local/share/dbus-1/services/org.freedesktop.secrets.service
+sudo bash scripts/50-configs.sh   # instala o service de D-Bus</code></pre></div>
+<p>O <code>50-configs.sh</code> instala <code>~/.local/share/dbus-1/services/org.freedesktop.secrets.service</code> e recarrega o barramento. O próximo app que pedir credenciais ativa o <code>ksecretd</code> sob demanda; não é preciso criar uma unit systemd (o <code>ksecretd</code> iniciado pelo PAM continua residente, mas sem dono do nome). Se o arquivo já existe mas o nome não aparece, recarregue o bus manualmente:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>dbus-send --session --type=method_call --dest=org.freedesktop.DBus / org.freedesktop.DBus.ReloadConfig</code></pre></div>
+<p>Reabra o app e, se tiver o <code>secret-tool</code>, teste com <code>secret-tool store</code>/<code>secret-tool lookup</code>. O <code>msbos-doctor</code> também aponta quando o serviço está ausente.</p>
+<h2 id="janelas-de-abrirsalvar-não-abrem-filechooser-do-portal">Janelas de abrir/salvar não abrem (FileChooser do portal)</h2>
+<p>Sintoma: o diálogo de <strong>abrir/salvar</strong> não aparece — baixar um arquivo no navegador, salvar como, abrir uma pasta no Zed. No journal:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>journalctl --user -u xdg-desktop-portal-gnome -b | grep -i 'FileChooser'
+# Delegated FileChooser call failed: The name is not activatable</code></pre></div>
+<p>Causa: o <code>niri-portals.conf</code> usa <code>default=gnome;gtk</code>; com o <code>xdg-desktop-portal-gnome</code> instalado (ScreenCast), ele assume o <code>FileChooser</code> e delega ao <strong>Nautilus</strong>, que o msbos não instala.</p>
+<p>Correção: o msbos instala <code>~/.config/xdg-desktop-portal/niri-portals.conf</code> fixando <code>org.freedesktop.impl.portal.FileChooser=gtk;</code>. Se o arquivo estiver ausente, rode <code>sudo bash scripts/50-configs.sh</code> e reinicie o portal (apps abertos precisam ser reabertos):</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>systemctl --user restart xdg-desktop-portal.service</code></pre></div>
+<h2 id="terminal-sem-transparência-ou-blur">Terminal sem transparência ou blur</h2>
+<p>O blur do alacritty usa <code>background-effect</code>, recurso do <strong>niri 26.04+</strong>. Em uma versão mais antiga, o config inteiro falha ao carregar (nó inesperado). Confira:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>niri --version
+niri validate</code></pre></div>
+<p>Se o <code>niri</code> for mais antigo que 26.04, remova os blocos <code>background-effect { blur true }</code> do <code>~/.config/niri/config.kdl</code> e recarregue:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>niri msg action load-config-file</code></pre></div>
+<p>A transparência do alacritty (<code>opacity = 0.85</code>) é multiplicada pela regra global do niri (<code>opacity 0.90</code>), resultando em ~0.77 na tela. Isso é esperado.</p>
+<h2 id="flatpak-not-allowed-to-query-parental-controls-data">Flatpak: “Not allowed to query parental controls data”</h2>
+<p>Se o <code>accounts-daemon</code> da sua versão do Fedora expõe a interface <code>com.endlessm.ParentalControls</code> e o pacote <code>malcontent</code> está ausente, todo <code>flatpak run</code> falha (flatpak/flatpak#6142). O msbos protege/instala o <code>malcontent</code> quando detecta esse build.</p>
+<p>Confira:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>grep -a com.endlessm.ParentalControls /usr/libexec/accounts-daemon
+rpm -q malcontent</code></pre></div>
+<p>Se a interface existir e o pacote faltar:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>sudo dnf install malcontent
+sudo systemctl try-restart accounts-daemon</code></pre></div>
+<p>Se a interface não existir no daemon, o <code>malcontent</code> não é necessário e nada precisa ser feito.</p>
+<h2 id="ram-acima-do-esperado">RAM acima do esperado</h2>
+<p>Não há meta numérica de RAM: o consumo varia com o kernel, os drivers, a GPU e o hardware. Navegador, Zed, ONLYOFFICE e VMs consomem RAM enquanto estão rodando. Para investigar:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>free -h
+ps aux --sort=-rss | head -15
+zramctl
+balooctl6 status</code></pre></div>
+<ul><li>O Baloo (indexador do Dolphin) é desligado pelo <code>20-stack.sh</code>; se estiver ativo, rode <code>balooctl6 disable</code>.</li><li>O zram é swap comprimido, não uma redução direta do uso de RAM; ele evita travar quando a memória aperta.</li><li>Flatpaks e Electron apps costumam ser os maiores consumidores. Feche-os para medir o idle.</li></ul>
+<h2 id="zram-não-está-ativo">zram não está ativo</h2>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>zramctl
+swapon --show
+systemctl status dev-zram0.swap</code></pre></div>
+<p>O arquivo correto é <code>/etc/systemd/zram-generator.conf</code> (o generator <strong>ignora</strong> <code>/etc/zram-generator.conf</code>). O <code>40-tuning.sh</code> instala e valida a config; uma reexecução da etapa e um reboot devem ativar o swap:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>sudo bash scripts/40-tuning.sh
+sudo reboot</code></pre></div>
+<h2 id="monitores-escala-e-rotação">Monitores, escala e rotação</h2>
+<p>Use <code>Super+P</code> (plugin <strong>Niri Displays</strong>) para ligar/desligar saídas, mudar resolução, escala, rotação e posição. Para inspecionar ou aplicar pela linha de comando:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>niri msg outputs
+niri msg output HDMI-A-1 mode 2560x1080@74.991
+niri msg output HDMI-A-1 position set 0 0</code></pre></div>
+<p>O <code>pessoal-pc.sh</code> é um exemplo <strong>pessoal</strong> de layout com dois monitores; ele não é executado pelo instalador e os nomes das saídas variam de máquina para máquina.</p>
+<h2 id="nvidia-e-híbridos">NVIDIA e híbridos</h2>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>nvidia-smi
+lsmod | grep nvidia
+grep -o 'nvidia-drm.modeset=1' /proc/cmdline</code></pre></div>
+<ul><li>O driver vem do <code>akmod-nvidia</code> (não existe pacote <code>nvidia</code> no Fedora nem no RPM Fusion). O <code>10-gpu.sh</code> habilita o RPM Fusion free + nonfree, compila o módulo com <code>akmods --force</code> e confere com <code>modinfo nvidia</code>. Se a compilação falhar, o módulo não existe no próximo boot.</li><li>Wayland exige KMS; o <code>10-gpu.sh</code> adiciona <code>nvidia-drm.modeset=1</code> via <code>grubby</code>. O efeito vale após o reboot.</li><li>Com <strong>Secure Boot</strong> ativo, o módulo precisa de uma chave enrolada. Se o instalador avisou: <code>sudo kmodgenca -a</code>, <code>sudo mokutil --import /etc/pki/akmods/certs/public_key.der</code>, reinicie e conclua o enrolamento no menu do firmware.</li><li><p>Em híbrido, o <code>profile.d/msbos-nvidia.sh</code> faz offload GLX para a dGPU. Para forçar a iGPU em um app específico:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>__GLX_VENDOR_LIBRARY_NAME=mesa nome-do-app</code></pre></div></li><li>Se o driver não instalou, rode <code>sudo bash scripts/10-gpu.sh</code> e reinicie.</li></ul>
+<h2 id="recuperar-arquivos-e-voltar-atrás">Recuperar arquivos e voltar atrás</h2>
+<ul><li><p>Todo arquivo sobrescrito tem um backup ao lado, com sufixo <code>.msbos-bak</code>. Para restaurar:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>cp -a /caminho/arquivo.msbos-bak /caminho/arquivo</code></pre></div></li><li>Configs pessoais (<code>niri/config.kdl</code>, <code>noctalia/config.toml</code>, <code>.zshrc</code>, <code>alacritty.toml</code>, <code>zed/*</code>) não são sobrescritas. Para voltar ao padrão, apague o arquivo e rode <code>sudo bash scripts/50-configs.sh</code>.</li><li><strong>Não há desinstalador automático.</strong> O sistema continua sendo Fedora; pacotes instalados podem ser removidos manualmente e configs restauradas pelos backups. Se você quiser voltar a usar o shell do Plasma, reinstale os pacotes do Plasma e reative o <code>plasmalogin</code> (ou reinstale a base). O <code>--skip-remove</code> evita a remoção em uma próxima execução.</li><li><p>Para interromper a remoção agendada do Plasma antes do reboot:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>sudo systemctl disable msbos-remove-plasma.service</code></pre></div>
+<p>Isso mantém os pacotes; o login ainda usa o greetd/niri até você reativar o <code>plasmalogin</code>.</p></li></ul>
+<h2 id="coletar-informações-para-pedir-ajuda">Coletar informações para pedir ajuda</h2>
+<p>Inclua no relato:</p>
+<div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>cat /etc/fedora-release
+niri --version
+systemctl --failed
+systemctl status greetd
+journalctl -b -p warning
+ls /var/lib/msbos/steps/
+free -h</code></pre></div>
+<p>Issues do projeto: <a href="https://github.com/marcos2872/msbos/issues" rel="noopener">https://github.com/marcos2872/msbos/issues</a>.</p>
+      </div>
+      <nav class="doc-pager" aria-label="Paginação"><a href="arquitetura.html" class="prev"><span>Anterior</span>Arquitetura</a><a href="migracao-msbos.html" class="next"><span>Próximo</span>Migração</a></nav>
+    </article>
+    <aside class="toc" aria-label="Nesta página"><h2>Nesta página</h2><ul><li class="depth-2"><a href="#diagnóstico-rápido">Diagnóstico rápido</a></li><li class="depth-2"><a href="#a-instalação-falhou">A instalação falhou</a></li><li class="depth-3"><a href="#dnf-checksum-doesnt-match-ou-404-de-repodata">dnf: “checksum doesn't match” ou 404 de repodata</a></li><li class="depth-3"><a href="#sem-espaço-em-disco">Sem espaço em disco</a></li><li class="depth-3"><a href="#o-prompt-não-aparece--instalação-não-interativa">O prompt não aparece / instalação não interativa</a></li><li class="depth-3"><a href="#anacondakickstart-o-script-não-funciona-no-post">Anaconda/Kickstart: o script não funciona no %post</a></li><li class="depth-2"><a href="#vm-com-tela-preta-ou-cursor-invertido">VM com tela preta ou cursor invertido</a></li><li class="depth-2"><a href="#o-login-não-aparece-ou-volta-para-o-greeter">O login não aparece ou volta para o greeter</a></li><li class="depth-2"><a href="#o-shell-do-plasma-continua-instalado">O shell do Plasma continua instalado</a></li><li class="depth-2"><a href="#wallpaper-não-aparece-na-tela-de-login">Wallpaper não aparece na tela de login</a></li><li class="depth-2"><a href="#uma-configuração-do-noctalia-não-pega">Uma configuração do Noctalia “não pega”</a></li><li class="depth-2"><a href="#apps-claros-ou-sem-o-breeze-dark">Apps claros ou sem o Breeze Dark</a></li><li class="depth-2"><a href="#app-electrontauri-não-lê-o-keychain-secret-service">App Electron/Tauri não lê o keychain (Secret Service)</a></li><li class="depth-2"><a href="#janelas-de-abrirsalvar-não-abrem-filechooser-do-portal">Janelas de abrir/salvar não abrem (FileChooser do portal)</a></li><li class="depth-2"><a href="#terminal-sem-transparência-ou-blur">Terminal sem transparência ou blur</a></li><li class="depth-2"><a href="#flatpak-not-allowed-to-query-parental-controls-data">Flatpak: “Not allowed to query parental controls data”</a></li><li class="depth-2"><a href="#ram-acima-do-esperado">RAM acima do esperado</a></li><li class="depth-2"><a href="#zram-não-está-ativo">zram não está ativo</a></li><li class="depth-2"><a href="#monitores-escala-e-rotação">Monitores, escala e rotação</a></li><li class="depth-2"><a href="#nvidia-e-híbridos">NVIDIA e híbridos</a></li><li class="depth-2"><a href="#recuperar-arquivos-e-voltar-atrás">Recuperar arquivos e voltar atrás</a></li><li class="depth-2"><a href="#coletar-informações-para-pedir-ajuda">Coletar informações para pedir ajuda</a></li></ul></aside>
+  </div>
+</div>
+</main>
+<footer class="site-footer">
+  <div class="container container--wide">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a class="brand" href="../index.html">
+          <img src="../assets/img/msbos-logo.png" alt="" width="30" height="30">
+          <span class="brand-word">msbos</span>
+        </a>
+        <p>Distro pessoal baseada no Fedora, com niri e Noctalia v5. Projeto pessoal · licença MIT.</p>
+      </div>
+      <div class="footer-col"><h4>Documentação</h4><ul><li><a href="index.html">Índice da documentação</a></li><li><a href="instalacao.html">Instalação</a></li><li><a href="uso.html">Uso diário</a></li><li><a href="arquitetura.html">Arquitetura</a></li><li><a href="solucao-de-problemas.html">Solução de problemas</a></li><li><a href="tecnico.html">Documentação técnica</a></li></ul></div>
+      <div class="footer-col"><h4>Projeto</h4><ul><li><a href="https://github.com/marcos2872/msbos" rel="noopener">GitHub</a></li><li><a href="https://github.com/marcos2872/msbos/issues" rel="noopener">Issues</a></li><li><a href="https://github.com/marcos2872/msbos/blob/main/LICENSE" rel="noopener">Licença MIT</a></li><li><a href="creditos.html">Créditos</a></li><li><a href="historico.html">Histórico de nomes</a></li><li><a href="migracao-msbos.html">Migração</a></li></ul></div>
+      <div class="footer-col"><h4>Upstream</h4><ul><li><a href="https://fedoraproject.org" rel="noopener">Fedora Project</a></li><li><a href="https://kde.org" rel="noopener">KDE</a></li><li><a href="https://github.com/YaLTeR/niri" rel="noopener">niri</a></li><li><a href="https://noctalia.dev" rel="noopener">Noctalia</a></li><li><a href="https://github.com/kennylevinsen/greetd" rel="noopener">greetd</a></li></ul></div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 msbos</span>
+      <p class="disclaimer">Projeto pessoal e não oficial. Fedora, KDE, niri, Noctalia e greetd pertencem aos seus respectivos projetos; o msbos não é afiliado, endossado ou mantido por eles.</p>
+    </div>
+  </div>
+</footer>
+<script src="../assets/js/site.js" defer></script>
+</body>
+</html>

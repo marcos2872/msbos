@@ -357,11 +357,20 @@ shellcheck -S warning "${scripts[@]}"
 ./install.sh --dry-run
 ```
 
-O CI em `.github/workflows/ci.yml` roda três jobs em `fedora:44` a cada push/PR:
+O CI em `.github/workflows/ci.yml` roda seis jobs a cada push/PR — três em um container
+`fedora:44`, um também em `fedora:44` para a skill de agentes, e o do rebranding e o do site
+direto no runner:
 
-1. **sintaxe** — `bash -n` em todos os arquivos com shebang shell.
+1. **sintaxe** — `bash -n` em todos os arquivos com shebang shell (um por vez).
 2. **lint** — `shellcheck -S warning`.
-3. **dry-run** — cria um usuário `ci` (UID 1000) e roda `./install.sh --dry-run --user ci`.
+3. **dry-run** — cria um usuário `ci` (UID 1000) e roda `./install.sh --dry-run --user ci`,
+   também com `--with-niri-zoom` (a etapa `55` valida os assets sem rede nem compilação).
+4. **rebranding** — `tests/rename-guard.sh`: bloqueia os nomes antigos fora dos scripts de
+   migração/detecção e da documentação histórica.
+5. **agent-skill** — a fase 1 de `tests/agent-skill/run.sh`: valida os assets do helper
+   privilegiado e a matriz de argumentos do `msbos-priv`, sem root.
+6. **site** — roda `python3 web/build.py` (valida os links e âncoras das páginas geradas) e
+   falha se os `.html` versionados em `web/` estiverem desatualizados em relação aos `.md`.
 
 ## Desenvolvimento: adicionar uma etapa
 

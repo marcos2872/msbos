@@ -1,0 +1,71 @@
+name: pages
+
+# Publica o site de web/ no GitHub Pages a cada push na main.
+#
+# O site é gerado a partir de docs/*.md (python3 web/build.py) e versionado no
+# repositório — o job de CI "site" garante que os .html não fiquem atrás dos
+# .md. Aqui o build roda de novo só para falhar cedo caso algo divergiu, e o
+# artefato publicado é a própria pasta web/.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - "docs/**"
+      - "README.md"
+      - "README.en.md"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Um deploy por vez; não cancela o que já está publicando.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: build do site
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: gera o site a partir dos .md
+        run: python3 web/build.py
+
+      - name: falha se os .html não estiverem atualizados
+        run: |
+          if ! git diff --quiet -- web ':!web/build.py'; then
+            echo "erro: web/*.html desatualizados; rode 'python3 web/build.py' e commite." >&2
+            git diff --stat -- web >&2
+            exit 1
+          fi
+
+      # Copia web/ para um diretório de publicação, sem o gerador nem o
+      # .gitignore (só o que o navegador precisa).
+      - name: prepara o artefato
+        run: |
+          mkdir -p _site
+          rsync -a --exclude build.py --exclude .gitignore \
+            --exclude '__pycache__' web/ _site/
+          test -f _site/index.html
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    name: deploy
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

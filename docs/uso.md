@@ -125,10 +125,13 @@ Arquivos complementares em `~/.config/noctalia/`:
   `.msbos-bak`; para usar outra, crie uma paleta nova em `palettes/` e aponte
   `custom_palette` no `config.toml`.
 
-Plugins instalados por padrão: **tmelik/system-monitor** (CPU/RAM) e
-**raycursive/niri-displays** (monitores). Plugins de comunidade ficam em
-`~/.local/state/noctalia/plugins/`; plugins locais ficam em
-`~/.local/share/noctalia/plugins/`. O instalador só copia um plugin se ele ainda não existir.
+Plugins habilitados por padrão no `settings.toml`: **tmelik/system-monitor** (CPU/RAM na
+cápsula da barra), **raycursive/niri-displays** (monitores, em `Super+P`) e
+**msbos/agent-usage** (uso dos agentes de IA — OpenCode Go e GitHub Copilot — em abas no
+painel). Plugins de comunidade ficam em `~/.local/state/noctalia/plugins/`; plugins locais
+ficam em `~/.local/share/noctalia/plugins/` (os do msbos — `niri-displays`, `agent-usage` e
+`materialized` — são copiados de `assets/noctalia/`). O instalador só copia um plugin se ele
+ainda não existir.
 
 ### Wallpaper
 

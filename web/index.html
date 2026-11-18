@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>msbos — distro pessoal Fedora com niri + Noctalia</title>
+<meta name="description" content="Suíte de scripts bash idempotentes que transforma um Fedora 44/45 já instalado em um desktop enxuto com niri (Wayland) e Noctalia v5, mantendo os apps do KDE.">
+<meta name="color-scheme" content="dark">
+<meta property="og:type" content="website">
+<meta property="og:title" content="msbos — distro pessoal Fedora com niri + Noctalia">
+<meta property="og:description" content="Suíte de scripts bash idempotentes que transforma um Fedora 44/45 já instalado em um desktop enxuto com niri (Wayland) e Noctalia v5, mantendo os apps do KDE.">
+<meta property="og:image" content="https://marcos2872.github.io/msbos/assets/img/msbos-logo.png">
+<meta property="og:url" content="https://marcos2872.github.io/msbos/index.html">
+<link rel="icon" href="./assets/img/favicon.png" type="image/png">
+<link rel="stylesheet" href="./assets/css/site.css">
+</head>
+<body>
+<a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+<header class="site-header" data-header>
+  <div class="container container--wide">
+    <div class="header-inner">
+      <a class="brand" href="index.html">
+        <img src="./assets/img/msbos-logo.png" alt="" width="30" height="30">
+        <span class="brand-word">msbos<small>niri + Noctalia</small></span>
+      </a>
+      <nav class="nav" id="menu" aria-label="Navegação principal">
+        <a href="index.html" aria-current="page">Início</a><a href="docs/instalacao.html">Instalação</a><a href="docs/uso.html">Uso</a><a href="docs/arquitetura.html">Arquitetura</a><a href="docs/solucao-de-problemas.html">Problemas</a><a href="docs/tecnico.html">Técnico</a>
+      </nav>
+      <div class="header-tools">
+        <span class="lang-switch" role="group" aria-label="Idioma"><span aria-current="true">PT</span><a href="en/index.html" hreflang="en" lang="en">EN</a></span>
+        <a class="icon-link" href="https://github.com/marcos2872/msbos" rel="noopener" aria-label="Repositório no GitHub" title="Repositório no GitHub"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg></a>
+        <button class="menu-btn" type="button" data-menu aria-expanded="false" aria-controls="menu" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+      </div>
+    </div>
+  </div>
+</header>
+<main id="conteudo">
+<section class="hero">
+  <div class="hero-bg" aria-hidden="true">
+    <picture>
+      <source srcset="./assets/img/wallpaper.webp" type="image/webp">
+      <img src="./assets/img/wallpaper.jpg" alt="" width="1920" height="1080" fetchpriority="high">
+    </picture>
+  </div>
+  <div class="container">
+    <img class="hero-mark" src="./assets/img/msbos-logo.png" alt="Logo do msbos" width="104" height="104">
+    <span class="eyebrow">Fedora 44/45 · niri · Noctalia v5</span>
+    <h1>msbos</h1>
+    <p class="hero-tagline">Um desktop <strong>enxuto e de baixo consumo</strong> montado sobre o Fedora que você já tem.</p>
+    <p class="hero-sub">Rota C, sem ISO própria: um orquestrador de scripts idempotentes troca o shell do Plasma pelo niri e pelo Noctalia v5, instala o driver da GPU e ajusta memória e desempenho — mantendo os apps do KDE.</p>
+    <div class="hero-actions">
+      <a class="btn btn--primary" href="docs/instalacao.html">Começar a instalação<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a>
+      <a class="btn" href="docs/arquitetura.html"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.8 14 5 8 8.2 2 5l6-3.2ZM2 8l6 3.2L14 8M2 11l6 3.2L14 11"/></svg>Ver a arquitetura</a>
+      <a class="btn" href="https://github.com/marcos2872/msbos" rel="noopener"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>GitHub</a>
+    </div>
+    <ul class="chips"><li>Fedora 44/45</li><li>niri</li><li>Noctalia v5</li><li>greetd</li><li>Breeze Dark</li><li>zram zstd</li><li>SELinux</li><li>bash idempotente</li></ul>
+  </div>
+</section><section class="section" id="o-que-e">
+  <div class="container">
+    <div class="section-head section-head--center">
+      <span class="eyebrow eyebrow--accent">O que é</span>
+      <h2>A cola pessoal entre projetos excelentes</h2>
+      <p>O msbos não reescreve o Fedora: ele aplica uma camada pessoal sobre a base, o kernel e os apps que já existem. O resultado é um desktop Wayland enxuto, com login próprio e os aplicativos do dia a dia intactos.</p>
+    </div>
+    <div class="grid grid--3">
+      <article class="card card--hover">
+        <span class="card-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="2"/><path d="m4.5 6.5 2 1.5-2 1.5M8.5 10h3"/></svg></span>
+        <span class="card-kicker">Sem ISO</span>
+        <h3>Rota C</h3>
+        <p>Nada de infraestrutura de build: um script de bootstrap baixa o repositório e aplica a configuração sobre um Fedora 44/45 já instalado.</p>
+      </article>
+      <article class="card card--hover">
+        <span class="card-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.8 14 5 8 8.2 2 5l6-3.2ZM2 8l6 3.2L14 8M2 11l6 3.2L14 11"/></svg></span>
+        <span class="card-kicker">niri + Noctalia</span>
+        <h3>Desktop enxuto</h3>
+        <p>Compositor Wayland com tiling rolável e um shell completo: barra, launcher, notificações, OSD, control center, lock screen e wallpaper.</p>
+      </article>
+      <article class="card card--hover">
+        <span class="card-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.8a6.2 6.2 0 1 0 0 12.4c1 0 1.4-.6 1.4-1.3 0-.9-.8-1-.8-1.9 0-.7.6-1.3 1.5-1.3h1.3c1.6 0 2.4-1 2.4-2.6C13.8 4.2 11.2 1.8 8 1.8Z"/><circle cx="5.2" cy="6" r=".8" fill="currentColor"/><circle cx="8" cy="4.6" r=".8" fill="currentColor"/></svg></span>
+        <span class="card-kicker">KDE</span>
+        <h3>Apps mantidos</h3>
+        <p>Dolphin, Konsole, Kate/KWrite, Okular, Gwenview, Spectacle, Dragon, Elisa… seguem instalados e usam o Breeze Dark, o tema dark padrão do KDE.</p>
+      </article>
+    </div>
+  </div>
+</section><section class="section" id="camadas">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Em camadas</span>
+      <h2>O que fica em cima do quê</h2>
+      <p>A troca acontece na camada de sessão e de shell. O sistema continua sendo Fedora — systemd, SELinux, dnf e o kernel que já estavam lá.</p>
+    </div>
+    <div class="layers"><div class="layer layer--mid"><span class="layer-idx">01</span><span class="layer-name">Aplicativos<small>Dolphin, Konsole, Kate… Zed, Brave, ONLYOFFICE, alacritty</small></span><span class="layer-tag">apps</span></div><div class="layer layer--mid"><span class="layer-idx">02</span><span class="layer-name">Shell do desktop<small>Noctalia v5 — barra, launcher, OSD, lock screen, wallpaper</small></span><span class="layer-tag">shell</span></div><div class="layer layer--top"><span class="layer-idx">03</span><span class="layer-name">Sessão gráfica<small>niri — compositor Wayland com tiling rolável</small></span><span class="layer-tag">session</span></div><div class="layer layer--base"><span class="layer-idx">04</span><span class="layer-name">Login<small>greetd + Noctalia Greeter</small></span><span class="layer-tag">login</span></div><div class="layer layer--base"><span class="layer-idx">05</span><span class="layer-name">Sistema<small>Fedora 44/45, systemd, SELinux, dnf</small></span><span class="layer-tag">base</span></div></div>
+    <div class="flow" aria-label="Fluxo de execução">
+      <span class="flow-step">install.sh</span><span class="flow-arrow">→</span>
+      <span class="flow-step">scripts/NN-*.sh</span><span class="flow-arrow">→</span>
+      <span class="flow-step">lib/common.sh</span><span class="flow-arrow">+</span>
+      <span class="flow-step">assets/**</span><span class="flow-arrow">→</span>
+      <span class="flow-step">/etc · /usr · /var · ~</span>
+    </div>
+  </div>
+</section><section class="section" id="antes-depois">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Antes e depois</span>
+      <h2>O que sai e o que entra</h2>
+      <p>O instalador remove apenas o shell do Plasma — e agenda a remoção para o próximo boot, fora da sessão viva.</p>
+    </div>
+    <div class="swap">
+      <div class="swap-col swap-col--before">
+        <div class="swap-head"><span class="dot"></span>Fedora KDE</div>
+        <ul class="swap-list"><li><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Shell do Plasma no login</span></li><li><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Plasma Login Manager</span></li><li><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Barra e painéis do Plasma</span></li><li><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Jogos, PIM, LibreOffice</span></li><li><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Wallpaper e tema do Plasma</span></li></ul>
+      </div>
+      <div class="swap-col swap-col--after">
+        <div class="swap-head"><span class="dot"></span>msbos</div>
+        <ul class="swap-list"><li><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 8.5 3 3 7-7"/></svg><span>greetd + Noctalia Greeter</span></li><li><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 8.5 3 3 7-7"/></svg><span>niri com tiling rolável</span></li><li><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 8.5 3 3 7-7"/></svg><span>Noctalia v5: barra, launcher, OSD</span></li><li><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 8.5 3 3 7-7"/></svg><span>Apps KDE mantidos, Breeze Dark</span></li><li><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 8.5 3 3 7-7"/></svg><span>zram zstd, oomd, trimmed services</span></li></ul>
+      </div>
+    </div>
+  </div>
+</section><section class="section" id="etapas">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow eyebrow--accent">Como funciona</span>
+      <h2>Sete etapas base, uma opt-in e duas de migração</h2>
+      <p>O install.sh descobre scripts/NN-*.sh em ordem e para na primeira falha. Toda etapa detecta antes de agir: rodar de novo é seguro.</p>
+    </div>
+    <div class="pipeline"><div class="stage"><h3><code>10-gpu.sh</code></h3><p><strong>Detecta a GPU</strong> — Intel/AMD/NVIDIA (inclusive híbrida) e instala o driver; RPM Fusion e <code>nvidia-drm.modeset=1</code> no NVIDIA.</p></div><div class="stage"><h3><code>20-stack.sh</code></h3><p><strong>Monta o stack</strong> — niri, Noctalia, greetd, áudio, portais, apps; curadoria dos apps KDE e agendamento da remoção do shell do Plasma.</p></div><div class="stage"><h3><code>25-devtools.sh</code></h3><p><strong>Ferramentas</strong> — gcc/make, GitHub CLI, Rust (rustup), Node LTS via nvm, pnpm/yarn e KVM/libvirt.</p></div><div class="stage"><h3><code>30-services.sh</code></h3><p><strong>Serviços e login</strong> — greetd assume o boot, outros DMs mascarados, daemons dispensáveis desligados.</p></div><div class="stage"><h3><code>40-tuning.sh</code></h3><p><strong>Memória</strong> — zram zstd, sysctl, <code>compress=zstd:1</code> no btrfs, oomd e perfil de energia.</p></div><div class="stage"><h3><code>50-configs.sh</code></h3><p><strong>Configuração</strong> — niri, Noctalia, Breeze Dark, greetd/PAM, wallpapers, zsh, apps padrão e atalhos.</p></div><div class="stage"><h3><code>60-agent-skill.sh</code></h3><p><strong>Privilégio</strong> — Helper polkit para agentes de IA, listas de root e skills em <code>~/.agents/skills/</code>.</p></div><div class="stage stage--optin"><h3><code>55-niri-zoom.sh</code></h3><p><strong>Zoom por output</strong> — Opcional: compila o fork do niri com zoom por monitor e instala em <code>/usr/local/bin/niri</code>.</p></div></div>
+    <p style="margin-top:1.25rem;color:var(--muted);font-size:.9rem">Além dessas, <code>00-migrate-names.sh</code> prepara uma instalação antiga e <code>99-cleanup-legacy.sh</code> remove os artefatos legados depois que os novos existem. Em instalação nova, as duas são no-op.</p>
+  </div>
+</section><section class="section" id="garantias">
+  <div class="container">
+    <div class="section-head section-head--center">
+      <span class="eyebrow">Garantias</span>
+      <h2>Seguro de rodar de novo</h2>
+    </div>
+    <div class="grid grid--4" style="margin-bottom:1.25rem"><div class="card" style="text-align:center;padding:1.5rem 1rem"><div style="font-size:clamp(2rem,5vw,2.8rem);font-weight:600;letter-spacing:-.04em;background:linear-gradient(180deg,#fff,#b9b8fb);-webkit-background-clip:text;background-clip:text;color:transparent">118</div><div style="color:var(--muted);font-size:.83rem;margin-top:.3rem">arquivos em assets/</div></div><div class="card" style="text-align:center;padding:1.5rem 1rem"><div style="font-size:clamp(2rem,5vw,2.8rem);font-weight:600;letter-spacing:-.04em;background:linear-gradient(180deg,#fff,#b9b8fb);-webkit-background-clip:text;background-clip:text;color:transparent">10</div><div style="color:var(--muted);font-size:.83rem;margin-top:.3rem">etapas no fluxo</div></div><div class="card" style="text-align:center;padding:1.5rem 1rem"><div style="font-size:clamp(2rem,5vw,2.8rem);font-weight:600;letter-spacing:-.04em;background:linear-gradient(180deg,#fff,#b9b8fb);-webkit-background-clip:text;background-clip:text;color:transparent">7</div><div style="color:var(--muted);font-size:.83rem;margin-top:.3rem">ações de polkit no helper</div></div><div class="card" style="text-align:center;padding:1.5rem 1rem"><div style="font-size:clamp(2rem,5vw,2.8rem);font-weight:600;letter-spacing:-.04em;background:linear-gradient(180deg,#fff,#b9b8fb);-webkit-background-clip:text;background-clip:text;color:transparent">5</div><div style="color:var(--muted);font-size:.83rem;margin-top:.3rem">jobs de CI a cada push</div></div></div>
+    <div class="grid grid--3">
+      <article class="card"><span class="card-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.5 13.5 3.5v4.2c0 3-2.2 5.5-5.5 6.8-3.3-1.3-5.5-3.8-5.5-6.8V3.5L8 1.5Z"/><path d="m5.6 7.8 1.8 1.8 3.2-3.2"/></svg></span><h3>Idempotente e com backup</h3><p>Cada etapa detecta o que já existe. Arquivos sobrescritos ganham um backup <code>.msbos-bak</code> na primeira vez.</p></article>
+      <article class="card"><span class="card-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="2"/><path d="m4.5 6.5 2 1.5-2 1.5M8.5 10h3"/></svg></span><h3>--dry-run</h3><p>Simula tudo: não instala, não remove, não escreve e não acessa a rede. É a primeira verificação recomendada.</p></article>
+      <article class="card"><span class="card-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="7" width="9" height="7" rx="1.6"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg></span><h3>Privilégio com portão</h3><p>Operações destrutivas passam por <code>exige_ok</code>; o helper para agentes de IA só aceita ações da lista, com senha de administrador.</p></article>
+    </div>
+  </div>
+</section><section class="section" id="atalhos">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">No dia a dia</span>
+      <h2>Atalhos essenciais</h2>
+      <p>Os padrões instalados em <code>~/.config/niri/config.kdl</code>. Suas edições são preservadas nas reexecuções.</p>
+    </div>
+    <ul class="kbd-grid"><li class="kbd-item"><span><kbd>Super</kbd> <kbd>T</kbd></span><span>Terminal (alacritty)</span></li><li class="kbd-item"><span><kbd>Super</kbd> <kbd>Space</kbd></span><span>Launcher do Noctalia</span></li><li class="kbd-item"><span><kbd>Super</kbd> <kbd>S</kbd></span><span>Control center</span></li><li class="kbd-item"><span><kbd>Super</kbd> <kbd>P</kbd></span><span>Monitores (Niri Displays)</span></li><li class="kbd-item"><span><kbd>Super</kbd> <kbd>O</kbd></span><span>Overview</span></li><li class="kbd-item"><span><kbd>Super</kbd> <kbd>Q</kbd></span><span>Fechar a janela</span></li><li class="kbd-item"><span><kbd>Super</kbd> <kbd>1…9</kbd></span><span>Área de trabalho 1…9</span></li><li class="kbd-item"><span><kbd>Alt</kbd> <kbd>Tab</kbd></span><span>Window switcher</span></li><li class="kbd-item"><span><kbd>Super</kbd> <kbd>Alt</kbd> <kbd>L</kbd></span><span>Bloquear a sessão</span></li><li class="kbd-item"><span><kbd>Super</kbd> <kbd>Shift</kbd> <kbd>/</kbd></span><span>Overlay de atalhos</span></li></ul>
+    <p style="margin-top:1.1rem;color:var(--muted);font-size:.9rem"><a href="docs/uso.html">Tabela completa de atalhos →</a></p>
+  </div>
+</section><section class="section" id="documentacao">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow eyebrow--accent">Documentação</span>
+      <h2>Tudo documentado, por assunto</h2>
+      <p>Instalação passo a passo, uso diário, arquitetura das etapas, solução de problemas e a documentação técnica de implementação.</p>
+    </div>
+    <div class="grid grid--3"><a class="doc-card" href="docs/instalacao.html"><span class="doc-card__title"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 1.5h5l3 3V14a.5.5 0 0 1-.5.5h-7A.5.5 0 0 1 4 14V2a.5.5 0 0 1 .5-.5ZM9 1.5V5h3"/></svg>Instalação</span><span class="doc-card__desc">Base, ISOs, VM com 3D, bootstrap, opções e kickstart.</span><span class="doc-card__more">Ler →</span></a><a class="doc-card" href="docs/uso.html"><span class="doc-card__title"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 1.5h5l3 3V14a.5.5 0 0 1-.5.5h-7A.5.5 0 0 1 4 14V2a.5.5 0 0 1 .5-.5ZM9 1.5V5h3"/></svg>Uso diário</span><span class="doc-card__desc">Atalhos do niri, Noctalia, tema, wallpapers e greeter.</span><span class="doc-card__more">Ler →</span></a><a class="doc-card" href="docs/arquitetura.html"><span class="doc-card__title"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 1.5h5l3 3V14a.5.5 0 0 1-.5.5h-7A.5.5 0 0 1 4 14V2a.5.5 0 0 1 .5-.5ZM9 1.5V5h3"/></svg>Arquitetura</span><span class="doc-card__desc">Fluxo dos scripts, as etapas, lib/common.sh e assets.</span><span class="doc-card__more">Ler →</span></a><a class="doc-card" href="docs/solucao-de-problemas.html"><span class="doc-card__title"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 1.5h5l3 3V14a.5.5 0 0 1-.5.5h-7A.5.5 0 0 1 4 14V2a.5.5 0 0 1 .5-.5ZM9 1.5V5h3"/></svg>Solução de problemas</span><span class="doc-card__desc">dnf, VM/GPU, flatpak, Noctalia, greeter e recuperação.</span><span class="doc-card__more">Ler →</span></a><a class="doc-card" href="docs/migracao-msbos.html"><span class="doc-card__title"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 1.5h5l3 3V14a.5.5 0 0 1-.5.5h-7A.5.5 0 0 1 4 14V2a.5.5 0 0 1 .5-.5ZM9 1.5V5h3"/></svg>Migração</span><span class="doc-card__desc">Sair de uma instalação anterior sem reinstalar o Fedora.</span><span class="doc-card__more">Ler →</span></a><a class="doc-card" href="docs/historico.html"><span class="doc-card__title"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 1.5h5l3 3V14a.5.5 0 0 1-.5.5h-7A.5.5 0 0 1 4 14V2a.5.5 0 0 1 .5-.5ZM9 1.5V5h3"/></svg>Histórico de nomes</span><span class="doc-card__desc">As gerações anteriores do nome do projeto.</span><span class="doc-card__more">Ler →</span></a><a class="doc-card" href="docs/creditos.html"><span class="doc-card__title"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 1.5h5l3 3V14a.5.5 0 0 1-.5.5h-7A.5.5 0 0 1 4 14V2a.5.5 0 0 1 .5-.5ZM9 1.5V5h3"/></svg>Créditos</span><span class="doc-card__desc">Fedora, KDE, niri, Noctalia, greetd e demais upstream.</span><span class="doc-card__more">Ler →</span></a><a class="doc-card" href="docs/tecnico.html"><span class="doc-card__title"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 1.5h5l3 3V14a.5.5 0 0 1-.5.5h-7A.5.5 0 0 1 4 14V2a.5.5 0 0 1 .5-.5ZM9 1.5V5h3"/></svg>Técnico</span><span class="doc-card__desc">Documento de implementação: orquestrador, etapas, contratos e garantias.</span><span class="doc-card__more">Ler →</span></a><a class="doc-card" href="docs/tecnico-configuracoes.html"><span class="doc-card__title"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 1.5h5l3 3V14a.5.5 0 0 1-.5.5h-7A.5.5 0 0 1 4 14V2a.5.5 0 0 1 .5-.5ZM9 1.5V5h3"/></svg>Técnico · assets</span><span class="doc-card__desc">Inventário do que é instalado, onde e por qual etapa.</span><span class="doc-card__more">Ler →</span></a></div>
+  </div>
+</section><section class="section" id="mascote" style="padding-block:0">
+  <div class="container">
+    <div class="mascot">
+      <div>
+        <span class="eyebrow eyebrow--accent">Um sistema, um nome</span>
+        <h2 style="margin-top:.55rem">Um nome, uma família de scripts</h2>
+        <p>O projeto teve outros nomes antes de chegar ao <strong>msbos</strong> — <em>M</em>arcos <em>S</em>ouza <em>B</em>rito + <em>OS</em>. Quem vem de uma instalação antiga migra sem reinstalar o Fedora: os scripts <code>00-migrate-names.sh</code> e <code>99-cleanup-legacy.sh</code> levam os caminhos, serviços e configurações para o nome atual.</p>
+        <div class="mascot-actions">
+          <a class="btn" href="docs/historico.html"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 1.5h5l3 3V14a.5.5 0 0 1-.5.5h-7A.5.5 0 0 1 4 14V2a.5.5 0 0 1 .5-.5ZM9 1.5V5h3"/></svg>Histórico de nomes</a>
+          <a class="btn" href="docs/migracao-msbos.html">Como migrar<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a>
+        </div>
+      </div>
+      <img src="./assets/img/msbos-mascot.webp" alt="Mascote do msbos" width="520" height="520" loading="lazy">
+    </div>
+  </div>
+</section><section class="section" id="instalar">
+  <div class="container">
+    <div class="grid grid--2" style="align-items:center;gap:2rem">
+      <div>
+        <span class="eyebrow eyebrow--accent">Instalação</span>
+        <h2 style="font-size:clamp(1.6rem,3vw,2.2rem);margin-top:.6rem">Do Fedora ao login do msbos</h2>
+        <p style="color:var(--fg-dim);margin-top:.9rem">Sem clonar o repositório: o bootstrap baixa o .tar.gz, extrai e chama o install.sh. A troca do shell vale no próximo boot — nada é parado na sessão atual.</p>
+        <ul class="spec-list" style="margin-top:1.1rem">
+          <li><span>Base recomendada: <strong>Fedora KDE</strong> (ou instalação mínima)</span></li>
+          <li><span>Em VM: virtio-gpu com aceleração 3D e GL no Spice</span></li>
+          <li><span>Requisitos: Fedora 44/45 x86_64, internet e sudo</span></li>
+        </ul>
+        <div class="hero-actions" style="justify-content:flex-start;margin-top:1.5rem">
+          <a class="btn btn--primary" href="docs/instalacao.html">Guia de instalação<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a>
+        </div>
+      </div>
+      <div class="codeblock"><div class="codeblock__head"><span class="codeblock__lang">bash</span><button type="button" class="codeblock__copy" data-copy>copiar</button></div><pre><code>curl -fsSL https://raw.githubusercontent.com/marcos2872/msbos/main/bootstrap.sh -o /tmp/msbos.sh
+sudo bash /tmp/msbos.sh --dry-run   # simula tudo
+sudo bash /tmp/msbos.sh             # instala
+sudo reboot</code></pre></div>
+    </div>
+  </div>
+</section><section class="section" id="creditos">
+  <div class="container">
+    <div class="section-head section-head--center">
+      <span class="eyebrow">Créditos</span>
+      <h2>Feito de trabalho de muita gente</h2>
+      <p>O msbos é só a cola pessoal entre projetos excelentes. Obrigado a quem mantém cada um deles.</p>
+    </div>
+    <div class="grid grid--4">
+      <a class="card card--hover" href="https://fedoraproject.org" rel="noopener"><span class="card-kicker">Base</span><h3>Fedora</h3><p>Sistema, pacotes, dnf, SELinux e systemd.</p></a>
+      <a class="card card--hover" href="https://github.com/YaLTeR/niri" rel="noopener"><span class="card-kicker">Compositor</span><h3>niri</h3><p>Tiling rolável, por YaLTeR.</p></a>
+      <a class="card card--hover" href="https://noctalia.dev" rel="noopener"><span class="card-kicker">Shell</span><h3>Noctalia</h3><p>Barra, launcher, OSD, lock screen e greeter.</p></a>
+      <a class="card card--hover" href="https://kde.org" rel="noopener"><span class="card-kicker">Apps</span><h3>KDE</h3><p>Aplicativos e Breeze Dark.</p></a>
+    </div>
+    <p style="text-align:center;margin-top:1.5rem;color:var(--muted);font-size:.9rem"><a href="docs/creditos.html">Créditos completos</a></p>
+  </div>
+</section>
+</main>
+<footer class="site-footer">
+  <div class="container container--wide">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a class="brand" href="index.html">
+          <img src="./assets/img/msbos-logo.png" alt="" width="30" height="30">
+          <span class="brand-word">msbos</span>
+        </a>
+        <p>Distro pessoal baseada no Fedora, com niri e Noctalia v5. Projeto pessoal · licença MIT.</p>
+      </div>
+      <div class="footer-col"><h4>Documentação</h4><ul><li><a href="docs/index.html">Índice da documentação</a></li><li><a href="docs/instalacao.html">Instalação</a></li><li><a href="docs/uso.html">Uso diário</a></li><li><a href="docs/arquitetura.html">Arquitetura</a></li><li><a href="docs/solucao-de-problemas.html">Solução de problemas</a></li><li><a href="docs/tecnico.html">Documentação técnica</a></li></ul></div>
+      <div class="footer-col"><h4>Projeto</h4><ul><li><a href="https://github.com/marcos2872/msbos" rel="noopener">GitHub</a></li><li><a href="https://github.com/marcos2872/msbos/issues" rel="noopener">Issues</a></li><li><a href="https://github.com/marcos2872/msbos/blob/main/LICENSE" rel="noopener">Licença MIT</a></li><li><a href="docs/creditos.html">Créditos</a></li><li><a href="docs/historico.html">Histórico de nomes</a></li><li><a href="docs/migracao-msbos.html">Migração</a></li></ul></div>
+      <div class="footer-col"><h4>Upstream</h4><ul><li><a href="https://fedoraproject.org" rel="noopener">Fedora Project</a></li><li><a href="https://kde.org" rel="noopener">KDE</a></li><li><a href="https://github.com/YaLTeR/niri" rel="noopener">niri</a></li><li><a href="https://noctalia.dev" rel="noopener">Noctalia</a></li><li><a href="https://github.com/kennylevinsen/greetd" rel="noopener">greetd</a></li></ul></div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 msbos</span>
+      <p class="disclaimer">Projeto pessoal e não oficial. Fedora, KDE, niri, Noctalia e greetd pertencem aos seus respectivos projetos; o msbos não é afiliado, endossado ou mantido por eles.</p>
+    </div>
+  </div>
+</footer>
+<script src="./assets/js/site.js" defer></script>
+</body>
+</html>

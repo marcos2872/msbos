@@ -108,3 +108,21 @@ jobs:
             --skill-dir "$PWD/assets/agents/skills/msbos" \
             --policy "$PWD/assets/polkit/org.msbos.priv.policy" \
             --report /tmp/agent-skill-ci.log
+
+  site:
+    name: site (build do web/)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # O site é gerado a partir de docs/*.md. O build também valida que todo
+      # link/âncora entre as páginas geradas existe; depois conferimos que os
+      # .html versionados estão em dia com os .md.
+      - name: gera o site
+        run: python3 web/build.py
+      - name: os .html estão atualizados com os .md
+        run: |
+          if ! git diff --quiet -- web ':!web/build.py'; then
+            echo "erro: web/*.html desatualizados; rode 'python3 web/build.py' e commite." >&2
+            git diff --stat -- web >&2
+            exit 1
+          fi

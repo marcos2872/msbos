@@ -90,6 +90,10 @@ O viewport ancora no cursor e **não** segue o mouse sozinho. Segure `Super` e m
 fazer o pan; ao soltar, o zoom fica parado no último ponto. O `Super+Alt+scroll` também segura o
 `Super`, então o zoom acompanha o cursor durante o gesto e para quando você solta.
 
+O msbos configura `zoom-filter-threshold 4.0`: até 4× a ampliação é interpolada (suave, sem
+blocos) e só de 4× até o `max-zoom` de 6× o niri usa o pixel "crisp". O padrão do niri é 2.0, o
+que deixava a tela quadriculada já em 2×. Para mudar, edite `~/.config/niri/zoom.kdl`.
+
 Para remover o fork e voltar ao niri do pacote:
 
 ```bash

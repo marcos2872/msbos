@@ -13,6 +13,10 @@ zoom {
     movement-mode "anchored"
     increment-type "exponential"
     max-zoom 6.0
+    // Abaixo de 4.0 o niri interpola (Linear: ampliação suave, sem blocos);
+    // de 4.0 até o max-zoom usa Nearest (pixel "crisp", só no topo da faixa).
+    // O padrão do niri é 2.0, o que já deixava a tela quadriculada em 2×.
+    zoom-filter-threshold 4.0
     pan-modifier "super"
 }
 

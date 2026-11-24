@@ -90,6 +90,10 @@ and move the mouse to pan; when you release it, the zoom stays at the last point
 `Super+Alt+scroll` also holds `Super`, the zoom follows the cursor during the gesture and
 stops when you let go.
 
+msbos sets `zoom-filter-threshold 4.0`: up to 4× the magnification is interpolated (smooth, no
+blocks) and only from 4× up to the 6× `max-zoom` does niri use crisp pixels. niri's default is
+2.0, which made the screen blocky as early as 2×. To change it, edit `~/.config/niri/zoom.kdl`.
+
 To remove the fork and return to the package's niri:
 
 ```bash

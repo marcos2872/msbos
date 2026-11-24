@@ -569,7 +569,21 @@ if have busctl; then
       elif [[ ${linha_secret} == *activatable* ]]; then
         ok 'Secret Service ativável sob demanda (ksecretd)'
       else
-        ok 'Secret Service ativo no barramento (ksecretd)'
+        # Quem responde pelo nome, de fato. No Fedora 45+ o oo7-daemon (arrastado
+        # pelo xdg-desktop-portal-gnome) também declara org.freedesktop.secrets;
+        # se ele responder em vez do ksecretd, o cofre do msbos (KWallet) fica
+        # sem efeito. O busctl lista as colunas NAME PID PROCESS USER ... —
+        # $3 é o processo dono do nome.
+        proc_secret="$(printf '%s\n' "${linha_secret}" | awk '{print $3}')"
+        case ${proc_secret} in
+          ksecretd) ok 'Secret Service respondido pelo ksecretd (KWallet)' ;;
+          oo7-daemon)
+            av 'Secret Service respondido pelo oo7-daemon, não pelo KWallet — mascare oo7-daemon.service (systemctl --user) e reative a sessão'
+            ;;
+          *)
+            av "Secret Service respondido por '${proc_secret:-?}' em vez do ksecretd (KWallet)"
+            ;;
+        esac
       fi
     fi
   fi

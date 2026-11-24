@@ -436,7 +436,18 @@ render_file "greetd/config.toml" "/etc/greetd/config.toml" "__GREETER_CMD__" "${
 # sem ele o SELinux em enforcing bloqueia o systemctl --user da sessão e o niri
 # volta para a tela de login). NÃO sobrescrevemos; apenas restauramos se
 # detectarmos uma versão antiga do msbos sem pam_selinux.
-if [[ -f /etc/pam.d/greetd ]] && ! grep -q 'pam_selinux' /etc/pam.d/greetd; then
+#
+# Desde o Fedora 45 o pacote instala esta config em /usr/lib/pam.d (vendordir)
+# e deixou de criar /etc/pam.d/greetd. Um arquivo em /etc/pam.d VENCE o do
+# pacote (pam.conf(5): "Files in /etc/pam.d override files with the same name
+# in other directories"), então instalar o asset ali passaria a sobrepor — com
+# conteúdo defasado — a config do pacote. Se o pacote já provê a config (em
+# qualquer dos dois diretórios), não tocamos em nada.
+PAM_PKG=''
+for _pam in /etc/pam.d/greetd /usr/lib/pam.d/greetd; do
+  [[ -f ${_pam} && -z ${PAM_PKG} ]] && PAM_PKG="${_pam}"
+done
+if [[ -n ${PAM_PKG} ]] && ! grep -q 'pam_selinux' "${PAM_PKG}"; then
   # Aceita o backup com o nome atual e o legado (instalações feitas antes do
   # rebranding omyfedora -> msbos).
   PAM_BAK=''
@@ -444,16 +455,23 @@ if [[ -f /etc/pam.d/greetd ]] && ! grep -q 'pam_selinux' /etc/pam.d/greetd; then
     [[ -f ${_bak} ]] && { PAM_BAK="${_bak}"; break; }
   done
   if [[ -n ${PAM_BAK} ]]; then
-    warn "greetd: /etc/pam.d/greetd sem pam_selinux — restaurando backup do pacote"
-    run_cmd cp -f "${PAM_BAK}" /etc/pam.d/greetd
+    warn "greetd: ${PAM_PKG} sem pam_selinux — restaurando backup do pacote"
+    run_cmd cp -f "${PAM_BAK}" "${PAM_PKG}"
   else
-    warn "greetd: /etc/pam.d/greetd sem pam_selinux — instalando versão correta do msbos"
-    install_file "pam.d/greetd" "/etc/pam.d/greetd"
+    warn "greetd: ${PAM_PKG} sem pam_selinux — instalando versão correta do msbos"
+    # O asset do msbos é a config do pacote do F44 (%PAM do greetd). Escrever em
+    # /etc/pam.d num sistema onde o pacote usa o vendordir o tornaria um override
+    # permanente e defasado: nesse caso o destino é o próprio vendordir.
+    if [[ ${PAM_PKG} == /usr/lib/pam.d/greetd ]]; then
+      install_file "pam.d/greetd" "${PAM_PKG}"
+    else
+      install_file "pam.d/greetd" "/etc/pam.d/greetd"
+    fi
   fi
-elif [[ ! -f /etc/pam.d/greetd ]]; then
+elif [[ -z ${PAM_PKG} ]]; then
   install_file "pam.d/greetd" "/etc/pam.d/greetd"
 else
-  log "greetd: /etc/pam.d/greetd ok (mantendo o do pacote)"
+  log "greetd: ${PAM_PKG} ok (mantendo o do pacote)"
 fi
 
 # ─── 4a. Noctalia Greeter — Auto-Sync sem prompt ────────────────────────────

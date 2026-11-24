@@ -188,6 +188,25 @@ Fluxo: `install.sh` (orquestrador) → `lib/common.sh` (helpers) → `scripts/NN
   query parental controls data for user N" — flatpak/flatpak#6142). O `msbos-remove-plasma` o
   protege quando presente, e a seção 9 do `20-stack.sh` só instala/repara quando o daemon tem o
   suporte (checagem compile-time via `strings`); no Fedora 44 ele não tem, então nada é instalado.
+- PAM do greetd e o vendordir (Fedora 45+): o `greetd` passou a instalar a config em
+  `/usr/lib/pam.d/greetd` e não cria mais `/etc/pam.d/greetd`. Como `/etc/pam.d` **vence** o
+  vendordir (`pam.conf(5)`: "Files in `/etc/pam.d` override files with the same name in other
+  directories"), escrever o asset em `/etc` num sistema assim o transforma num override
+  permanente e defasado. O bloco do PAM em `50-configs.sh` detecta os dois diretórios, nunca
+  sobrescreve a config do pacote e, quando precisa reparar, mira o diretório que o pacote usa.
+  Não sobe o PAM sem `pam_selinux`: sem ele o SELinux em enforcing nega o `systemctl --user` da
+  sessão e o niri volta para o login.
+- Secret Service × oo7 (Fedora 45+): o `xdg-desktop-portal-gnome` arrasta `oo7-daemon`, que
+  também declara `org.freedesktop.secrets`. O cofre do msbos é o KWallet (`ksecretd`, via o
+  service de D-Bus do usuário e a entrada `Secret=kwallet` do `niri-portals.conf`). O
+  `oo7-daemon` vem disabled por preset, mas se responder pelo nome o KWallet fica sem efeito;
+  o `msbos-doctor` reporta qual processo é o dono. O `gnome-keyring` só passou a publicar
+  `gnome-keyring.portal` no Fedora 45 — até então a entrada `Secret=gnome-keyring` do upstream
+  do niri era letra morta (e o pacote nem está no stack).
+- `assets/oomd.conf` só vale em `[OOM]`: as chaves são `SwapUsedLimit`,
+  `DefaultMemoryPressureLimit` e `DefaultMemoryPressureDurationSec`. Com qualquer outra grafia
+  (ex.: `[oomd]`/`SwapFull`) o systemd descarta o arquivo inteiro no boot com
+  "Unknown section ... Ignoring." — e o tuning não vale sem nenhum aviso visível.
 - VM de teste: o niri **rejeita renderização por software** (`llvmpipe`) por design — a VM
   precisa de virtio-gpu com `accel3d=yes` + `gl=on` no Spice, senão a sessão fica em tela preta
   (só aparece o aviso de depreciação do `systemd` no VT). Com o GL ligado ainda podem surgir
